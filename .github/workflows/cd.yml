@@ -68,14 +68,14 @@ jobs:
         run: pnpm install
 
       - name: Build Frontend
-        run: pnpm --filter @budget-tracker/frontend build
+        run: pnpm --filter @budget-tracker/frontend build:prod
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          workingDirectory: 'apps/frontend'
-          command: pages deploy dist/apps/frontend --project-name=budget-tracker-frontend
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist/apps/frontend/browser --project-name=budget-tracker-frontend
 
   deploy-worker:
     runs-on: ubuntu-latest
