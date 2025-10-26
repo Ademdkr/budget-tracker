@@ -44,7 +44,7 @@ export class TransactionFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private dialogRef = inject(MatDialogRef<TransactionFormComponent>);
   public data = inject(MAT_DIALOG_DATA) as TransactionFormData;
-  
+
   transactionForm!: FormGroup;
   categories: Category[] = [];
   accounts: Account[] = [];
@@ -66,7 +66,7 @@ export class TransactionFormComponent implements OnInit {
       type: [data.transaction?.type || 'expense', [Validators.required]],
       date: [data.transaction?.date || new Date(), [Validators.required]],
       amount: [
-        data.transaction ? Math.abs(data.transaction.amount) : null, 
+        data.transaction ? Math.abs(data.transaction.amount) : null,
         [Validators.required, Validators.min(0.01)]
       ],
       category: [data.transaction?.category || '', [Validators.required]],
@@ -89,7 +89,7 @@ export class TransactionFormComponent implements OnInit {
 
   private filterCategories() {
     const transactionType = this.transactionForm.get('type')?.value;
-    this.filteredCategories = this.categories.filter(category => 
+    this.filteredCategories = this.categories.filter(category =>
       category.type === transactionType || category.type === 'both'
     );
   }
@@ -110,7 +110,7 @@ export class TransactionFormComponent implements OnInit {
   onSubmit() {
     if (this.transactionForm.valid && !this.isSubmitting) {
       this.isSubmitting = true;
-      
+
       const formValue = this.transactionForm.value;
       const transaction: Partial<Transaction> = {
         ...formValue,
@@ -143,23 +143,23 @@ export class TransactionFormComponent implements OnInit {
 
   getErrorMessage(fieldName: string): string {
     const field = this.transactionForm.get(fieldName);
-    
+
     if (field?.hasError('required')) {
       return 'Dieses Feld ist erforderlich';
     }
-    
+
     if (fieldName === 'amount') {
       if (field?.hasError('min')) {
         return 'Der Betrag muss größer als 0 sein';
       }
     }
-    
+
     if (fieldName === 'date') {
       if (field?.hasError('matDatepickerParse')) {
         return 'Ungültiges Datum';
       }
     }
-    
+
     return '';
   }
 }
