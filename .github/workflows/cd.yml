@@ -75,7 +75,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist/apps/frontend/browser --project-name=budget-tracker-frontend
+          command: pages deploy apps/frontend/dist/apps/frontend/browser --project-name=budget-tracker-frontend
 
   deploy-worker:
     runs-on: ubuntu-latest
