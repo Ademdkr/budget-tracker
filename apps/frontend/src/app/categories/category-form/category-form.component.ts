@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, Inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -40,8 +40,9 @@ export interface CategoryFormData {
 export class CategoryFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private dialogRef = inject(MatDialogRef<CategoryFormComponent>);
+  public data = inject(MAT_DIALOG_DATA) as CategoryFormData;
   
-  categoryForm: FormGroup;
+  categoryForm!: FormGroup;
   mode: 'create' | 'edit' = 'create';
   isSubmitting = false;
   existingNames: string[] = [];
@@ -61,9 +62,11 @@ export class CategoryFormComponent implements OnInit {
     '#ff4081', '#00bcd4', '#cddc39', '#ffeb3b', '#9e9e9e'
   ];
 
-  constructor(
-    @Inject(MAT_DIALOG_DATA) public data: CategoryFormData
-  ) {
+  constructor() {}
+
+  ngOnInit() {
+    // Initialize from injected data
+    const data = this.data;
     this.mode = data.mode;
     this.existingNames = data.existingNames;
 
@@ -77,9 +80,7 @@ export class CategoryFormComponent implements OnInit {
       type: [data.category?.type || 'expense', [Validators.required]],
       description: [data.category?.description || '']
     });
-  }
 
-  ngOnInit() {
     // Pre-select first available emoji if none selected
     if (!this.categoryForm.get('emoji')?.value) {
       this.categoryForm.patchValue({ emoji: this.commonEmojis[0] });

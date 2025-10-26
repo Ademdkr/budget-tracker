@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, Inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -43,8 +43,9 @@ export interface TransactionFormData {
 export class TransactionFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private dialogRef = inject(MatDialogRef<TransactionFormComponent>);
+  public data = inject(MAT_DIALOG_DATA) as TransactionFormData;
   
-  transactionForm: FormGroup;
+  transactionForm!: FormGroup;
   categories: Category[] = [];
   accounts: Account[] = [];
   mode: 'create' | 'edit' = 'create';
@@ -53,9 +54,10 @@ export class TransactionFormComponent implements OnInit {
   // Filtered categories based on transaction type
   filteredCategories: Category[] = [];
 
-  constructor(
-    @Inject(MAT_DIALOG_DATA) public data: TransactionFormData
-  ) {
+  constructor() {}
+
+  ngOnInit() {
+    const data = this.data;
     this.categories = data.categories;
     this.accounts = data.accounts;
     this.mode = data.mode;
@@ -71,9 +73,7 @@ export class TransactionFormComponent implements OnInit {
       account: [data.transaction?.account || '', [Validators.required]],
       note: [data.transaction?.note || '']
     });
-  }
 
-  ngOnInit() {
     this.setupFormSubscriptions();
     this.filterCategories();
   }

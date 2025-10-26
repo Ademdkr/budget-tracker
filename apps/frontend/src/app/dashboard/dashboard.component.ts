@@ -1,6 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Observable, of } from 'rxjs';
 
 // Angular Material imports
 import { MatButtonModule } from '@angular/material/button';
@@ -90,7 +89,7 @@ export class DashboardComponent implements OnInit {
     labels: [],
     datasets: []
   };
-  
+
   lineChartData: ChartData<'line'> = {
     labels: [],
     datasets: []
@@ -143,7 +142,7 @@ export class DashboardComponent implements OnInit {
         this.loadRecentTransactions();
         this.loadChartData();
         this.checkEmptyState();
-        
+
         this.isLoading = false;
       } catch {
         this.hasError = true;
