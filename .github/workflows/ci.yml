@@ -27,8 +27,8 @@ jobs:
       - name: Install dependencies (ignore postinstall scripts)
         run: pnpm install --ignore-scripts
 
-      - name: Generate Prisma clients
-        run: pnpm --filter @template/backend prisma:generate && pnpm --filter @template/worker prisma:generate
+      - name: Generate Prisma client (backend)
+        run: pnpm --filter @budget-tracker/backend prisma:generate
 
       - name: Lint
         run: pnpm -r lint
@@ -37,7 +37,7 @@ jobs:
         run: pnpm -r build
 
       - name: Run tests (backend only)
-        run: pnpm --filter @template/backend test
+        run: pnpm --filter @budget-tracker/backend test
 
   frontend-tests:
     name: Frontend Tests (Headless)
@@ -64,4 +64,4 @@ jobs:
           sudo apt-get install -y chromium-browser
 
       - name: Run frontend tests
-        run: pnpm --filter @template/frontend test
+        run: pnpm --filter @budget-tracker/frontend test

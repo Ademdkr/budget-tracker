@@ -1,0 +1,289 @@
+.account-form-dialog {
+  width: 100%;
+  max-width: 600px;
+  
+  .dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem 1.5rem 0 1.5rem;
+    margin: 0;
+    
+    .header-content {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      
+      .header-icon {
+        font-size: 1.5rem;
+        width: 1.5rem;
+        height: 1.5rem;
+        color: var(--mat-sys-primary);
+      }
+      
+      h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--mat-sys-on-surface);
+      }
+    }
+    
+    .close-button {
+      color: var(--mat-sys-on-surface-variant);
+    }
+  }
+  
+  .dialog-content {
+    padding: 1.5rem;
+    max-height: 70vh;
+    overflow-y: auto;
+    
+    .account-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      
+      .full-width {
+        width: 100%;
+      }
+      
+      // Type Option Styling
+      .type-option {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        
+        mat-icon {
+          font-size: 1.125rem;
+          width: 1.125rem;
+          height: 1.125rem;
+        }
+        
+        span {
+          font-weight: 500;
+        }
+      }
+      
+      // Form Status
+      .form-status {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        background: color-mix(in srgb, var(--mat-sys-error) 10%, transparent);
+        border: 1px solid color-mix(in srgb, var(--mat-sys-error) 30%, transparent);
+        border-radius: 8px;
+        color: var(--mat-sys-error);
+        font-size: 0.875rem;
+        
+        mat-icon {
+          font-size: 1.125rem;
+          width: 1.125rem;
+          height: 1.125rem;
+        }
+      }
+    }
+  }
+  
+  .dialog-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1.5rem 1.5rem 1.5rem;
+    gap: 1rem;
+    
+    .actions-left,
+    .actions-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .actions-right {
+      margin-left: auto;
+    }
+    
+    button {
+      min-width: 120px;
+      height: 40px;
+      font-weight: 500;
+      
+      mat-icon {
+        margin-right: 0.5rem;
+        font-size: 1.125rem;
+        width: 1.125rem;
+        height: 1.125rem;
+      }
+    }
+    
+    .cancel-button {
+      color: var(--mat-sys-on-surface-variant);
+      
+      &:hover {
+        background: color-mix(in srgb, var(--mat-sys-on-surface) 8%, transparent);
+      }
+    }
+    
+    .reset-button {
+      color: var(--mat-sys-outline);
+      
+      &:hover:not(:disabled) {
+        background: color-mix(in srgb, var(--mat-sys-outline) 8%, transparent);
+      }
+      
+      &:disabled {
+        opacity: 0.5;
+      }
+    }
+    
+    .submit-button {
+      &:disabled {
+        opacity: 0.6;
+      }
+    }
+  }
+}
+
+// Form Field Customization
+::ng-deep {
+  .account-form-dialog {
+    .mat-mdc-form-field {
+      .mat-mdc-text-field-wrapper {
+        .mat-mdc-form-field-flex {
+          .mat-mdc-form-field-icon-prefix {
+            color: var(--mat-sys-on-surface-variant);
+            padding-right: 0.75rem;
+          }
+          
+          .mat-mdc-form-field-icon-suffix {
+            color: var(--mat-sys-on-surface-variant);
+            padding-left: 0.75rem;
+          }
+        }
+      }
+      
+      .mat-mdc-form-field-subscript-wrapper {
+        .mat-mdc-form-field-hint-wrapper {
+          .mat-mdc-form-field-hint {
+            font-size: 0.75rem;
+            color: var(--mat-sys-on-surface-variant);
+          }
+        }
+        
+        .mat-mdc-form-field-error-wrapper {
+          .mat-mdc-form-field-error {
+            font-size: 0.75rem;
+            color: var(--mat-sys-error);
+          }
+        }
+      }
+    }
+    
+    // Select Panel Styling
+    .mat-mdc-select-panel {
+      .mat-mdc-option {
+        .type-option {
+          mat-icon {
+            margin-right: 0.75rem;
+          }
+        }
+      }
+    }
+    
+    // Textarea Styling
+    .mat-mdc-input-element {
+      &[type="number"] {
+        text-align: right;
+      }
+    }
+  }
+}
+
+// Loading States
+.submit-button {
+  &.loading {
+    position: relative;
+    color: transparent !important;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      margin: -10px 0 0 -10px;
+      border: 2px solid transparent;
+      border-top: 2px solid currentColor;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .account-form-dialog {
+    max-width: calc(100vw - 2rem);
+    
+    .dialog-header {
+      padding: 1rem 1rem 0 1rem;
+      
+      .header-content {
+        h2 {
+          font-size: 1.25rem;
+        }
+      }
+    }
+    
+    .dialog-content {
+      padding: 1rem;
+      max-height: 60vh;
+    }
+    
+    .dialog-actions {
+      padding: 0 1rem 1rem 1rem;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.75rem;
+      
+      .actions-left,
+      .actions-right {
+        width: 100%;
+        justify-content: center;
+      }
+      
+      .actions-right {
+        margin-left: 0;
+        flex-direction: row-reverse;
+      }
+      
+      button {
+        flex: 1;
+        min-width: auto;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .account-form-dialog {
+    .dialog-actions {
+      .actions-left,
+      .actions-right {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      button {
+        width: 100%;
+      }
+    }
+  }
+}

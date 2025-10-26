@@ -1,0 +1,233 @@
+<div class="dashboard-container">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <h1 class="dashboard-title">Dashboard</h1>
+    <p class="dashboard-subtitle">Überblick über Ihre Finanzen</p>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-card class="loading-card">
+      <mat-card-content class="loading-content">
+        <div class="loading-spinner"></div>
+        <p>Dashboard wird geladen...</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="hasError" class="error-container">
+    <mat-card class="error-card">
+      <mat-card-content class="error-content">
+        <mat-icon class="error-icon">error_outline</mat-icon>
+        <h3>Fehler beim Laden</h3>
+        <p>Die Dashboard-Daten konnten nicht geladen werden.</p>
+        <button mat-raised-button color="primary" (click)="retry()">
+          <mat-icon>refresh</mat-icon>
+          Erneut versuchen
+        </button>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="isEmpty && !isLoading && !hasError" class="empty-container">
+    <mat-card class="empty-card">
+      <mat-card-content class="empty-content">
+        <mat-icon class="empty-icon">inbox</mat-icon>
+        <h3>Keine Daten verfügbar</h3>
+        <p>Fügen Sie Ihre ersten Transaktionen hinzu, um Ihr Dashboard zu sehen.</p>
+        <button mat-raised-button color="primary">
+          <mat-icon>add</mat-icon>
+          Transaktion hinzufügen
+        </button>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!isLoading && !hasError && !isEmpty" class="dashboard-content">
+    
+    <!-- KPI Cards -->
+    <section class="kpi-section">
+      <h2 class="section-title">Monatsübersicht</h2>
+      <div class="kpi-grid">
+        <mat-card *ngFor="let kpi of kpiCards" class="kpi-card" [ngClass]="'kpi-' + kpi.color">
+          <mat-card-content>
+            <div class="kpi-header">
+              <mat-icon class="kpi-icon">{{ kpi.icon }}</mat-icon>
+              <div class="kpi-trend" [ngClass]="'trend-' + kpi.trend?.direction">
+                <mat-icon class="trend-icon">
+                  {{ kpi.trend?.direction === 'up' ? 'trending_up' : 'trending_down' }}
+                </mat-icon>
+                <span class="trend-value">{{ kpi.trend?.value }}%</span>
+              </div>
+            </div>
+            <div class="kpi-content">
+              <h3 class="kpi-title">{{ kpi.title }}</h3>
+              <div class="kpi-value">{{ formatCurrency(kpi.value) }}</div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </section>
+
+    <!-- Budget Progress -->
+    <section class="budget-section">
+      <h2 class="section-title">Budget-Fortschritte</h2>
+      <div class="budget-grid">
+        <mat-card *ngFor="let budget of budgetProgress" class="budget-card">
+          <mat-card-content>
+            <div class="budget-header">
+              <div class="budget-category">
+                <span class="category-emoji">{{ budget.emoji }}</span>
+                <h3 class="category-name">{{ budget.category }}</h3>
+              </div>
+              <mat-chip class="budget-chip" [color]="getProgressColor(budget.percentage)">
+                {{ budget.percentage }}%
+              </mat-chip>
+            </div>
+            
+            <div class="budget-amounts">
+              <div class="amount-row">
+                <span class="amount-label">Geplant:</span>
+                <span class="amount-value">{{ formatCurrency(budget.budgeted) }}</span>
+              </div>
+              <div class="amount-row">
+                <span class="amount-label">Ausgegeben:</span>
+                <span class="amount-value spent">{{ formatCurrency(budget.spent) }}</span>
+              </div>
+              <div class="amount-row">
+                <span class="amount-label">Verbleibt:</span>
+                <span class="amount-value remaining">{{ formatCurrency(budget.remaining) }}</span>
+              </div>
+            </div>
+
+            <div class="progress-container">
+              <mat-progress-bar 
+                mode="determinate" 
+                [value]="budget.percentage"
+                [color]="getProgressColor(budget.percentage)">
+              </mat-progress-bar>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </section>
+
+    <!-- Charts Section -->
+    <section class="charts-section">
+      <h2 class="section-title">Diagramme</h2>
+      <div class="charts-grid">
+        
+        <!-- Pie Chart - Expenses by Category -->
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>Ausgaben nach Kategorie</mat-card-title>
+            <mat-card-subtitle>Aktueller Monat</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content class="chart-content">
+            <div class="chart-container">
+              <canvas 
+                baseChart
+                [data]="pieChartData"
+                [options]="pieChartOptions"
+                [type]="pieChartType">
+              </canvas>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Line Chart - Monthly Trends -->
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>Monatlicher Verlauf</mat-card-title>
+            <mat-card-subtitle>Letzte 6 Monate</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content class="chart-content">
+            <div class="chart-container">
+              <canvas 
+                baseChart
+                [data]="lineChartData"
+                [options]="lineChartOptions"
+                [type]="lineChartType">
+              </canvas>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+      </div>
+    </section>
+
+    <!-- Recent Transactions -->
+    <section class="transactions-section">
+      <h2 class="section-title">Letzte Transaktionen</h2>
+      <mat-card class="transactions-card">
+        <mat-card-content>
+          <div class="table-container">
+            <table mat-table [dataSource]="recentTransactions" class="transactions-table">
+              
+              <!-- Date Column -->
+              <ng-container matColumnDef="date">
+                <th mat-header-cell *matHeaderCellDef>Datum</th>
+                <td mat-cell *matCellDef="let transaction">
+                  {{ transaction.date | date:'dd.MM.yyyy' }}
+                </td>
+              </ng-container>
+
+              <!-- Category Column -->
+              <ng-container matColumnDef="category">
+                <th mat-header-cell *matHeaderCellDef>Kategorie</th>
+                <td mat-cell *matCellDef="let transaction">
+                  <div class="category-cell">
+                    <span class="category-emoji">{{ transaction.categoryEmoji }}</span>
+                    <span class="category-name">{{ transaction.category }}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Account Column -->
+              <ng-container matColumnDef="account">
+                <th mat-header-cell *matHeaderCellDef>Konto</th>
+                <td mat-cell *matCellDef="let transaction">
+                  {{ transaction.account }}
+                </td>
+              </ng-container>
+
+              <!-- Amount Column -->
+              <ng-container matColumnDef="amount">
+                <th mat-header-cell *matHeaderCellDef>Betrag</th>
+                <td mat-cell *matCellDef="let transaction">
+                  <span 
+                    class="amount" 
+                    [ngClass]="transaction.type === 'income' ? 'income' : 'expense'">
+                    {{ formatCurrency(transaction.amount) }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <!-- Note Column -->
+              <ng-container matColumnDef="note">
+                <th mat-header-cell *matHeaderCellDef>Notiz</th>
+                <td mat-cell *matCellDef="let transaction">
+                  <span class="transaction-note">{{ transaction.note }}</span>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="transactionColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: transactionColumns;"></tr>
+            </table>
+          </div>
+          
+          <div class="table-actions">
+            <button mat-button color="primary">
+              Alle Transaktionen anzeigen
+              <mat-icon>arrow_forward</mat-icon>
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </section>
+
+  </div>
+</div>
