@@ -1,0 +1,301 @@
+<div class="budgets-container">
+  <!-- Header -->
+  <div class="budgets-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon>pie_chart</mat-icon>
+        Budgets
+      </h1>
+      
+      <div class="header-actions">
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="createBudget()"
+          class="create-button"
+        >
+          <mat-icon>add</mat-icon>
+          Budget erstellen
+        </button>
+      </div>
+    </div>
+
+    <!-- Period Selection -->
+    <div class="period-selection">
+      <mat-card class="period-card">
+        <mat-card-content>
+          <div class="period-controls">
+            <mat-form-field appearance="outline" class="month-field">
+              <mat-label>Monat</mat-label>
+              <mat-select [formControl]="monthControl">
+                <mat-option *ngFor="let month of availableMonths" [value]="month.value">
+                  {{ month.label }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>calendar_month</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="year-field">
+              <mat-label>Jahr</mat-label>
+              <mat-select [formControl]="yearControl">
+                <mat-option *ngFor="let year of availableYears" [value]="year">
+                  {{ year }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>calendar_today</mat-icon>
+            </mat-form-field>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Monthly Summary -->
+    <div class="monthly-summary" *ngIf="monthlyStats && !isLoading">
+      <mat-card class="summary-card">
+        <mat-card-content>
+          <div class="summary-content">
+            <div class="summary-item">
+              <mat-icon class="summary-icon">account_balance_wallet</mat-icon>
+              <div class="summary-details">
+                <span class="summary-label">Geplant</span>
+                <span class="summary-value">{{ formatCurrency(monthlyStats.totalTarget) }}</span>
+              </div>
+            </div>
+
+            <div class="summary-divider"></div>
+
+            <div class="summary-item">
+              <mat-icon class="summary-icon">trending_down</mat-icon>
+              <div class="summary-details">
+                <span class="summary-label">Ausgegeben</span>
+                <span class="summary-value" 
+                      [class.negative]="monthlyStats.totalSpent > monthlyStats.totalTarget">
+                  {{ formatCurrency(monthlyStats.totalSpent) }}
+                </span>
+              </div>
+            </div>
+
+            <div class="summary-divider"></div>
+
+            <div class="summary-item">
+              <mat-icon class="summary-icon">savings</mat-icon>
+              <div class="summary-details">
+                <span class="summary-label">Verbleibend</span>
+                <span class="summary-value"
+                      [class.positive]="monthlyStats.totalRemaining >= 0"
+                      [class.negative]="monthlyStats.totalRemaining < 0">
+                  {{ formatCurrency(monthlyStats.totalRemaining) }}
+                </span>
+              </div>
+            </div>
+
+            <div class="summary-divider"></div>
+
+            <div class="summary-item">
+              <mat-icon class="summary-icon">analytics</mat-icon>
+              <div class="summary-details">
+                <span class="summary-label">Status</span>
+                <div class="status-chips">
+                  <mat-chip-set>
+                    <mat-chip class="achieved-chip" *ngIf="monthlyStats.achievedCount > 0">
+                      {{ monthlyStats.achievedCount }} im Ziel
+                    </mat-chip>
+                    <mat-chip class="over-budget-chip" *ngIf="monthlyStats.overBudgetCount > 0">
+                      {{ monthlyStats.overBudgetCount }} überschritten
+                    </mat-chip>
+                  </mat-chip-set>
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <mat-card class="loading-card">
+      <mat-card-content class="loading-content">
+        <mat-spinner diameter="50"></mat-spinner>
+        <h3>Budgets werden geladen...</h3>
+        <p>Bitte warten Sie einen Moment.</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="hasError && !isLoading">
+    <mat-card class="error-card">
+      <mat-card-content class="error-content">
+        <mat-icon class="error-icon">error_outline</mat-icon>
+        <h3>Fehler beim Laden</h3>
+        <p>Die Budgets konnten nicht geladen werden. Bitte versuchen Sie es erneut.</p>
+        <button mat-raised-button color="primary" (click)="retry()">
+          <mat-icon>refresh</mat-icon>
+          Erneut versuchen
+        </button>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-container" *ngIf="isEmpty && !isLoading && !hasError">
+    <mat-card class="empty-card">
+      <mat-card-content class="empty-content">
+        <mat-icon class="empty-icon">pie_chart_outlined</mat-icon>
+        <h3>Keine Budgets für {{ getSelectedMonthName() }} {{ selectedYear }}</h3>
+        <p>Erstellen Sie Ihr erstes Budget, um Ihre Ausgaben zu verfolgen.</p>
+        <button mat-raised-button color="primary" (click)="createBudget()">
+          <mat-icon>add</mat-icon>
+          Erstes Budget erstellen
+        </button>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Budgets Table -->
+  <div class="budgets-content" *ngIf="!isEmpty && !isLoading && !hasError">
+    <mat-card class="budgets-table-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>list</mat-icon>
+          Budgets für {{ getSelectedMonthName() }} {{ selectedYear }}
+        </mat-card-title>
+        <mat-card-subtitle>
+          {{ budgets.length }} Budget{{ budgets.length !== 1 ? 's' : '' }}
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="table-container">
+          <table mat-table [dataSource]="budgets" class="budgets-data-table">
+            
+            <!-- Category Column -->
+            <ng-container matColumnDef="category">
+              <th mat-header-cell *matHeaderCellDef>Kategorie</th>
+              <td mat-cell *matCellDef="let budget" class="category-cell">
+                <div class="category-info">
+                  <div class="category-icon" [style.background-color]="budget.categoryColor">
+                    {{ budget.categoryIcon }}
+                  </div>
+                  <div class="category-details">
+                    <span class="category-name">{{ budget.categoryName }}</span>
+                    <span class="category-meta" *ngIf="budget.transactionCount > 0">
+                      {{ budget.transactionCount }} Transaktion{{ budget.transactionCount !== 1 ? 'en' : '' }}
+                    </span>
+                  </div>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Target Amount Column -->
+            <ng-container matColumnDef="target">
+              <th mat-header-cell *matHeaderCellDef>Soll (Monat)</th>
+              <td mat-cell *matCellDef="let budget" class="target-cell">
+                <span class="target-amount">{{ formatCurrency(budget.targetAmount) }}</span>
+              </td>
+            </ng-container>
+
+            <!-- Current Amount Column -->
+            <ng-container matColumnDef="current">
+              <th mat-header-cell *matHeaderCellDef>Ist (Ausgegeben)</th>
+              <td mat-cell *matCellDef="let budget" class="current-cell">
+                <div class="current-info">
+                  <span class="current-amount"
+                        [class.over-budget]="budget.percentageUsed > 100">
+                    {{ formatCurrency(budget.currentAmount) }}
+                  </span>
+                  <span class="percentage"
+                        [class.over-budget]="budget.percentageUsed > 100">
+                    ({{ budget.percentageUsed.toFixed(1) }}%)
+                  </span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Progress Column -->
+            <ng-container matColumnDef="progress">
+              <th mat-header-cell *matHeaderCellDef>Fortschritt</th>
+              <td mat-cell *matCellDef="let budget" class="progress-cell">
+                <div class="progress-container">
+                  <mat-progress-bar
+                    [mode]="'determinate'"
+                    [value]="Math.min(budget.percentageUsed, 100)"
+                    [color]="getProgressBarColor(budget.percentageUsed)"
+                    class="progress-bar">
+                  </mat-progress-bar>
+                  <div class="progress-overlay" *ngIf="budget.percentageUsed > 100">
+                    <div class="over-budget-indicator" 
+                         [style.width.%]="Math.min(budget.percentageUsed - 100, 100)">
+                    </div>
+                  </div>
+                </div>
+                <div class="status-chip">
+                  <mat-chip [class]="'status-' + getBudgetStatus(budget)">
+                    {{ getBudgetStatusText(budget) }}
+                  </mat-chip>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Remaining Amount Column -->
+            <ng-container matColumnDef="remaining">
+              <th mat-header-cell *matHeaderCellDef>Verbleibend</th>
+              <td mat-cell *matCellDef="let budget" class="remaining-cell">
+                <div class="remaining-info">
+                  <span class="remaining-amount"
+                        [class.positive]="budget.remainingAmount >= 0"
+                        [class.negative]="budget.remainingAmount < 0">
+                    {{ formatCurrency(budget.remainingAmount) }}
+                  </span>
+                  <span class="last-transaction" *ngIf="budget.lastTransactionDate">
+                    Letzte: {{ formatDate(budget.lastTransactionDate) }}
+                  </span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Aktionen</th>
+              <td mat-cell *matCellDef="let budget" class="actions-cell">
+                <button
+                  mat-icon-button
+                  [matTooltip]="'Budget bearbeiten'"
+                  (click)="editBudget(budget)"
+                  class="edit-button"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                
+                <button
+                  mat-icon-button
+                  [matMenuTriggerFor]="actionsMenu"
+                  [matTooltip]="'Weitere Aktionen'"
+                  class="menu-button"
+                >
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                
+                <mat-menu #actionsMenu="matMenu">
+                  <button mat-menu-item (click)="editBudget(budget)">
+                    <mat-icon>edit</mat-icon>
+                    <span>Bearbeiten</span>
+                  </button>
+                  <button mat-menu-item (click)="deleteBudget(budget)" class="delete-action">
+                    <mat-icon>delete</mat-icon>
+                    <span>Löschen</span>
+                  </button>
+                </mat-menu>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="budget-row"></tr>
+          </table>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

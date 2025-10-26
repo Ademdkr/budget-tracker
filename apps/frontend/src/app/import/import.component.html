@@ -1,0 +1,525 @@
+<div class="import-container">
+  <!-- Header -->
+  <div class="import-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon>upload_file</mat-icon>
+        CSV-Import
+      </h1>
+      
+      <div class="header-actions">
+        <button
+          mat-button
+          (click)="resetImport()"
+          [disabled]="isImporting"
+          class="reset-button"
+        >
+          <mat-icon>refresh</mat-icon>
+          Neu starten
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import Stepper -->
+  <div class="import-stepper">
+    <mat-horizontal-stepper [selectedIndex]="currentStep" #stepper="matHorizontalStepper">
+      
+      <!-- Step 1: File Upload -->
+      <mat-step [completed]="csvPreview !== null" [editable]="!isImporting">
+        <ng-template matStepLabel>CSV-Datei hochladen</ng-template>
+        
+        <mat-card class="step-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>cloud_upload</mat-icon>
+              Datei auswählen
+            </mat-card-title>
+            <mat-card-subtitle>
+              Wählen Sie eine CSV-Datei (UTF-8) zum Importieren aus
+            </mat-card-subtitle>
+          </mat-card-header>
+          
+          <mat-card-content>
+            <form [formGroup]="uploadForm" class="upload-form">
+              <!-- File Upload Area -->
+              <div class="upload-area" 
+                   [class.has-file]="selectedFile"
+                   [class.is-parsing]="isParsing">
+                
+                <div class="upload-content" *ngIf="!selectedFile && !isParsing">
+                  <mat-icon class="upload-icon">cloud_upload</mat-icon>
+                  <h3>CSV-Datei hierher ziehen oder auswählen</h3>
+                  <p>Unterstützte Formate: .csv (UTF-8 kodiert)</p>
+                  <p>Maximale Größe: 10 MB</p>
+                  
+                  <input
+                    type="file"
+                    accept=".csv"
+                    (change)="onFileSelected($event)"
+                    #fileInput
+                    style="display: none;"
+                  >
+                  
+                  <button
+                    mat-raised-button
+                    color="primary"
+                    type="button"
+                    (click)="fileInput.click()"
+                  >
+                    <mat-icon>folder_open</mat-icon>
+                    Datei auswählen
+                  </button>
+                </div>
+                
+                <div class="parsing-content" *ngIf="isParsing">
+                  <mat-spinner diameter="40"></mat-spinner>
+                  <h3>CSV wird verarbeitet...</h3>
+                  <p>Bitte warten Sie einen Moment.</p>
+                </div>
+                
+                <div class="file-info" *ngIf="selectedFile && !isParsing">
+                  <mat-icon class="file-icon">description</mat-icon>
+                  <div class="file-details">
+                    <h4>{{ selectedFile.name }}</h4>
+                    <p>{{ formatFileSize(selectedFile.size) }}</p>
+                    <p *ngIf="csvPreview">{{ csvPreview.totalRows }} Datenzeilen gefunden</p>
+                  </div>
+                  <button
+                    mat-icon-button
+                    (click)="resetImport()"
+                    matTooltip="Andere Datei wählen"
+                  >
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </mat-card-content>
+          
+          <mat-card-actions>
+            <button
+              mat-raised-button
+              color="primary"
+              [disabled]="!csvPreview"
+              (click)="nextStep()"
+            >
+              Weiter zur Vorschau
+              <mat-icon>arrow_forward</mat-icon>
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      </mat-step>
+
+      <!-- Step 2: Preview & Mapping -->
+      <mat-step [completed]="mappingForm.valid" [editable]="!isImporting">
+        <ng-template matStepLabel>Vorschau & Zuordnung</ng-template>
+        
+        <div class="step-content" *ngIf="csvPreview">
+          
+          <!-- Preview Table -->
+          <mat-card class="preview-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>preview</mat-icon>
+                Datenvorschau
+              </mat-card-title>
+              <mat-card-subtitle>
+                Erste {{ csvPreview.rows.length }} von {{ csvPreview.totalRows }} Zeilen
+              </mat-card-subtitle>
+            </mat-card-header>
+            
+            <mat-card-content>
+              <div class="table-container">
+                <table mat-table [dataSource]="csvPreview.rows" class="preview-table">
+                  
+                  <ng-container *ngFor="let column of displayedColumns" [matColumnDef]="column">
+                    <th mat-header-cell *matHeaderCellDef>{{ column }}</th>
+                    <td mat-cell *matCellDef="let row">{{ row[column] }}</td>
+                  </ng-container>
+                  
+                  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+                </table>
+              </div>
+              
+              <div class="more-columns" *ngIf="csvPreview.headers.length > displayedColumns.length">
+                <mat-chip-set>
+                  <mat-chip>
+                    +{{ csvPreview.headers.length - displayedColumns.length }} weitere Spalten
+                  </mat-chip>
+                </mat-chip-set>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Column Mapping -->
+          <mat-card class="mapping-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>swap_horiz</mat-icon>
+                Spaltenzuordnung
+              </mat-card-title>
+              <mat-card-subtitle>
+                Ordnen Sie die CSV-Spalten den entsprechenden Feldern zu
+              </mat-card-subtitle>
+            </mat-card-header>
+            
+            <mat-card-content>
+              <form [formGroup]="mappingForm" class="mapping-form">
+                <div class="mapping-grid">
+                  
+                  <!-- Required Mappings -->
+                  <div class="mapping-section">
+                    <h4>Erforderliche Felder</h4>
+                    
+                    <mat-form-field appearance="outline">
+                      <mat-label>Datum</mat-label>
+                      <mat-select formControlName="dateColumn">
+                        <mat-option *ngFor="let header of csvPreview.headers" [value]="header">
+                          {{ header }}
+                        </mat-option>
+                      </mat-select>
+                      <mat-icon matPrefix>calendar_today</mat-icon>
+                      <mat-error>Datum-Spalte ist erforderlich</mat-error>
+                    </mat-form-field>
+                    
+                    <mat-form-field appearance="outline">
+                      <mat-label>Betrag</mat-label>
+                      <mat-select formControlName="amountColumn">
+                        <mat-option *ngFor="let header of csvPreview.headers" [value]="header">
+                          {{ header }}
+                        </mat-option>
+                      </mat-select>
+                      <mat-icon matPrefix>euro</mat-icon>
+                      <mat-error>Betrag-Spalte ist erforderlich</mat-error>
+                    </mat-form-field>
+                    
+                    <mat-form-field appearance="outline">
+                      <mat-label>Verwendungszweck/Notiz</mat-label>
+                      <mat-select formControlName="descriptionColumn">
+                        <mat-option *ngFor="let header of csvPreview.headers" [value]="header">
+                          {{ header }}
+                        </mat-option>
+                      </mat-select>
+                      <mat-icon matPrefix>description</mat-icon>
+                      <mat-error>Beschreibung-Spalte ist erforderlich</mat-error>
+                    </mat-form-field>
+                  </div>
+                  
+                  <mat-divider></mat-divider>
+                  
+                  <!-- Optional Mappings -->
+                  <div class="mapping-section">
+                    <h4>Optionale Felder</h4>
+                    
+                    <mat-form-field appearance="outline">
+                      <mat-label>Kategorie (optional)</mat-label>
+                      <mat-select formControlName="categoryColumn">
+                        <mat-option value="">-- Nicht zuordnen --</mat-option>
+                        <mat-option *ngFor="let header of csvPreview.headers" [value]="header">
+                          {{ header }}
+                        </mat-option>
+                      </mat-select>
+                      <mat-icon matPrefix>category</mat-icon>
+                      <mat-hint>Falls leer, wird Standard-Kategorie verwendet</mat-hint>
+                    </mat-form-field>
+                    
+                    <mat-form-field appearance="outline">
+                      <mat-label>Konto (optional)</mat-label>
+                      <mat-select formControlName="accountColumn">
+                        <mat-option value="">-- Nicht zuordnen --</mat-option>
+                        <mat-option *ngFor="let header of csvPreview.headers" [value]="header">
+                          {{ header }}
+                        </mat-option>
+                      </mat-select>
+                      <mat-icon matPrefix>account_balance</mat-icon>
+                      <mat-hint>Falls leer, wird Ziel-Konto verwendet</mat-hint>
+                    </mat-form-field>
+                  </div>
+                </div>
+              </form>
+            </mat-card-content>
+          </mat-card>
+        </div>
+        
+        <div class="step-actions">
+          <button mat-button (click)="previousStep()">
+            <mat-icon>arrow_back</mat-icon>
+            Zurück
+          </button>
+          
+          <button
+            mat-raised-button
+            color="primary"
+            [disabled]="mappingForm.invalid"
+            (click)="nextStep()"
+          >
+            Weiter zu Optionen
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </div>
+      </mat-step>
+
+      <!-- Step 3: Options -->
+      <mat-step [completed]="optionsForm.valid" [editable]="!isImporting">
+        <ng-template matStepLabel>Import-Optionen</ng-template>
+        
+        <mat-card class="options-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>settings</mat-icon>
+              Import-Einstellungen
+            </mat-card-title>
+            <mat-card-subtitle>
+              Konfigurieren Sie die Import-Optionen
+            </mat-card-subtitle>
+          </mat-card-header>
+          
+          <mat-card-content>
+            <form [formGroup]="optionsForm" class="options-form">
+              
+              <!-- Account Selection -->
+              <div class="options-section">
+                <h4>Konto-Einstellungen</h4>
+                
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Ziel-Konto</mat-label>
+                  <mat-select formControlName="targetAccountId">
+                    <mat-option *ngFor="let account of accounts" [value]="account.id">
+                      <div class="account-option">
+                        <span class="account-icon">{{ account.icon }}</span>
+                        <span class="account-name">{{ account.name }}</span>
+                        <span class="account-type">({{ account.type }})</span>
+                      </div>
+                    </mat-option>
+                  </mat-select>
+                  <mat-icon matPrefix>account_balance</mat-icon>
+                  <mat-error>Ziel-Konto ist erforderlich</mat-error>
+                  <mat-hint>Transaktionen werden diesem Konto zugeordnet</mat-hint>
+                </mat-form-field>
+                
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Standard-Kategorie (optional)</mat-label>
+                  <mat-select formControlName="defaultCategoryId">
+                    <mat-option value="">-- Keine Standard-Kategorie --</mat-option>
+                    <mat-option *ngFor="let category of categories" [value]="category.id">
+                      <div class="category-option">
+                        <span class="category-icon">{{ category.icon }}</span>
+                        <span class="category-name">{{ category.name }}</span>
+                      </div>
+                    </mat-option>
+                  </mat-select>
+                  <mat-icon matPrefix>category</mat-icon>
+                  <mat-hint>Wird verwendet, wenn keine Kategorie-Spalte zugeordnet ist</mat-hint>
+                </mat-form-field>
+              </div>
+              
+              <mat-divider></mat-divider>
+              
+              <!-- Format Settings -->
+              <div class="options-section">
+                <h4>Format-Einstellungen</h4>
+                
+                <mat-form-field appearance="outline">
+                  <mat-label>Datumsformat</mat-label>
+                  <mat-select formControlName="dateFormat">
+                    <mat-option *ngFor="let format of dateFormats" [value]="format.value">
+                      {{ format.label }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-icon matPrefix>date_range</mat-icon>
+                </mat-form-field>
+                
+                <mat-form-field appearance="outline">
+                  <mat-label>Zahlenformat</mat-label>
+                  <mat-select formControlName="amountFormat">
+                    <mat-option *ngFor="let format of amountFormats" [value]="format.value">
+                      {{ format.label }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-icon matPrefix>euro</mat-icon>
+                </mat-form-field>
+              </div>
+              
+              <mat-divider></mat-divider>
+              
+              <!-- Import Options -->
+              <div class="options-section">
+                <h4>Import-Optionen</h4>
+                
+                <div class="checkbox-options">
+                  <mat-checkbox formControlName="skipFirstRow">
+                    Erste Zeile überspringen (Kopfzeile)
+                  </mat-checkbox>
+                  
+                  <mat-checkbox formControlName="enableDuplicateCheck">
+                    Duplikat-Prüfung aktivieren
+                  </mat-checkbox>
+                </div>
+                
+                <mat-hint class="duplicate-hint" *ngIf="optionsForm.get('enableDuplicateCheck')?.value">
+                  Duplikate werden anhand von Datum + Betrag + Beschreibung erkannt
+                </mat-hint>
+              </div>
+            </form>
+          </mat-card-content>
+        </mat-card>
+        
+        <div class="step-actions">
+          <button mat-button (click)="previousStep()">
+            <mat-icon>arrow_back</mat-icon>
+            Zurück
+          </button>
+          
+          <button
+            mat-raised-button
+            color="primary"
+            [disabled]="optionsForm.invalid || isImporting"
+            (click)="startImport()"
+          >
+            <mat-spinner diameter="20" *ngIf="isImporting"></mat-spinner>
+            <mat-icon *ngIf="!isImporting">upload</mat-icon>
+            {{ isImporting ? 'Importiere...' : 'Import starten' }}
+          </button>
+        </div>
+      </mat-step>
+
+      <!-- Step 4: Results -->
+      <mat-step [completed]="importResult !== null">
+        <ng-template matStepLabel>Ergebnisse</ng-template>
+        
+        <div class="results-content" *ngIf="importResult">
+          
+          <!-- Import Summary -->
+          <mat-card class="summary-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>assessment</mat-icon>
+                Import-Zusammenfassung
+              </mat-card-title>
+            </mat-card-header>
+            
+            <mat-card-content>
+              <div class="summary-stats">
+                <div class="stat-item total">
+                  <mat-icon>description</mat-icon>
+                  <div class="stat-details">
+                    <span class="stat-label">Gesamt</span>
+                    <span class="stat-value">{{ importResult.total }}</span>
+                  </div>
+                </div>
+                
+                <div class="stat-item successful">
+                  <mat-icon>check_circle</mat-icon>
+                  <div class="stat-details">
+                    <span class="stat-label">Erfolgreich</span>
+                    <span class="stat-value">{{ importResult.successful }}</span>
+                  </div>
+                </div>
+                
+                <div class="stat-item skipped" *ngIf="importResult.skipped > 0">
+                  <mat-icon>skip_next</mat-icon>
+                  <div class="stat-details">
+                    <span class="stat-label">Übersprungen</span>
+                    <span class="stat-value">{{ importResult.skipped }}</span>
+                  </div>
+                </div>
+                
+                <div class="stat-item errors" *ngIf="importResult.errors > 0">
+                  <mat-icon>error</mat-icon>
+                  <div class="stat-details">
+                    <span class="stat-label">Fehler</span>
+                    <span class="stat-value">{{ importResult.errors }}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="progress-info">
+                <mat-progress-bar
+                  mode="determinate"
+                  [value]="(importResult.successful / importResult.total) * 100"
+                  class="success-progress">
+                </mat-progress-bar>
+                <span class="progress-text">
+                  {{ ((importResult.successful / importResult.total) * 100).toFixed(1) }}% erfolgreich importiert
+                </span>
+              </div>
+            </mat-card-content>
+            
+            <mat-card-actions *ngIf="importResult.errors > 0">
+              <button
+                mat-raised-button
+                color="warn"
+                (click)="downloadErrorReport()"
+              >
+                <mat-icon>download</mat-icon>
+                Fehler-Report herunterladen
+              </button>
+            </mat-card-actions>
+          </mat-card>
+          
+          <!-- Error Details -->
+          <mat-card class="errors-card" *ngIf="importResult.errors > 0">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>error_outline</mat-icon>
+                Fehlerhafte Zeilen
+              </mat-card-title>
+              <mat-card-subtitle>
+                {{ importResult.errorDetails.length }} Fehler gefunden
+              </mat-card-subtitle>
+            </mat-card-header>
+            
+            <mat-card-content>
+              <div class="error-list">
+                <div
+                  class="error-item"
+                  *ngFor="let error of importResult.errorDetails.slice(0, 10)"
+                >
+                  <div class="error-header">
+                    <mat-icon color="warn">error</mat-icon>
+                    <span class="error-row">Zeile {{ error.row }}</span>
+                    <span class="error-message">{{ error.error }}</span>
+                  </div>
+                  <div class="error-data">
+                    <mat-chip-set>
+                      <mat-chip *ngFor="let key of getObjectKeys(error.data).slice(0, 3)">
+                        {{ key }}: {{ error.data[key] }}
+                      </mat-chip>
+                    </mat-chip-set>
+                  </div>
+                </div>
+                
+                <div class="more-errors" *ngIf="importResult.errorDetails.length > 10">
+                  <mat-chip>
+                    +{{ importResult.errorDetails.length - 10 }} weitere Fehler
+                  </mat-chip>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+        
+        <div class="step-actions">
+          <button
+            mat-button
+            (click)="resetImport()"
+          >
+            <mat-icon>refresh</mat-icon>
+            Neuer Import
+          </button>
+          
+          <button
+            mat-raised-button
+            color="primary"
+            routerLink="/transactions"
+          >
+            <mat-icon>list</mat-icon>
+            Zu Transaktionen
+          </button>
+        </div>
+      </mat-step>
+    </mat-horizontal-stepper>
+  </div>
+</div>

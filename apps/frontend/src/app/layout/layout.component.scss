@@ -1,0 +1,319 @@
+.layout-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.global-loading-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  height: 4px;
+}
+
+.sidenav-container {
+  flex: 1;
+  background-color: #fafafa;
+}
+
+.sidenav {
+  width: 280px;
+  border-right: 1px solid #e0e0e0;
+  background-color: white;
+  box-shadow: 3px 0 6px rgba(0, 0, 0, 0.08);
+
+  .sidenav-header {
+    background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 24px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    .app-icon {
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
+    }
+
+    .app-name {
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+  }
+
+  .nav-list {
+    padding-top: 8px;
+
+    .nav-item {
+      margin: 4px 12px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      color: rgba(0, 0, 0, 0.87);
+
+      &:hover {
+        background-color: rgba(25, 118, 210, 0.08);
+        color: #1976d2;
+      }
+
+      &.active {
+        background-color: rgba(25, 118, 210, 0.12);
+        color: #1976d2;
+        font-weight: 500;
+
+        mat-icon {
+          color: #1976d2;
+        }
+      }
+
+      mat-icon {
+        margin-right: 12px;
+        color: rgba(0, 0, 0, 0.54);
+        transition: color 0.2s ease;
+      }
+    }
+  }
+}
+
+.top-toolbar {
+  height: 80px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 24px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  .menu-button {
+    display: none; // Hidden on desktop, will show on mobile
+  }
+
+  .filter-section {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-left: 24px;
+
+    .filter-type {
+      width: 140px;
+    }
+
+    .month-picker {
+      width: 180px;
+    }
+
+    .date-range {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .start-date,
+      .end-date {
+        width: 150px;
+      }
+    }
+
+    mat-form-field {
+      .mat-mdc-text-field-wrapper {
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .mat-mdc-form-field-label {
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      .mat-mdc-input-element {
+        color: white;
+      }
+
+      .mat-mdc-form-field-icon-suffix {
+        color: rgba(255, 255, 255, 0.8);
+      }
+    }
+  }
+
+  .spacer {
+    flex: 1;
+  }
+
+  .add-transaction-fab {
+    width: 48px;
+    height: 48px;
+    transform: scale(0.85);
+
+    &:hover {
+      transform: scale(0.9);
+    }
+  }
+
+  .user-menu-button {
+    width: 48px;
+    height: 48px;
+
+    mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+    }
+  }
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  color: rgba(0, 0, 0, 0.87);
+  pointer-events: none;
+
+  mat-icon {
+    color: rgba(0, 0, 0, 0.54);
+  }
+
+  span {
+    font-size: 14px;
+    font-weight: 500;
+  }
+}
+
+.content-area {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  background-color: #fafafa;
+  min-height: calc(100vh - 80px);
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .sidenav {
+    width: 100%;
+    position: fixed;
+    z-index: 1000;
+
+    &.mat-drawer-over {
+      width: 280px;
+    }
+  }
+
+  .top-toolbar {
+    padding: 0 16px;
+
+    .menu-button {
+      display: flex;
+    }
+
+    .filter-section {
+      margin-left: 8px;
+      flex-wrap: wrap;
+      gap: 8px;
+
+      .filter-type {
+        width: 120px;
+      }
+
+      .month-picker {
+        width: 160px;
+      }
+
+      .date-range {
+        flex-direction: column;
+        gap: 8px;
+
+        .start-date,
+        .end-date {
+          width: 140px;
+        }
+      }
+    }
+
+    .add-transaction-fab {
+      display: none; // Hide FAB on mobile, could be moved to content area
+    }
+  }
+
+  .content-area {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .top-toolbar {
+    height: auto;
+    min-height: 64px;
+    flex-wrap: wrap;
+    padding: 8px 12px;
+
+    .filter-section {
+      width: 100%;
+      margin-left: 0;
+      justify-content: space-around;
+
+      .filter-type,
+      .month-picker {
+        width: 100px;
+      }
+
+      .date-range {
+        .start-date,
+        .end-date {
+          width: 120px;
+        }
+      }
+    }
+  }
+
+  .content-area {
+    padding: 12px;
+  }
+}
+
+// Custom Material Design Overrides
+.mat-mdc-form-field-appearance-outline {
+  .mat-mdc-text-field-wrapper {
+    height: 48px;
+  }
+
+  .mat-mdc-form-field-label {
+    font-size: 14px;
+  }
+}
+
+// Sidenav overlay styling
+.mat-drawer-backdrop {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+// Active route styling enhancement
+.mat-mdc-list-item.active {
+  .mat-mdc-list-item-content {
+    background-color: rgba(25, 118, 210, 0.12);
+    border-radius: 8px;
+  }
+}
+
+// FAB animation
+.add-transaction-fab {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:active {
+    transform: scale(0.8);
+  }
+}
+
+// Loading bar animation
+.global-loading-bar {
+  .mat-mdc-progress-bar-buffer {
+    background-color: rgba(25, 118, 210, 0.2);
+  }
+
+  .mat-mdc-progress-bar-fill::after {
+    background-color: #1976d2;
+  }
+}

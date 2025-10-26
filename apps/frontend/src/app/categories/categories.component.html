@@ -1,0 +1,280 @@
+<div class="categories-container">
+  
+  <!-- Header -->
+  <div class="categories-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon>category</mat-icon>
+        Kategorien
+      </h1>
+      <div class="header-actions">
+        <button mat-raised-button color="primary" (click)="addCategory()">
+          <mat-icon>add</mat-icon>
+          Kategorie hinzufügen
+        </button>
+        <button mat-icon-button 
+                [matTooltip]="viewMode === 'grid' ? 'Listenansicht' : 'Gitteransicht'"
+                (click)="toggleViewMode()">
+          <mat-icon>{{ viewMode === 'grid' ? 'view_list' : 'view_module' }}</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-card class="loading-card">
+      <mat-card-content>
+        <div class="loading-content">
+          <mat-spinner diameter="50"></mat-spinner>
+          <p>Kategorien werden geladen...</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="hasError" class="error-container">
+    <mat-card class="error-card">
+      <mat-card-content>
+        <div class="error-content">
+          <mat-icon class="error-icon">error_outline</mat-icon>
+          <h3>Fehler beim Laden</h3>
+          <p>Die Kategorien konnten nicht geladen werden.</p>
+          <button mat-raised-button color="primary" (click)="retry()">
+            <mat-icon>refresh</mat-icon>
+            Erneut versuchen
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="isEmpty && !isLoading && !hasError" class="empty-container">
+    <mat-card class="empty-card">
+      <mat-card-content>
+        <div class="empty-content">
+          <mat-icon class="empty-icon">category</mat-icon>
+          <h3>Keine Kategorien gefunden</h3>
+          <p>Erstellen Sie Ihre erste Kategorie, um zu beginnen.</p>
+          <button mat-raised-button color="primary" (click)="addCategory()">
+            <mat-icon>add</mat-icon>
+            Erste Kategorie erstellen
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!isLoading && !hasError && !isEmpty" class="categories-content">
+    
+    <!-- Filter Tabs -->
+    <div class="filter-tabs">
+      <button mat-button 
+              [class.active]="selectedFilter === 'all'"
+              (click)="setFilter('all')">
+        <mat-icon>all_inclusive</mat-icon>
+        Alle ({{ categories.length }})
+      </button>
+      <button mat-button 
+              [class.active]="selectedFilter === 'income'"
+              (click)="setFilter('income')">
+        <mat-icon>trending_up</mat-icon>
+        Einnahmen ({{ incomeCategories.length }})
+      </button>
+      <button mat-button 
+              [class.active]="selectedFilter === 'expense'"
+              (click)="setFilter('expense')">
+        <mat-icon>trending_down</mat-icon>
+        Ausgaben ({{ expenseCategories.length }})
+      </button>
+    </div>
+
+    <!-- Income Categories Section -->
+    <div *ngIf="incomeCategories.length > 0" class="category-section">
+      <h2 class="section-title">
+        <mat-icon class="section-icon income">trending_up</mat-icon>
+        Einnahme-Kategorien
+      </h2>
+      
+      <!-- Grid View -->
+      <div *ngIf="viewMode === 'grid'" class="categories-grid">
+        <mat-card *ngFor="let category of incomeCategories" class="category-card income-card">
+          <mat-card-header>
+            <div class="category-avatar" [style.background-color]="category.color">
+              <span class="category-emoji">{{ category.emoji }}</span>
+            </div>
+            <mat-card-title>{{ category.name }}</mat-card-title>
+            <mat-card-subtitle>{{ category.description }}</mat-card-subtitle>
+            <button mat-icon-button [matMenuTriggerFor]="categoryMenu" class="category-menu">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #categoryMenu="matMenu">
+              <button mat-menu-item (click)="editCategory(category)">
+                <mat-icon>edit</mat-icon>
+                Bearbeiten
+              </button>
+              <button mat-menu-item (click)="deleteCategory(category)" class="delete-action">
+                <mat-icon>delete</mat-icon>
+                Löschen
+              </button>
+            </mat-menu>
+          </mat-card-header>
+          
+          <mat-card-content>
+            <div class="category-stats">
+              <div class="stat-item">
+                <mat-icon>receipt</mat-icon>
+                <span class="stat-label">Transaktionen</span>
+                <span class="stat-value">{{ category.transactionCount }}</span>
+              </div>
+              <div class="stat-item">
+                <mat-icon>euro</mat-icon>
+                <span class="stat-label">Gesamt</span>
+                <span class="stat-value income">{{ formatCurrency(category.totalAmount) }}</span>
+              </div>
+            </div>
+            
+            <div class="category-meta">
+              <mat-chip class="type-chip income">
+                {{ getCategoryTypeLabel(category.type) }}
+              </mat-chip>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- List View -->
+      <div *ngIf="viewMode === 'list'" class="categories-list">
+        <mat-card *ngFor="let category of incomeCategories" class="category-list-item income-item">
+          <div class="list-item-content">
+            <div class="category-info">
+              <div class="category-avatar small" [style.background-color]="category.color">
+                <span class="category-emoji">{{ category.emoji }}</span>
+              </div>
+              <div class="category-details">
+                <h3 class="category-name">{{ category.name }}</h3>
+                <p class="category-description">{{ category.description }}</p>
+              </div>
+            </div>
+            
+            <div class="category-metrics">
+              <div class="metric">
+                <span class="metric-value">{{ category.transactionCount }}</span>
+                <span class="metric-label">Transaktionen</span>
+              </div>
+              <div class="metric">
+                <span class="metric-value income">{{ formatCurrency(category.totalAmount) }}</span>
+                <span class="metric-label">Gesamt</span>
+              </div>
+            </div>
+            
+            <div class="category-actions">
+              <button mat-icon-button (click)="editCategory(category)" matTooltip="Bearbeiten">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button (click)="deleteCategory(category)" matTooltip="Löschen" class="delete-button">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+        </mat-card>
+      </div>
+    </div>
+
+    <!-- Expense Categories Section -->
+    <div *ngIf="expenseCategories.length > 0" class="category-section">
+      <h2 class="section-title">
+        <mat-icon class="section-icon expense">trending_down</mat-icon>
+        Ausgaben-Kategorien
+      </h2>
+      
+      <!-- Grid View -->
+      <div *ngIf="viewMode === 'grid'" class="categories-grid">
+        <mat-card *ngFor="let category of expenseCategories" class="category-card expense-card">
+          <mat-card-header>
+            <div class="category-avatar" [style.background-color]="category.color">
+              <span class="category-emoji">{{ category.emoji }}</span>
+            </div>
+            <mat-card-title>{{ category.name }}</mat-card-title>
+            <mat-card-subtitle>{{ category.description }}</mat-card-subtitle>
+            <button mat-icon-button [matMenuTriggerFor]="categoryMenu2" class="category-menu">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #categoryMenu2="matMenu">
+              <button mat-menu-item (click)="editCategory(category)">
+                <mat-icon>edit</mat-icon>
+                Bearbeiten
+              </button>
+              <button mat-menu-item (click)="deleteCategory(category)" class="delete-action">
+                <mat-icon>delete</mat-icon>
+                Löschen
+              </button>
+            </mat-menu>
+          </mat-card-header>
+          
+          <mat-card-content>
+            <div class="category-stats">
+              <div class="stat-item">
+                <mat-icon>receipt</mat-icon>
+                <span class="stat-label">Transaktionen</span>
+                <span class="stat-value">{{ category.transactionCount }}</span>
+              </div>
+              <div class="stat-item">
+                <mat-icon>euro</mat-icon>
+                <span class="stat-label">Gesamt</span>
+                <span class="stat-value expense">{{ formatCurrency(category.totalAmount) }}</span>
+              </div>
+            </div>
+            
+            <div class="category-meta">
+              <mat-chip class="type-chip expense">
+                {{ getCategoryTypeLabel(category.type) }}
+              </mat-chip>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- List View -->
+      <div *ngIf="viewMode === 'list'" class="categories-list">
+        <mat-card *ngFor="let category of expenseCategories" class="category-list-item expense-item">
+          <div class="list-item-content">
+            <div class="category-info">
+              <div class="category-avatar small" [style.background-color]="category.color">
+                <span class="category-emoji">{{ category.emoji }}</span>
+              </div>
+              <div class="category-details">
+                <h3 class="category-name">{{ category.name }}</h3>
+                <p class="category-description">{{ category.description }}</p>
+              </div>
+            </div>
+            
+            <div class="category-metrics">
+              <div class="metric">
+                <span class="metric-value">{{ category.transactionCount }}</span>
+                <span class="metric-label">Transaktionen</span>
+              </div>
+              <div class="metric">
+                <span class="metric-value expense">{{ formatCurrency(category.totalAmount) }}</span>
+                <span class="metric-label">Gesamt</span>
+              </div>
+            </div>
+            
+            <div class="category-actions">
+              <button mat-icon-button (click)="editCategory(category)" matTooltip="Bearbeiten">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button (click)="deleteCategory(category)" matTooltip="Löschen" class="delete-button">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+        </mat-card>
+      </div>
+    </div>
+
+  </div>
+</div>
