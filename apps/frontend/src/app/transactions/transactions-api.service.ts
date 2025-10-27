@@ -59,10 +59,19 @@ export class TransactionsApiService {
   /**
    * Get all transactions (with optional filters)
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getAll(filters?: TransactionFilters): Observable<Transaction[]> {
-    // TODO: Implement query params for filters
-    return this.api.get<unknown[]>('transactions').pipe(
+    let endpoint = 'transactions';
+    const params = new URLSearchParams();
+
+    if (filters?.accountId) {
+      params.append('accountId', filters.accountId);
+    }
+
+    if (params.toString()) {
+      endpoint += `?${params.toString()}`;
+    }
+
+    return this.api.get<unknown[]>(endpoint).pipe(
       map(transactions => transactions.map((tRaw) => {
         type RawTxn = { categoryId?: string; budgetId?: string; category?: { id?: string; name?: string } | string | null; date: string | Date } & Record<string, unknown>;
         const t = tRaw as RawTxn;

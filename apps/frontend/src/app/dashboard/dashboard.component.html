@@ -1,8 +1,24 @@
 <div class="dashboard-container">
   <!-- Header -->
   <div class="dashboard-header">
-    <h1 class="dashboard-title">Dashboard</h1>
-    <p class="dashboard-subtitle">Überblick über Ihre Finanzen</p>
+    <h1 class="dashboard-title">
+      Dashboard
+      <span *ngIf="getSelectedAccountName()" class="account-filter-badge">
+        für {{ getSelectedAccountName() }}
+        <button
+          mat-icon-button
+          (click)="clearAccountFilter()"
+          matTooltip="Account-Filter entfernen"
+          class="clear-filter-btn"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </span>
+    </h1>
+    <p class="dashboard-subtitle">
+      Überblick über Ihre Finanzen
+      <span *ngIf="hasAccountSelection()"> - Gefiltert nach ausgewähltem Konto</span>
+    </p>
   </div>
 
   <!-- Loading State -->

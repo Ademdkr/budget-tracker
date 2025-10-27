@@ -48,9 +48,10 @@ export class DashboardApiService {
   /**
    * Get dashboard KPIs
    */
-  getKPIs(): Observable<DashboardKPI[]> {
+  getKPIs(accountId?: string): Observable<DashboardKPI[]> {
     // TODO: Replace with dedicated backend endpoint
-    return this.transactionsApi.getAll().pipe(
+    const filters = accountId ? { accountId } : undefined;
+    return this.transactionsApi.getAll(filters).pipe(
       map((transactions) => {
         // Beträge sind in DB als positive Zahlen gespeichert
         const income = transactions
@@ -102,10 +103,15 @@ export class DashboardApiService {
   /**
    * Get comprehensive dashboard statistics
    */
-  getStatistics(startDate?: string, endDate?: string): Observable<DashboardStatistics> {
+  getStatistics(startDate?: string, endDate?: string, accountId?: string): Observable<DashboardStatistics> {
     // TODO: Replace with dedicated backend endpoint
+    const filters: { startDate?: string; endDate?: string; accountId?: string } = {};
+    if (startDate) filters.startDate = startDate;
+    if (endDate) filters.endDate = endDate;
+    if (accountId) filters.accountId = accountId;
+
     return forkJoin({
-      transactions: this.transactionsApi.getAll({ startDate, endDate }),
+      transactions: this.transactionsApi.getAll(filters),
       categories: this.categoriesApi.getAll()
     }).pipe(
       map(({ transactions, categories }) => {
@@ -182,9 +188,10 @@ export class DashboardApiService {
    * Get monthly comparison data
    * TODO: Implement with backend endpoint, currently returns mock data
    */
-  getMonthlyComparison(): Observable<ChartData> {
+  getMonthlyComparison(accountId?: string): Observable<ChartData> {
     // TODO: Implement with backend endpoint
-  return this.transactionsApi.getAll().pipe(
+    const filters = accountId ? { accountId } : undefined;
+    return this.transactionsApi.getAll(filters).pipe(
   map(() => ({
   labels: ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun'],
   datasets: [
@@ -207,16 +214,17 @@ export class DashboardApiService {
    * Get budget progress overview
    * Shows spending progress for actual Budget entities created via /budgets
    */
-  getBudgetProgress(): Observable<Array<{
+  getBudgetProgress(accountId?: string): Observable<Array<{
     budgetName: string;
     spent: number;
     limit: number;
     percentage: number;
     icon: string;
   }>> {
+    const filters = accountId ? { accountId } : undefined;
     return forkJoin({
       budgets: this.budgetsApi.getAll(),
-      transactions: this.transactionsApi.getAll(),
+      transactions: this.transactionsApi.getAll(filters),
       categories: this.categoriesApi.getAll()
     }).pipe(
       map(({ budgets, transactions, categories }) => {
@@ -225,9 +233,9 @@ export class DashboardApiService {
         const currentYear = new Date().getFullYear();
         const periodStart = new Date(currentYear, currentMonth, 1);
         const periodEnd = new Date(currentYear, currentMonth + 1, 0);
-        
+
         const totalExpensesInPeriod = transactions
-          .filter(t => 
+          .filter(t =>
             t.type === 'EXPENSE' &&
             new Date(t.date) >= periodStart &&
             new Date(t.date) <= periodEnd
@@ -237,7 +245,7 @@ export class DashboardApiService {
         return budgets.map(budget => {
           const budgetStart = new Date(budget.startDate);
           const budgetEnd = budget.endDate ? new Date(budget.endDate) : new Date(budgetStart.getFullYear(), budgetStart.getMonth() + 1, 0);
-          
+
           // Prüfe, ob dieses Budget INCOME-Transaktionen hat
           const hasIncomeTransactions = transactions.some(t =>
             t.budgetId === budget.id &&
@@ -248,8 +256,8 @@ export class DashboardApiService {
 
           // Calculate budget-specific expenses
           const budgetExpenses = transactions
-            .filter(t => 
-              t.budgetId === budget.id && 
+            .filter(t =>
+              t.budgetId === budget.id &&
               t.type === 'EXPENSE' &&
               new Date(t.date) >= budgetStart &&
               new Date(t.date) <= budgetEnd
@@ -282,7 +290,7 @@ export class DashboardApiService {
   /**
    * Get recent transactions for dashboard
    */
-  getRecentTransactions(limit: number = 10): Observable<Array<{
+  getRecentTransactions(limit: number = 10, accountId?: string): Observable<Array<{
     id: string;
     date: Date;
     category: string;
@@ -291,8 +299,9 @@ export class DashboardApiService {
     note: string;
     type: 'income' | 'expense';
   }>> {
+    const filters = accountId ? { accountId } : undefined;
     return forkJoin({
-      transactions: this.transactionsApi.getAll(),
+      transactions: this.transactionsApi.getAll(filters),
       categories: this.categoriesApi.getAll()
     }).pipe(
       map(({ transactions, categories }) => {
@@ -320,31 +329,31 @@ export class DashboardApiService {
 
   private findCategoryByBudgetName(budgetName: string, categories: Category[]): Category | undefined {
     // Erste Strategie: Exakte Übereinstimmung mit Kategorie-Namen
-    let match = categories.find(cat => 
+    let match = categories.find(cat =>
       cat.name.toLowerCase() === budgetName.toLowerCase()
     );
-    
+
     if (match) return match;
 
     // Zweite Strategie: Budget-Name enthält Kategorie-Namen
-    match = categories.find(cat => 
+    match = categories.find(cat =>
       budgetName.toLowerCase().includes(cat.name.toLowerCase())
     );
-    
+
     if (match) return match;
 
     // Dritte Strategie: Kategorie-Name ist in Budget-Name enthalten
-    match = categories.find(cat => 
+    match = categories.find(cat =>
       cat.name.toLowerCase().includes(budgetName.toLowerCase())
     );
-    
+
     if (match) return match;
 
     // Vierte Strategie: Budget enthält "Budget für [Kategorie]" Pattern
     const budgetForMatch = budgetName.match(/budget für (.+?) - /i);
     if (budgetForMatch) {
       const categoryNameFromBudget = budgetForMatch[1].trim();
-      match = categories.find(cat => 
+      match = categories.find(cat =>
         cat.name.toLowerCase() === categoryNameFromBudget.toLowerCase()
       );
       if (match) return match;

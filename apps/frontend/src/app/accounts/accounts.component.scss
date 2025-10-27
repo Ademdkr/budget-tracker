@@ -40,7 +40,11 @@
 
   .accounts-summary {
     .summary-card {
-      background: linear-gradient(135deg, var(--mat-sys-primary-container) 0%, var(--mat-sys-secondary-container) 100%);
+      background: linear-gradient(
+        135deg,
+        var(--mat-sys-primary-container) 0%,
+        var(--mat-sys-secondary-container) 100%
+      );
 
       .summary-content {
         display: flex;
@@ -150,11 +154,11 @@
   justify-content: center;
   background: var(--mat-sys-primary);
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   transition: all 0.2s ease;
 
   &:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   }
 
   mat-icon {
@@ -163,10 +167,10 @@
 
   &.small {
     border-radius: 8px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 
     &:hover {
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
     }
   }
 }
@@ -209,11 +213,13 @@
 
     .account-card {
       position: relative;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
 
       &:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
       }
 
       .mat-mdc-card-header {
@@ -385,7 +391,7 @@
               display: flex;
               align-items: center;
               justify-content: center;
-              box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+              box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 
               mat-icon {
                 color: white;
@@ -558,5 +564,56 @@
       font-size: 0.625rem;
       padding: 0.125rem 0.5rem;
     }
+  }
+}
+
+// Account Selection Styles
+.selected-icon {
+  color: var(--mat-sys-primary) !important;
+  animation: pulse 2s infinite;
+}
+
+.selected-account {
+  color: var(--mat-sys-primary) !important;
+  font-weight: 700 !important;
+}
+
+.clear-selection-btn {
+  margin-left: auto;
+  width: 2rem;
+  height: 2rem;
+
+  mat-icon {
+    font-size: 1.25rem;
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}
+
+// Highlight selected account cards
+.account-card {
+  transition: all 0.3s ease;
+
+  &.selected {
+    border: 2px solid var(--mat-sys-primary);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+
+    .account-avatar {
+      border: 2px solid var(--mat-sys-primary);
+    }
+  }
+}
+
+// Pulse animation
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
   }
 }

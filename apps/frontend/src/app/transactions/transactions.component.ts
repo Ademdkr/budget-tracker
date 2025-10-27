@@ -10,7 +10,7 @@ interface UiTransactionFilter {
 import { Component, OnInit, AfterViewInit, inject, ViewChild } from '@angular/core';
 import { TransactionsApiService, Transaction } from './transactions-api.service';
 import { CategoriesApiService, Category } from '../categories/categories-api.service';
-// import { AccountsApiService, Account } from '../accounts/accounts-api.service';
+import { AccountSelectionService } from '../shared/services/account-selection.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -88,6 +88,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
 
   private transactionsApi = inject(TransactionsApiService);
   private categoriesApi = inject(CategoriesApiService);
+  private accountSelection = inject(AccountSelectionService);
   // private accountsApi = inject(AccountsApiService);
 
   constructor() {
@@ -101,7 +102,20 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
     });
   }
 
+  private initialLoadCompleted = false;
+
   ngOnInit() {
+    // Zuerst den AccountSelectionService initialisieren
+    this.accountSelection.initialize();
+
+    // Subscribe to account selection changes
+    this.accountSelection.selectedAccount$.subscribe(() => {
+      // Nur neu laden wenn die initiale Ladung abgeschlossen ist
+      if (this.initialLoadCompleted) {
+        this.loadTransactions();
+      }
+    });
+
     this.loadInitialData();
     this.setupFilterSubscription();
   }
@@ -122,22 +136,31 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
     this.isLoading = true;
     this.hasError = false;
 
-    // Lade Kategorien und Transaktionen parallel
-    Promise.all([
-      this.categoriesApi.getAll().toPromise(),
-      this.transactionsApi.getAll().toPromise()
-    ]).then(([categories, transactions]) => {
+    // Lade Kategorien zuerst
+    this.categoriesApi.getAll().toPromise().then(categories => {
       this.categories = categories ?? [];
+      this.loadTransactions();
+    }).catch(error => {
+      console.error('Error loading categories:', error);
+      this.hasError = true;
+      this.isLoading = false;
+    });
+  }
 
+  private loadTransactions() {
+    const selectedAccountId = this.accountSelection.getSelectedAccountId();
+    const filters = selectedAccountId ? { accountId: selectedAccountId } : undefined;
+
+    this.transactionsApi.getAll(filters).toPromise().then(transactions => {
       // Map transactions with category information
       this.transactions = (transactions ?? []).map(transaction => {
-        const category = categories?.find(c => c.id === transaction.categoryId);
+        const category = this.categories.find(c => c.id === transaction.categoryId);
         return {
           ...transaction,
           category: category?.name || 'Unbekannt',
           categoryEmoji: category?.icon || category?.emoji || '📝',
           note: transaction.description || transaction.note || '',
-          account: '' // No account field in schema
+          account: transaction.account || '' // Include account info
         };
       });
 
@@ -149,9 +172,11 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
       this.applyFilters();
       this.checkEmptyState();
       this.isLoading = false;
+      this.initialLoadCompleted = true;
     }).catch(() => {
       this.hasError = true;
       this.isLoading = false;
+      this.initialLoadCompleted = true;
     });
   }
 
@@ -320,5 +345,19 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
 
   retry() {
     this.loadInitialData();
+  }
+
+  // Account Selection Methods
+  getSelectedAccountName(): string {
+    const selected = this.accountSelection.getSelectedAccount();
+    return selected ? selected.name : '';
+  }
+
+  hasAccountSelection(): boolean {
+    return this.accountSelection.hasSelection();
+  }
+
+  clearAccountFilter(): void {
+    this.accountSelection.clearSelection();
   }
 }

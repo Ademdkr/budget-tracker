@@ -5,6 +5,17 @@
       <h1 class="page-title">
         <mat-icon>receipt_long</mat-icon>
         Transaktionen
+        <span *ngIf="getSelectedAccountName()" class="account-filter-badge">
+          für {{ getSelectedAccountName() }}
+          <button
+            mat-icon-button
+            (click)="clearAccountFilter()"
+            matTooltip="Account-Filter entfernen"
+            class="clear-filter-btn"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        </span>
       </h1>
       <div class="header-actions">
         <button mat-raised-button color="primary" (click)="addTransaction()">

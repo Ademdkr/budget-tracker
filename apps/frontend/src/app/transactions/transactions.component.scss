@@ -28,6 +28,31 @@
         height: 2rem;
         color: var(--mat-sys-primary);
       }
+
+      .account-filter-badge {
+        display: inline-flex;
+        align-items: center;
+        margin-left: 1rem;
+        padding: 0.5rem 1rem;
+        background: var(--mat-sys-primary-container);
+        color: var(--mat-sys-on-primary-container);
+        border-radius: 2rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        animation: slideIn 0.3s ease-out;
+
+        .clear-filter-btn {
+          margin-left: 0.5rem;
+          width: 1.5rem;
+          height: 1.5rem;
+
+          mat-icon {
+            font-size: 1rem;
+            width: 1rem;
+            height: 1rem;
+          }
+        }
+      }
     }
 
     .header-actions {
@@ -430,5 +455,17 @@
         padding-right: 0.5rem;
       }
     }
+  }
+}
+
+// Animations
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }

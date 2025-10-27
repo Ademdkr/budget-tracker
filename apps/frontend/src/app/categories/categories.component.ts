@@ -1,7 +1,10 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CategoriesApiService, CreateCategoryDto, UpdateCategoryDto } from './categories-api.service';
 import { BudgetsApiService } from '../budgets/budgets-api.service';
+import { AccountSelectionService } from '../shared/services/account-selection.service';
+import { AccountsApiService } from '../accounts/accounts-api.service';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -35,6 +38,7 @@ export interface CategoryWithStats {
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     MatButtonModule,
     MatCardModule,
     MatIconModule,
@@ -69,8 +73,23 @@ export class CategoriesComponent implements OnInit {
   private categoriesApi = inject(CategoriesApiService);
   private budgetsApi = inject(BudgetsApiService);
   private transactionsApi = inject(TransactionsApiService);
+  private accountSelection = inject(AccountSelectionService);
+  private accountsApi = inject(AccountsApiService);
+
+  private initialLoadCompleted = false;
 
   ngOnInit() {
+    // Zuerst den AccountSelectionService initialisieren
+    this.accountSelection.initialize();
+
+    // Subscribe to account selection changes
+    this.accountSelection.selectedAccount$.subscribe(() => {
+      // Nur neu laden wenn bereits initial geladen wurde
+      if (this.initialLoadCompleted) {
+        this.loadCategories();
+      }
+    });
+
     this.loadCategories();
   }
 
@@ -78,12 +97,31 @@ export class CategoriesComponent implements OnInit {
     this.isLoading = true;
     this.hasError = false;
 
-    this.categoriesApi.getAll().toPromise()
+    const selectedAccountId = this.accountSelection.getSelectedAccountId();
+    console.log('🔍 Loading categories with accountId:', selectedAccountId);
+    console.log('🏦 Selected account:', this.accountSelection.getSelectedAccount());
+
+    // Kein Konto ausgewählt? Zeige leere Liste
+    if (!selectedAccountId) {
+      console.log('⚠️ No account selected, showing empty categories list');
+      this.categories = [];
+      this.filterCategories();
+      this.checkEmptyState();
+      this.isLoading = false;
+      this.initialLoadCompleted = true;
+      return;
+    }
+
+    this.categoriesApi.getAll(selectedAccountId).toPromise()
       .then(categories => {
+        console.log('📂 Categories API response:', categories);
+        console.log('📊 Total categories loaded:', (categories ?? []).length);
+        console.log('🎯 Category names:', (categories ?? []).map(c => c.name));
         this.categories = (categories ?? []).map(cat => {
           const emoji = (cat.emoji && cat.emoji.trim() !== '')
             ? cat.emoji
             : (cat.icon && String(cat.icon).trim() !== '' ? String(cat.icon) : '📦');
+
           // Backend liefert kein "type"-Feld – sinnvolle Defaults setzen
           // Heuristik: Kategorie "Gehalt" als income, sonst expense
           const type = cat.type ?? (cat.name?.toLowerCase().includes('gehalt') ? 'income' : 'expense');
@@ -104,10 +142,12 @@ export class CategoriesComponent implements OnInit {
         this.filterCategories();
         this.checkEmptyState();
         this.isLoading = false;
+        this.initialLoadCompleted = true;
       })
       .catch(() => {
         this.hasError = true;
         this.isLoading = false;
+        this.initialLoadCompleted = true;
       });
   }
 
@@ -187,6 +227,12 @@ export class CategoriesComponent implements OnInit {
   }
 
   addCategory() {
+    // Überprüfen ob ein Konto ausgewählt ist
+    if (!this.hasAccountSelection()) {
+      alert('Bitte wählen Sie zunächst ein Konto aus, um eine Kategorie zu erstellen.');
+      return;
+    }
+
     import('./category-form/category-form.component').then(({ CategoryFormComponent }) => {
       const dialogRef = this.dialog.open(CategoryFormComponent, {
         width: '500px',
@@ -244,6 +290,20 @@ export class CategoriesComponent implements OnInit {
                 this.categories.unshift(newCategory);
                 this.filterCategories();
                 this.checkEmptyState();
+
+                // Automatisch dem ausgewählten Konto zuordnen
+                const selectedAccountId = this.accountSelection.getSelectedAccountId();
+                if (selectedAccountId) {
+                  this.accountsApi.assignCategory(selectedAccountId, created.id).subscribe({
+                    next: () => {
+                      console.log('✅ Kategorie automatisch dem Konto zugeordnet');
+                    },
+                    error: (error) => {
+                      console.log('⚠️ Automatische Kontozuordnung fehlgeschlagen:', error);
+                    }
+                  });
+                }
+
                 this.isLoading = false;
                 console.log('Kategorie erstellt:', newCategory);
               },
@@ -387,6 +447,20 @@ export class CategoriesComponent implements OnInit {
 
   retry() {
     this.loadCategories();
+  }
+
+  // Account Selection Helper Methods
+  getSelectedAccountName(): string {
+    const selected = this.accountSelection.getSelectedAccount();
+    return selected ? selected.name : '';
+  }
+
+  hasAccountSelection(): boolean {
+    return this.accountSelection.hasSelection();
+  }
+
+  clearAccountFilter(): void {
+    this.accountSelection.clearSelection();
   }
 
   private async resolveCurrentBudgetId(): Promise<string | null> {

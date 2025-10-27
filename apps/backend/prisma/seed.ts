@@ -17,6 +17,87 @@ async function main() {
 
   console.log('Starting database seed...');
 
+  // Accounts erstellen (alle starten mit Saldo 0)
+  const checkingAccount = await prisma.account.create({
+    data: {
+      name: 'Sparkasse Hauptkonto',
+      type: 'CHECKING',
+      balance: 0,
+      currency: 'EUR',
+      icon: 'account_balance',
+      color: '#2196f3',
+      note: 'Hauptkonto für Gehalt und tägliche Ausgaben',
+      isActive: true,
+    },
+  });
+
+  const savingsAccount = await prisma.account.create({
+    data: {
+      name: 'ING Tagesgeld',
+      type: 'SAVINGS',
+      balance: 0,
+      currency: 'EUR',
+      icon: 'savings',
+      color: '#4caf50',
+      note: 'Notgroschen und kurzfristige Ersparnisse',
+      isActive: true,
+    },
+  });
+
+  const creditCard = await prisma.account.create({
+    data: {
+      name: 'DKB Visa Card',
+      type: 'CREDIT_CARD',
+      balance: 0,
+      currency: 'EUR',
+      icon: 'credit_card',
+      color: '#ff9800',
+      note: 'Kreditkarte für Online-Einkäufe und Reisen',
+      isActive: true,
+    },
+  });
+
+  const investmentAccount = await prisma.account.create({
+    data: {
+      name: 'Trade Republic',
+      type: 'INVESTMENT',
+      balance: 0,
+      currency: 'EUR',
+      icon: 'trending_up',
+      color: '#9c27b0',
+      note: 'ETF-Sparplan und Einzelaktien',
+      isActive: true,
+    },
+  });
+
+  const cashAccount = await prisma.account.create({
+    data: {
+      name: 'Bargeld',
+      type: 'CASH',
+      balance: 0,
+      currency: 'EUR',
+      icon: 'payments',
+      color: '#795548',
+      note: 'Portemonnaie und Spardose',
+      isActive: true,
+    },
+  });
+
+  const businessAccount = await prisma.account.create({
+    data: {
+      name: 'Freelancer Konto',
+      type: 'OTHER',
+      balance: 0,
+      currency: 'EUR',
+      icon: 'business',
+      color: '#607d8b',
+      note: 'Separates Konto für freiberufliche Tätigkeiten',
+      isActive: true,
+    },
+  });
+
+  console.log('Accounts created');
+
   // Haupt-Budget erstellen
   const mainBudget = await prisma.budget.create({
     data: {
@@ -88,6 +169,16 @@ async function main() {
     },
   });
 
+  const miscellaneous = await prisma.category.create({
+    data: {
+      name: 'Sonstiges',
+      description: 'Verschiedene Transaktionen ohne spezifische Kategorie',
+      color: '#9E9E9E',
+      icon: '📝',
+      budgetId: mainBudget.id,
+    },
+  });
+
   console.log('Categories created');
 
   // Transaktionen erstellen
@@ -104,6 +195,7 @@ async function main() {
       date: new Date(thisMonth.getTime() + 1 * 24 * 60 * 60 * 1000),
       budgetId: mainBudget.id,
       categoryId: salary.id,
+      accountId: checkingAccount.id,
     },
   });
 
@@ -117,6 +209,7 @@ async function main() {
       date: new Date(thisMonth.getTime() + 3 * 24 * 60 * 60 * 1000),
       budgetId: mainBudget.id,
       categoryId: groceries.id,
+      accountId: checkingAccount.id,
     },
   });
 
@@ -129,6 +222,7 @@ async function main() {
       date: new Date(thisMonth.getTime() + 5 * 24 * 60 * 60 * 1000),
       budgetId: mainBudget.id,
       categoryId: transport.id,
+      accountId: creditCard.id,
     },
   });
 
@@ -141,6 +235,7 @@ async function main() {
       date: new Date(thisMonth.getTime() + 7 * 24 * 60 * 60 * 1000),
       budgetId: mainBudget.id,
       categoryId: entertainment.id,
+      accountId: cashAccount.id,
     },
   });
 
@@ -153,6 +248,7 @@ async function main() {
       date: new Date(thisMonth.getTime() + 10 * 24 * 60 * 60 * 1000),
       budgetId: mainBudget.id,
       categoryId: groceries.id,
+      accountId: checkingAccount.id,
     },
   });
 
@@ -165,6 +261,7 @@ async function main() {
       date: new Date(thisMonth.getTime() + 12 * 24 * 60 * 60 * 1000),
       budgetId: mainBudget.id,
       categoryId: utilities.id,
+      accountId: checkingAccount.id,
     },
   });
 
@@ -177,6 +274,7 @@ async function main() {
       date: new Date(thisMonth.getTime() + 15 * 24 * 60 * 60 * 1000),
       budgetId: mainBudget.id,
       categoryId: entertainment.id,
+      accountId: creditCard.id,
     },
   });
 
@@ -189,6 +287,47 @@ async function main() {
       date: new Date(thisMonth.getTime() + 18 * 24 * 60 * 60 * 1000),
       budgetId: mainBudget.id,
       categoryId: transport.id,
+      accountId: checkingAccount.id,
+    },
+  });
+
+  // Zusätzliche Transaktionen für andere Accounts
+  await prisma.transaction.create({
+    data: {
+      title: 'ETF Sparplan',
+      description: 'Monatlicher ETF-Sparplan',
+      amount: 500.0,
+      type: 'EXPENSE',
+      date: new Date(thisMonth.getTime() + 2 * 24 * 60 * 60 * 1000),
+      budgetId: mainBudget.id,
+      categoryId: miscellaneous.id,
+      accountId: investmentAccount.id,
+    },
+  });
+
+  await prisma.transaction.create({
+    data: {
+      title: 'Freelancer Projekt',
+      description: 'Webentwicklung für Kunde ABC',
+      amount: 1200.0,
+      type: 'INCOME',
+      date: new Date(thisMonth.getTime() + 8 * 24 * 60 * 60 * 1000),
+      budgetId: mainBudget.id,
+      categoryId: miscellaneous.id,
+      accountId: businessAccount.id,
+    },
+  });
+
+  await prisma.transaction.create({
+    data: {
+      title: 'Notgroschen aufstocken',
+      description: 'Übertrag von Girokonto',
+      amount: 200.0,
+      type: 'INCOME',
+      date: new Date(thisMonth.getTime() + 14 * 24 * 60 * 60 * 1000),
+      budgetId: mainBudget.id,
+      categoryId: miscellaneous.id,
+      accountId: savingsAccount.id,
     },
   });
 
@@ -201,6 +340,40 @@ async function main() {
 
   console.log('Transactions created');
   console.log(`Total expenses: €${totalExpenses}`);
+
+  // Account-Salden basierend auf Transaktionen berechnen
+  console.log('Calculating account balances based on transactions...');
+
+  const accounts = await prisma.account.findMany({
+    include: {
+      transactions: true,
+    },
+  });
+
+  for (const account of accounts) {
+    let calculatedBalance = 0;
+
+    // Summiere alle Transaktionen für dieses Konto
+    for (const transaction of account.transactions) {
+      if (transaction.type === 'INCOME') {
+        calculatedBalance += transaction.amount;
+      } else if (transaction.type === 'EXPENSE') {
+        calculatedBalance -= transaction.amount;
+      }
+    }
+
+    // Aktualisiere den Account-Saldo
+    await prisma.account.update({
+      where: { id: account.id },
+      data: { balance: calculatedBalance },
+    });
+
+    console.log(
+      `${account.name}: €${calculatedBalance} (${account.transactions.length} transactions)`,
+    );
+  }
+
+  console.log('Account balances calculated successfully!');
   console.log('Seed completed successfully!');
 }
 

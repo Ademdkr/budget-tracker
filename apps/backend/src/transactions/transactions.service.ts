@@ -13,11 +13,15 @@ export class TransactionsService {
     });
   }
 
-  async findAll() {
+  async findAll(accountId?: string) {
+    const whereClause = accountId ? { accountId } : {};
+
     return this.prisma.transaction.findMany({
+      where: whereClause,
       include: {
         category: true,
         budget: true,
+        account: true,
       },
       orderBy: {
         date: 'desc',

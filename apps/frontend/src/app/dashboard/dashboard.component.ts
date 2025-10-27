@@ -15,6 +15,7 @@ import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration } from 'chart.js';
 
 import { DashboardApiService, DashboardKPI, ChartData } from './dashboard-api.service';
+import { AccountSelectionService } from '../shared/services/account-selection.service';
 
 // Interfaces
 export interface KPICard {
@@ -74,6 +75,7 @@ export interface MonthlyData {
 })
 export class DashboardComponent implements OnInit {
   private dashboardApi = inject(DashboardApiService);
+  private accountSelection = inject(AccountSelectionService);
 
   // States
   isLoading = false;
@@ -138,7 +140,20 @@ export class DashboardComponent implements OnInit {
   // Table columns
   transactionColumns: string[] = ['date', 'category', 'amount', 'note'];
 
+  private initialLoadCompleted = false;
+
   ngOnInit() {
+    // Zuerst den AccountSelectionService initialisieren
+    this.accountSelection.initialize();
+
+    // Subscribe to account selection changes
+    this.accountSelection.selectedAccount$.subscribe(() => {
+      // Nur neu laden wenn die initiale Ladung abgeschlossen ist
+      if (this.initialLoadCompleted) {
+        this.loadDashboardData();
+      }
+    });
+
     this.loadDashboardData();
   }
 
@@ -146,11 +161,13 @@ export class DashboardComponent implements OnInit {
     this.isLoading = true;
     this.hasError = false;
 
+    const selectedAccountId = this.accountSelection.getSelectedAccountId();
+
     Promise.all([
-      this.dashboardApi.getKPIs().toPromise(),
-      this.dashboardApi.getBudgetProgress().toPromise(),
-      this.dashboardApi.getStatistics().toPromise(),
-      this.dashboardApi.getRecentTransactions(10).toPromise()
+      this.dashboardApi.getKPIs(selectedAccountId || undefined).toPromise(),
+      this.dashboardApi.getBudgetProgress(selectedAccountId || undefined).toPromise(),
+      this.dashboardApi.getStatistics(undefined, undefined, selectedAccountId || undefined).toPromise(),
+      this.dashboardApi.getRecentTransactions(10, selectedAccountId || undefined).toPromise()
     ]).then(([kpis, budgetProgress, stats, transactions]) => {
       // Map KPIs to include title and trend fields
       this.kpiCards = (kpis ?? []).map(kpi => ({
@@ -178,9 +195,11 @@ export class DashboardComponent implements OnInit {
       this.lineChartData = stats?.monthlyTrend ?? { labels: [], datasets: [] };
       this.checkEmptyState();
       this.isLoading = false;
+      this.initialLoadCompleted = true;
     }).catch(() => {
       this.hasError = true;
       this.isLoading = false;
+      this.initialLoadCompleted = true;
     });
   }
 
@@ -208,5 +227,19 @@ export class DashboardComponent implements OnInit {
     if (percentage >= 90) return 'warn';
     if (percentage >= 70) return 'accent';
     return 'primary';
+  }
+
+  // Account Selection Methods
+  getSelectedAccountName(): string {
+    const selected = this.accountSelection.getSelectedAccount();
+    return selected ? selected.name : '';
+  }
+
+  hasAccountSelection(): boolean {
+    return this.accountSelection.hasSelection();
+  }
+
+  clearAccountFilter(): void {
+    this.accountSelection.clearSelection();
   }
 }

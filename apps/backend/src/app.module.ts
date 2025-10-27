@@ -5,6 +5,7 @@ import { HealthModule } from './health/health.module';
 import { BudgetsModule } from './budgets/budgets.module';
 import { CategoriesModule } from './categories/categories.module';
 import { TransactionsModule } from './transactions/transactions.module';
+import { AccountsModule } from './accounts/accounts.module';
 import * as Joi from 'joi';
 
 @Module({
@@ -21,7 +22,8 @@ import * as Joi from 'joi';
     HealthModule,
     BudgetsModule,
     CategoriesModule,
-    TransactionsModule, // <- neu
+    TransactionsModule,
+    AccountsModule,
   ],
 })
 export class AppModule {}
