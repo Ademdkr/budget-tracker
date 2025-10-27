@@ -8,18 +8,17 @@
 
   <mat-dialog-content class="form-content">
     <form [formGroup]="transactionForm" class="transaction-form">
-      
       <!-- Transaction Type -->
       <div class="form-section">
         <h3 class="section-title">Transaktionstyp</h3>
         <mat-radio-group formControlName="type" class="type-radio-group">
-          <mat-radio-button value="income" class="type-radio income">
+          <mat-radio-button value="INCOME" class="type-radio income">
             <div class="radio-content">
               <mat-icon>trending_up</mat-icon>
               <span>Einnahme</span>
             </div>
           </mat-radio-button>
-          <mat-radio-button value="expense" class="type-radio expense">
+          <mat-radio-button value="EXPENSE" class="type-radio expense">
             <div class="radio-content">
               <mat-icon>trending_down</mat-icon>
               <span>Ausgabe</span>
@@ -31,17 +30,21 @@
       <!-- Basic Information -->
       <div class="form-section">
         <h3 class="section-title">Grundinformationen</h3>
-        
+
         <div class="form-row">
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Datum</mat-label>
-            <input matInput 
-                   [matDatepicker]="datePicker" 
-                   formControlName="date"
-                   [class.error]="hasError('date', 'required') || hasError('date', 'matDatepickerParse')">
+            <input
+              matInput
+              [matDatepicker]="datePicker"
+              formControlName="date"
+              [class.error]="hasError('date', 'required') || hasError('date', 'matDatepickerParse')"
+            />
             <mat-datepicker-toggle matIconSuffix [for]="datePicker"></mat-datepicker-toggle>
             <mat-datepicker #datePicker></mat-datepicker>
-            <mat-error *ngIf="hasError('date', 'required') || hasError('date', 'matDatepickerParse')">
+            <mat-error
+              *ngIf="hasError('date', 'required') || hasError('date', 'matDatepickerParse')"
+            >
               {{ getErrorMessage('date') }}
             </mat-error>
           </mat-form-field>
@@ -50,13 +53,15 @@
         <div class="form-row">
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Betrag</mat-label>
-            <input matInput 
-                   type="number" 
-                   step="0.01" 
-                   min="0.01"
-                   formControlName="amount"
-                   placeholder="0,00"
-                   [class.error]="hasError('amount', 'required') || hasError('amount', 'min')">
+            <input
+              matInput
+              type="number"
+              step="0.01"
+              min="0.01"
+              formControlName="amount"
+              placeholder="0,00"
+              [class.error]="hasError('amount', 'required') || hasError('amount', 'min')"
+            />
             <span matTextPrefix>€&nbsp;</span>
             <mat-error *ngIf="hasError('amount', 'required') || hasError('amount', 'min')">
               {{ getErrorMessage('amount') }}
@@ -65,18 +70,17 @@
         </div>
       </div>
 
-      <!-- Category and Account -->
+      <!-- Category -->
       <div class="form-section">
         <h3 class="section-title">Kategorisierung</h3>
-        
+
         <div class="form-row">
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Kategorie</mat-label>
-            <mat-select formControlName="category" 
-                       [class.error]="hasError('category', 'required')">
-              <mat-option *ngFor="let category of filteredCategories" [value]="category.name">
+            <mat-select formControlName="category" [class.error]="hasError('category', 'required')">
+              <mat-option *ngFor="let category of filteredCategories" [value]="category.id">
                 <div class="category-option">
-                  <span class="category-emoji">{{ category.emoji }}</span>
+                  <span class="category-emoji">{{ category.emoji || category.icon }}</span>
                   <span class="category-name">{{ category.name }}</span>
                   <div class="category-color" [style.background-color]="category.color"></div>
                 </div>
@@ -88,10 +92,11 @@
           </mat-form-field>
         </div>
 
-        <div class="form-row">
+        <!-- Account field removed - no Account table in schema -->
+        <!-- <div class="form-row">
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Konto</mat-label>
-            <mat-select formControlName="account" 
+            <mat-select formControlName="account"
                        [class.error]="hasError('account', 'required')">
               <mat-option *ngFor="let account of accounts" [value]="account.name">
                 <div class="account-option">
@@ -105,44 +110,46 @@
               {{ getErrorMessage('account') }}
             </mat-error>
           </mat-form-field>
-        </div>
+        </div> -->
       </div>
 
       <!-- Additional Information -->
       <div class="form-section">
         <h3 class="section-title">Zusätzliche Informationen</h3>
-        
+
         <div class="form-row">
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Notiz (optional)</mat-label>
-            <textarea matInput 
-                     formControlName="note"
-                     rows="3"
-                     placeholder="Beschreibung, Händler, Zweck..."
-                     maxlength="200"></textarea>
-            <mat-hint align="end">{{ transactionForm.get('note')?.value?.length || 0 }}/200</mat-hint>
+            <textarea
+              matInput
+              formControlName="note"
+              rows="3"
+              placeholder="Beschreibung, Händler, Zweck..."
+              maxlength="200"
+            ></textarea>
+            <mat-hint align="end"
+              >{{ transactionForm.get('note')?.value?.length || 0 }}/200</mat-hint
+            >
           </mat-form-field>
         </div>
       </div>
-
     </form>
   </mat-dialog-content>
 
   <!-- Form Actions -->
   <mat-dialog-actions class="form-actions">
-    <button mat-button 
-            type="button" 
-            (click)="onCancel()"
-            [disabled]="isSubmitting">
+    <button mat-button type="button" (click)="onCancel()" [disabled]="isSubmitting">
       Abbrechen
     </button>
-    
-    <button mat-raised-button 
-            color="primary"
-            type="submit"
-            (click)="onSubmit()"
-            [disabled]="transactionForm.invalid || isSubmitting"
-            [class.loading]="isSubmitting">
+
+    <button
+      mat-raised-button
+      color="primary"
+      type="submit"
+      (click)="onSubmit()"
+      [disabled]="transactionForm.invalid || isSubmitting"
+      [class.loading]="isSubmitting"
+    >
       <mat-icon *ngIf="isSubmitting">hourglass_empty</mat-icon>
       <mat-icon *ngIf="!isSubmitting && mode === 'create'">add</mat-icon>
       <mat-icon *ngIf="!isSubmitting && mode === 'edit'">save</mat-icon>

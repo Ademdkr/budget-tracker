@@ -7,13 +7,13 @@
 // Header
 .budgets-header {
   margin-bottom: 2rem;
-  
+
   .header-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.5rem;
-    
+
     .page-title {
       display: flex;
       align-items: center;
@@ -22,7 +22,7 @@
       font-size: 2rem;
       font-weight: 500;
       color: var(--mat-sys-on-surface);
-      
+
       mat-icon {
         font-size: 2rem;
         width: 2rem;
@@ -30,23 +30,23 @@
         color: var(--mat-sys-primary);
       }
     }
-    
+
     .header-actions {
       display: flex;
       align-items: center;
       gap: 0.5rem;
     }
   }
-  
+
   .period-selection {
     margin-bottom: 1.5rem;
-    
+
     .period-card {
       .period-controls {
         display: flex;
         gap: 1rem;
         align-items: center;
-        
+
         .month-field,
         .year-field {
           min-width: 140px;
@@ -54,70 +54,81 @@
       }
     }
   }
-  
+
   .monthly-summary {
     .summary-card {
-      background: linear-gradient(135deg, var(--mat-sys-primary-container) 0%, var(--mat-sys-secondary-container) 100%);
-      
+      background: linear-gradient(
+        135deg,
+        var(--mat-sys-primary-container) 0%,
+        var(--mat-sys-secondary-container) 100%
+      );
+
       .summary-content {
         display: flex;
         align-items: center;
         gap: 2rem;
         padding: 0.5rem 0;
-        
+
         .summary-item {
           display: flex;
           align-items: center;
           gap: 1rem;
-          
+
           .summary-icon {
             font-size: 2rem;
             width: 2rem;
             height: 2rem;
             color: var(--mat-sys-primary);
           }
-          
+
           .summary-details {
             display: flex;
             flex-direction: column;
-            
+
             .summary-label {
               font-size: 0.875rem;
               color: var(--mat-sys-on-surface-variant);
               text-transform: uppercase;
               letter-spacing: 0.5px;
             }
-            
+
             .summary-value {
               font-size: 1.5rem;
               font-weight: 600;
-              
+
               &.positive {
                 color: #4caf50;
               }
-              
+
               &.negative {
                 color: var(--mat-sys-error);
               }
             }
-            
+
             .status-chips {
               margin-top: 0.25rem;
-              
+
               mat-chip-set {
                 display: flex;
                 gap: 0.25rem;
-                
+
                 .achieved-chip {
                   background: #4caf50;
                   color: white;
                   font-size: 0.75rem;
                   font-weight: 500;
                 }
-                
+
                 .over-budget-chip {
                   background: var(--mat-sys-error);
                   color: white;
+                  font-size: 0.75rem;
+                  font-weight: 500;
+                }
+
+                .neutral-chip {
+                  background: var(--mat-sys-surface-container-highest);
+                  color: var(--mat-sys-on-surface);
                   font-size: 0.75rem;
                   font-weight: 500;
                 }
@@ -125,7 +136,7 @@
             }
           }
         }
-        
+
         .summary-divider {
           width: 1px;
           height: 40px;
@@ -158,7 +169,7 @@
 .empty-content {
   text-align: center;
   padding: 2rem;
-  
+
   .error-icon,
   .empty-icon {
     font-size: 4rem;
@@ -167,12 +178,12 @@
     color: var(--mat-sys-on-surface-variant);
     margin-bottom: 1rem;
   }
-  
+
   h3 {
     margin: 0 0 1rem 0;
     color: var(--mat-sys-on-surface);
   }
-  
+
   p {
     margin: 0 0 1.5rem 0;
     color: var(--mat-sys-on-surface-variant);
@@ -184,10 +195,10 @@
   .budgets-table-card {
     .table-container {
       overflow-x: auto;
-      
+
       .budgets-data-table {
         width: 100%;
-        
+
         .mat-mdc-header-cell {
           font-weight: 600;
           color: var(--mat-sys-on-surface-variant);
@@ -195,28 +206,28 @@
           letter-spacing: 0.5px;
           font-size: 0.75rem;
         }
-        
+
         .mat-mdc-cell {
           border-bottom: 1px solid var(--mat-sys-outline-variant);
           padding: 1rem 0.5rem;
         }
-        
+
         .budget-row {
           cursor: pointer;
           transition: background-color 0.2s ease;
-          
+
           &:hover {
             background-color: var(--mat-sys-surface-container-high);
           }
         }
-        
+
         // Cell Styles
         .category-cell {
           .category-info {
             display: flex;
             align-items: center;
             gap: 1rem;
-            
+
             .category-icon {
               width: 40px;
               height: 40px;
@@ -227,16 +238,16 @@
               font-size: 1.25rem;
               color: white;
             }
-            
+
             .category-details {
               display: flex;
               flex-direction: column;
-              
+
               .category-name {
                 font-weight: 500;
                 color: var(--mat-sys-on-surface);
               }
-              
+
               .category-meta {
                 font-size: 0.75rem;
                 color: var(--mat-sys-on-surface-variant);
@@ -244,7 +255,7 @@
             }
           }
         }
-        
+
         .target-cell {
           .target-amount {
             font-weight: 600;
@@ -252,27 +263,27 @@
             color: var(--mat-sys-on-surface);
           }
         }
-        
+
         .current-cell {
           .current-info {
             display: flex;
             flex-direction: column;
             gap: 0.25rem;
-            
+
             .current-amount {
               font-weight: 600;
               font-size: 1rem;
               color: var(--mat-sys-on-surface);
-              
+
               &.over-budget {
                 color: var(--mat-sys-error);
               }
             }
-            
+
             .percentage {
               font-size: 0.75rem;
               color: var(--mat-sys-on-surface-variant);
-              
+
               &.over-budget {
                 color: var(--mat-sys-error);
                 font-weight: 500;
@@ -280,26 +291,26 @@
             }
           }
         }
-        
+
         .progress-cell {
           width: 200px;
-          
+
           .progress-container {
             position: relative;
             margin-bottom: 0.5rem;
-            
+
             .progress-bar {
               height: 8px;
               border-radius: 4px;
             }
-            
+
             .progress-overlay {
               position: absolute;
               top: 0;
               left: 0;
               right: 0;
               bottom: 0;
-              
+
               .over-budget-indicator {
                 height: 8px;
                 background: repeating-linear-gradient(
@@ -314,31 +325,31 @@
               }
             }
           }
-          
+
           .status-chip {
             display: flex;
             justify-content: center;
-            
+
             mat-chip {
               font-size: 0.625rem;
               font-weight: 500;
               min-height: 20px;
-              
+
               &.status-success {
                 background: #4caf50;
                 color: white;
               }
-              
+
               &.status-info {
                 background: var(--mat-sys-primary);
                 color: white;
               }
-              
+
               &.status-warning {
                 background: #ff9800;
                 color: white;
               }
-              
+
               &.status-danger {
                 background: var(--mat-sys-error);
                 color: white;
@@ -346,38 +357,38 @@
             }
           }
         }
-        
+
         .remaining-cell {
           .remaining-info {
             display: flex;
             flex-direction: column;
             gap: 0.25rem;
-            
+
             .remaining-amount {
               font-weight: 600;
               font-size: 1rem;
-              
+
               &.positive {
                 color: #4caf50;
               }
-              
+
               &.negative {
                 color: var(--mat-sys-error);
               }
             }
-            
+
             .last-transaction {
               font-size: 0.75rem;
               color: var(--mat-sys-on-surface-variant);
             }
           }
         }
-        
+
         .actions-cell {
           display: flex;
           gap: 0.25rem;
           justify-content: flex-end;
-          
+
           button {
             min-width: 40px;
             width: 40px;
@@ -401,7 +412,7 @@
       flex-wrap: wrap;
       gap: 1rem;
       justify-content: center;
-      
+
       .summary-divider {
         display: none;
       }
@@ -413,41 +424,41 @@
   .budgets-container {
     padding: 1rem;
   }
-  
+
   .budgets-header {
     .header-content {
       flex-direction: column;
       align-items: stretch;
       gap: 1rem;
-      
+
       .page-title {
         font-size: 1.5rem;
         justify-content: center;
       }
-      
+
       .header-actions {
         justify-content: center;
       }
     }
-    
+
     .period-selection {
       .period-controls {
         flex-direction: column;
         align-items: stretch;
-        
+
         .month-field,
         .year-field {
           min-width: auto;
         }
       }
     }
-    
+
     .monthly-summary {
       .summary-content {
         flex-direction: column;
         gap: 1rem;
         text-align: center;
-        
+
         .summary-divider {
           width: 100%;
           height: 1px;
@@ -455,12 +466,12 @@
       }
     }
   }
-  
+
   .budgets-data-table {
     .progress-cell {
       width: 150px;
     }
-    
+
     .remaining-cell,
     .current-cell {
       .last-transaction,
@@ -476,26 +487,26 @@
     .mat-mdc-cell,
     .mat-mdc-header-cell {
       padding: 0.5rem 0.25rem;
-      
+
       &:first-child {
         padding-left: 0.5rem;
       }
-      
+
       &:last-child {
         padding-right: 0.5rem;
       }
     }
-    
+
     .category-cell {
       .category-info {
         gap: 0.5rem;
-        
+
         .category-icon {
           width: 32px;
           height: 32px;
           font-size: 1rem;
         }
-        
+
         .category-details {
           .category-name {
             font-size: 0.875rem;
@@ -503,10 +514,10 @@
         }
       }
     }
-    
+
     .progress-cell {
       width: 120px;
-      
+
       .status-chip {
         mat-chip {
           font-size: 0.5rem;

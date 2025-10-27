@@ -1,30 +1,50 @@
 import { Injectable } from '@nestjs/common';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class TransactionsService {
-  create(createTransactionDto: CreateTransactionDto) {
-    // TODO: Implement transaction creation with Prisma
-    console.log('Creating transaction:', createTransactionDto);
-    return 'This action adds a new transaction';
+  constructor(private readonly prisma: PrismaService) {}
+
+  async create(createTransactionDto: CreateTransactionDto) {
+    return this.prisma.transaction.create({
+      data: createTransactionDto,
+    });
   }
 
-  findAll() {
-    return `This action returns all transactions`;
+  async findAll() {
+    return this.prisma.transaction.findMany({
+      include: {
+        category: true,
+        budget: true,
+      },
+      orderBy: {
+        date: 'desc',
+      },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} transaction`;
+  async findOne(id: string) {
+    return this.prisma.transaction.findUnique({
+      where: { id },
+      include: {
+        category: true,
+        budget: true,
+      },
+    });
   }
 
-  update(id: number, updateTransactionDto: UpdateTransactionDto) {
-    // TODO: Implement transaction update with Prisma
-    console.log('Updating transaction:', id, updateTransactionDto);
-    return `This action updates a #${id} transaction`;
+  async update(id: string, updateTransactionDto: UpdateTransactionDto) {
+    return this.prisma.transaction.update({
+      where: { id },
+      data: updateTransactionDto,
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} transaction`;
+  async remove(id: string) {
+    return this.prisma.transaction.delete({
+      where: { id },
+    });
   }
 }

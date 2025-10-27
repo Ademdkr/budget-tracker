@@ -27,12 +27,12 @@ export class BudgetsController {
 
   @Post()
   create(@Body() dto: CreateBudgetDto) {
-    return this.service.create(dto.name);
+    return this.service.create(dto);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateBudgetDto) {
-    return this.service.update(id, dto.name);
+    return this.service.update(id, dto);
   }
 
   @Delete(':id')

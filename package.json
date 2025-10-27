@@ -44,6 +44,7 @@
     "@angular-eslint/template-parser": "^20.4.0",
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
+    "@types/jest": "^29.5.14",
     "@types/joi": "^17.2.3",
     "@types/node": "^20.19.22",
     "@typescript-eslint/eslint-plugin": "^8.46.2",

@@ -1,4 +1,16 @@
+// UI-Filter Interface für die Filter-Form
+interface UiTransactionFilter {
+  dateFrom?: Date | null;
+  dateTo?: Date | null;
+  categories?: string[];
+  // accounts?: string[];
+  searchText?: string;
+  type?: 'INCOME' | 'EXPENSE' | 'all';
+}
 import { Component, OnInit, AfterViewInit, inject, ViewChild } from '@angular/core';
+import { TransactionsApiService, Transaction } from './transactions-api.service';
+import { CategoriesApiService, Category } from '../categories/categories-api.service';
+// import { AccountsApiService, Account } from '../accounts/accounts-api.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -17,41 +29,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
-// Interfaces
-export interface Transaction {
-  id: string;
-  date: Date;
-  category: string;
-  categoryEmoji: string;
-  account: string;
-  amount: number;
-  note?: string;
-  type: 'income' | 'expense';
-}
-
-export interface TransactionFilter {
-  dateFrom?: Date;
-  dateTo?: Date;
-  categories?: string[];
-  accounts?: string[];
-  searchText?: string;
-  type?: 'income' | 'expense' | 'all';
-}
-
-export interface Category {
-  id: string;
-  name: string;
-  emoji: string;
-  color: string;
-  type: 'income' | 'expense' | 'both';
-}
-
-export interface Account {
-  id: string;
-  name: string;
-  type: string;
-  balance: number;
-}
+// ...Interfaces entfernt, stattdessen API-Typen verwenden
 
 @Component({
   selector: 'app-transactions',
@@ -90,30 +68,34 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
   dataSource = new MatTableDataSource<Transaction>([]);
   transactions: Transaction[] = [];
   categories: Category[] = [];
-  accounts: Account[] = [];
-  
+  // accounts: Account[] = [];
+
   // Filter form
   filterForm: FormGroup;
-  
+
   // UI states
   isLoading = true;
   hasError = false;
   isEmpty = false;
-  
+
   // Table configuration
-  displayedColumns: string[] = ['date', 'category', 'account', 'amount', 'note', 'actions'];
-  
+  displayedColumns: string[] = ['date', 'category', 'amount', 'note', 'actions'];
+
   // Pagination
   totalTransactions = 0;
   pageSize = 10;
   pageSizeOptions = [5, 10, 25, 50];
+
+  private transactionsApi = inject(TransactionsApiService);
+  private categoriesApi = inject(CategoriesApiService);
+  // private accountsApi = inject(AccountsApiService);
 
   constructor() {
     this.filterForm = this.fb.group({
       dateFrom: [null],
       dateTo: [null],
       categories: [[]],
-      accounts: [[]],
+      // accounts: [[]],
       searchText: [''],
       type: ['all']
     });
@@ -127,110 +109,52 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
+
+    // Workaround: Sort-Instanz nach jedem Filtervorgang neu setzen
+    this.filterForm.valueChanges.subscribe(() => {
+      setTimeout(() => {
+        this.dataSource.sort = this.sort;
+      });
+    });
   }
 
   private loadInitialData() {
     this.isLoading = true;
     this.hasError = false;
 
-    // Simulate API call
-    setTimeout(() => {
-      try {
-        this.loadCategories();
-        this.loadAccounts();
-        this.loadTransactions();
-        this.checkEmptyState();
-        
-        this.isLoading = false;
-      } catch {
-        this.hasError = true;
-        this.isLoading = false;
-      }
-    }, 1000);
+    // Lade Kategorien und Transaktionen parallel
+    Promise.all([
+      this.categoriesApi.getAll().toPromise(),
+      this.transactionsApi.getAll().toPromise()
+    ]).then(([categories, transactions]) => {
+      this.categories = categories ?? [];
+
+      // Map transactions with category information
+      this.transactions = (transactions ?? []).map(transaction => {
+        const category = categories?.find(c => c.id === transaction.categoryId);
+        return {
+          ...transaction,
+          category: category?.name || 'Unbekannt',
+          categoryEmoji: category?.icon || category?.emoji || '📝',
+          note: transaction.description || transaction.note || '',
+          account: '' // No account field in schema
+        };
+      });
+
+      this.totalTransactions = this.transactions.length;
+      // DataSource direkt initialisieren und Sort/Paginator binden
+      this.dataSource = new MatTableDataSource<Transaction>(this.transactions);
+      this.dataSource.paginator = this.paginator;
+      this.dataSource.sort = this.sort;
+      this.applyFilters();
+      this.checkEmptyState();
+      this.isLoading = false;
+    }).catch(() => {
+      this.hasError = true;
+      this.isLoading = false;
+    });
   }
 
-  private loadCategories() {
-    this.categories = [
-      { id: '1', name: 'Gehalt', emoji: '💰', color: '#4caf50', type: 'income' },
-      { id: '2', name: 'Freelancing', emoji: '💻', color: '#2196f3', type: 'income' },
-      { id: '3', name: 'Investitionen', emoji: '📈', color: '#9c27b0', type: 'income' },
-      { id: '4', name: 'Lebensmittel', emoji: '🍕', color: '#ff9800', type: 'expense' },
-      { id: '5', name: 'Transport', emoji: '🚗', color: '#f44336', type: 'expense' },
-      { id: '6', name: 'Unterhaltung', emoji: '🎬', color: '#e91e63', type: 'expense' },
-      { id: '7', name: 'Gesundheit', emoji: '💊', color: '#03dac6', type: 'expense' },
-      { id: '8', name: 'Shopping', emoji: '🛍️', color: '#ff5722', type: 'expense' },
-      { id: '9', name: 'Bildung', emoji: '📚', color: '#673ab7', type: 'expense' },
-      { id: '10', name: 'Wohnen', emoji: '🏠', color: '#795548', type: 'expense' }
-    ];
-  }
-
-  private loadAccounts() {
-    this.accounts = [
-      { id: '1', name: 'Sparkasse Giro', type: 'checking', balance: 2450.75 },
-      { id: '2', name: 'DKB Visa', type: 'credit', balance: -180.25 },
-      { id: '3', name: 'ING Tagesgeld', type: 'savings', balance: 15000.00 },
-      { id: '4', name: 'Bargeld', type: 'cash', balance: 120.50 }
-    ];
-  }
-
-  private loadTransactions() {
-    // Generate mock transactions
-    this.transactions = this.generateMockTransactions(50);
-    this.totalTransactions = this.transactions.length;
-    this.applyFilters();
-  }
-
-  private generateMockTransactions(count: number): Transaction[] {
-    const transactions: Transaction[] = [];
-    const today = new Date();
-    
-    for (let i = 0; i < count; i++) {
-      const isIncome = Math.random() < 0.3; // 30% chance of income
-      const category = isIncome 
-        ? this.categories.filter(c => c.type === 'income')[Math.floor(Math.random() * 3)]
-        : this.categories.filter(c => c.type === 'expense')[Math.floor(Math.random() * 7)];
-      
-      const account = this.accounts[Math.floor(Math.random() * this.accounts.length)];
-      
-      const transaction: Transaction = {
-        id: `tx_${i + 1}`,
-        date: new Date(today.getTime() - Math.random() * 90 * 24 * 60 * 60 * 1000), // Last 90 days
-        category: category.name,
-        categoryEmoji: category.emoji,
-        account: account.name,
-        amount: isIncome 
-          ? +(Math.random() * 4000 + 1000).toFixed(2) // Income: 1000-5000
-          : +(-(Math.random() * 300 + 10)).toFixed(2), // Expense: -10 to -310
-        note: this.generateRandomNote(category.name, isIncome),
-        type: isIncome ? 'income' : 'expense'
-      };
-      
-      transactions.push(transaction);
-    }
-    
-    return transactions.sort((a, b) => b.date.getTime() - a.date.getTime());
-  }
-
-  private generateRandomNote(category: string, isIncome: boolean): string {
-    const incomeNotes = {
-      'Gehalt': ['Monatsgehalt', 'Gehalt November', 'Lohn Oktober'],
-      'Freelancing': ['Projekt ABC', 'Website Entwicklung', 'Beratung Kunde XYZ'],
-      'Investitionen': ['Dividende ETF', 'Aktienverkauf', 'Zinsen Tagesgeld']
-    };
-    
-    const expenseNotes = {
-      'Lebensmittel': ['Rewe Wocheneinkauf', 'Edeka', 'Bäckerei Müller', 'Lieferando'],
-      'Transport': ['Tankstelle Shell', 'DB Ticket', 'Uber Fahrt', 'Parkgebühr'],
-      'Unterhaltung': ['Netflix Abo', 'Kino Tickets', 'Spotify Premium', 'Amazon Prime'],
-      'Gesundheit': ['Apotheke', 'Arztbesuch', 'Fitness Studio', 'Vitamin D'],
-      'Shopping': ['Amazon Bestellung', 'Kleidung H&M', 'Elektronik MediaMarkt'],
-      'Bildung': ['Udemy Kurs', 'Buch Amazon', 'Online Seminar'],
-      'Wohnen': ['Miete November', 'Strom Rechnung', 'Internet Telekom', 'Hausrat Versicherung']
-    };
-    
-    const notes = isIncome ? incomeNotes[category as keyof typeof incomeNotes] : expenseNotes[category as keyof typeof expenseNotes];
-    return notes ? notes[Math.floor(Math.random() * notes.length)] : '';
-  }
 
   private setupFilterSubscription() {
     this.filterForm.valueChanges.subscribe(() => {
@@ -239,7 +163,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
   }
 
   private applyFilters() {
-    const filters = this.filterForm.value as TransactionFilter;
+    const filters = this.filterForm.value as UiTransactionFilter;
     let filteredTransactions = [...this.transactions];
 
     // Date range filter
@@ -252,17 +176,17 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
 
     // Category filter
     if (filters.categories && filters.categories.length > 0) {
-      filteredTransactions = filteredTransactions.filter(t => 
-        filters.categories!.includes(t.category)
+      filteredTransactions = filteredTransactions.filter(t =>
+        t.category && filters.categories!.includes(t.category)
       );
     }
 
-    // Account filter
-    if (filters.accounts && filters.accounts.length > 0) {
-      filteredTransactions = filteredTransactions.filter(t => 
-        filters.accounts!.includes(t.account)
-      );
-    }
+    // Account filter - Temporarily disabled (no Account table in schema)
+    // if (filters.accounts && filters.accounts.length > 0) {
+    //   filteredTransactions = filteredTransactions.filter(t =>
+    //     filters.accounts!.includes(t.account)
+    //   );
+    // }
 
     // Type filter
     if (filters.type && filters.type !== 'all') {
@@ -272,15 +196,21 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
     // Text search
     if (filters.searchText && filters.searchText.trim()) {
       const searchTerm = filters.searchText.toLowerCase().trim();
-      filteredTransactions = filteredTransactions.filter(t => 
-        t.category.toLowerCase().includes(searchTerm) ||
-        t.account.toLowerCase().includes(searchTerm) ||
+      filteredTransactions = filteredTransactions.filter(t =>
+        (t.category && t.category.toLowerCase().includes(searchTerm)) ||
+        // t.account.toLowerCase().includes(searchTerm) ||
         (t.note && t.note.toLowerCase().includes(searchTerm))
       );
     }
 
+    // DataSource nicht neu erzeugen, sondern nur die Daten setzen
     this.dataSource.data = filteredTransactions;
     this.totalTransactions = filteredTransactions.length;
+    // Sort/Paginator nach jedem Filter neu binden
+    setTimeout(() => {
+      this.dataSource.paginator = this.paginator;
+      this.dataSource.sort = this.sort;
+    });
   }
 
   clearFilters() {
@@ -308,25 +238,15 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
         data: {
           mode: 'create',
           categories: this.categories,
-          accounts: this.accounts
+          // accounts: this.accounts
         },
         disableClose: true
       });
 
       dialogRef.afterClosed().subscribe(result => {
         if (result) {
-          // Add new transaction to the list
-          const newTransaction: Transaction = {
-            ...result,
-            id: `tx_${Date.now()}`,
-            date: new Date(result.date)
-          };
-          
-          this.transactions.unshift(newTransaction);
-          this.applyFilters();
-          
-          // Show success message (could use MatSnackBar)
-          console.log('Transaction added:', newTransaction);
+          // Lade die Daten neu, um die aktualisierte Transaktion aus der DB zu bekommen
+          this.loadInitialData();
         }
       });
     });
@@ -342,25 +262,15 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
           mode: 'edit',
           transaction: transaction,
           categories: this.categories,
-          accounts: this.accounts
+          // accounts: this.accounts
         },
         disableClose: true
       });
 
       dialogRef.afterClosed().subscribe(result => {
         if (result) {
-          // Update transaction in the list
-          const index = this.transactions.findIndex(t => t.id === transaction.id);
-          if (index !== -1) {
-            this.transactions[index] = {
-              ...result,
-              id: transaction.id,
-              date: new Date(result.date)
-            };
-            this.applyFilters();
-            
-            console.log('Transaction updated:', result);
-          }
+          // Lade die Daten neu, um die aktualisierte Transaktion aus der DB zu bekommen
+          this.loadInitialData();
         }
       });
     });
@@ -371,15 +281,18 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
     const confirmed = window.confirm(
       `Möchten Sie die Transaktion "${transaction.note || transaction.category}" wirklich löschen?`
     );
-    
+
     if (confirmed) {
-      const index = this.transactions.findIndex(t => t.id === transaction.id);
-      if (index !== -1) {
-        this.transactions.splice(index, 1);
-        this.applyFilters();
-        
-        console.log('Transaction deleted:', transaction);
-      }
+      this.transactionsApi.delete(transaction.id).subscribe({
+        next: () => {
+          // Lade die Daten neu
+          this.loadInitialData();
+        },
+        error: (error) => {
+          console.error('Fehler beim Löschen:', error);
+          alert('Fehler beim Löschen der Transaktion');
+        }
+      });
     }
   }
 
@@ -392,11 +305,12 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
     return new Intl.NumberFormat('de-DE', {
       style: 'currency',
       currency: 'EUR'
-    }).format(amount);
+    }).format(Math.abs(amount)); // Immer positiv anzeigen, Vorzeichen wird über Icon/Farbe dargestellt
   }
 
-  getAmountClass(amount: number): string {
-    return amount >= 0 ? 'income' : 'expense';
+  getAmountClass(transaction: Transaction): string {
+    // Use type field instead of amount sign
+    return transaction.type === 'INCOME' ? 'income' : 'expense';
   }
 
   getCategoryColor(categoryName: string): string {
