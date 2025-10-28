@@ -131,14 +131,20 @@
             [class.selected]="isAccountSelected(account.id)"
           >
             <mat-card-header>
-              <div
-                class="account-avatar"
-                [style.background-color]="getAccountTypeInfo(account.type)?.color"
-              >
-                <mat-icon>{{ getAccountTypeInfo(account.type)?.icon }}</mat-icon>
+              <div class="header-content-wrapper">
+                <div
+                  class="account-avatar"
+                  [style.background-color]="getAccountTypeInfo(account.type)?.color"
+                >
+                  <mat-icon>{{ getAccountTypeInfo(account.type)?.icon }}</mat-icon>
+                </div>
+                <div class="header-text">
+                  <mat-card-title>{{ account.name }}</mat-card-title>
+                  <mat-card-subtitle>{{
+                    getAccountTypeInfo(account.type)?.name
+                  }}</mat-card-subtitle>
+                </div>
               </div>
-              <mat-card-title>{{ account.name }}</mat-card-title>
-              <mat-card-subtitle>{{ getAccountTypeInfo(account.type)?.name }}</mat-card-subtitle>
               <button mat-icon-button [matMenuTriggerFor]="accountMenu" class="account-menu">
                 <mat-icon>more_vert</mat-icon>
               </button>

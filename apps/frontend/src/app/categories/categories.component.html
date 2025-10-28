@@ -138,11 +138,15 @@
       <div *ngIf="viewMode === 'grid'" class="categories-grid">
         <mat-card *ngFor="let category of incomeCategories" class="category-card income-card">
           <mat-card-header>
-            <div class="category-avatar" [style.background-color]="category.color">
-              <span class="category-emoji">{{ category.emoji }}</span>
+            <div class="header-content-wrapper">
+              <div class="category-avatar" [style.background-color]="category.color">
+                <span class="category-emoji">{{ category.emoji }}</span>
+              </div>
+              <div class="header-text">
+                <mat-card-title>{{ category.name }}</mat-card-title>
+                <mat-card-subtitle>{{ category.description }}</mat-card-subtitle>
+              </div>
             </div>
-            <mat-card-title>{{ category.name }}</mat-card-title>
-            <mat-card-subtitle>{{ category.description }}</mat-card-subtitle>
             <button mat-icon-button [matMenuTriggerFor]="categoryMenu" class="category-menu">
               <mat-icon>more_vert</mat-icon>
             </button>
@@ -235,11 +239,15 @@
       <div *ngIf="viewMode === 'grid'" class="categories-grid">
         <mat-card *ngFor="let category of expenseCategories" class="category-card expense-card">
           <mat-card-header>
-            <div class="category-avatar" [style.background-color]="category.color">
-              <span class="category-emoji">{{ category.emoji }}</span>
+            <div class="header-content-wrapper">
+              <div class="category-avatar" [style.background-color]="category.color">
+                <span class="category-emoji">{{ category.emoji }}</span>
+              </div>
+              <div class="header-text">
+                <mat-card-title>{{ category.name }}</mat-card-title>
+                <mat-card-subtitle>{{ category.description }}</mat-card-subtitle>
+              </div>
             </div>
-            <mat-card-title>{{ category.name }}</mat-card-title>
-            <mat-card-subtitle>{{ category.description }}</mat-card-subtitle>
             <button mat-icon-button [matMenuTriggerFor]="categoryMenu2" class="category-menu">
               <mat-icon>more_vert</mat-icon>
             </button>
