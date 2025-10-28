@@ -101,7 +101,7 @@ async function main() {
   // Haupt-Budget erstellen
   const mainBudget = await prisma.budget.create({
     data: {
-      name: 'Monatsbudget Oktober 2025',
+      name: 'Gehalt',
       description: 'Hauptbudget für Oktober',
       totalAmount: 3000.0,
       spent: 0,
