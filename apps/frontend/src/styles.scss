@@ -8,16 +8,18 @@
 @include mat.core();
 
 // Define the theme object.
-$budget-tracker-theme: mat.define-theme((
-  color: (
-    theme-type: light,
-    primary: mat.$azure-palette,
-    tertiary: mat.$blue-palette,
-  ),
-  density: (
-    scale: 0,
+$budget-tracker-theme: mat.define-theme(
+  (
+    color: (
+      theme-type: light,
+      primary: mat.$azure-palette,
+      tertiary: mat.$blue-palette,
+    ),
+    density: (
+      scale: 0,
+    ),
   )
-));
+);
 
 // Include theme styles for core and each component used in your app.
 // Wrap the theme in a selector as required for M3 themes
@@ -26,37 +28,30 @@ html {
 }
 
 // Reset styles
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
   padding: 0;
 }
 
-body { 
-  font-family: Roboto, "Helvetica Neue", sans-serif; 
+body {
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
 }
 
-// Notification Styles
-.notification-success {
-  --mdc-snackbar-container-color: #4caf50;
-  --mdc-snackbar-supporting-text-color: white;
-  --mat-snack-bar-button-color: white;
+// Utility classes
+.full-width {
+  width: 100%;
 }
 
-.notification-error {
-  --mdc-snackbar-container-color: #f44336;
-  --mdc-snackbar-supporting-text-color: white;
-  --mat-snack-bar-button-color: white;
+.text-center {
+  text-align: center;
 }
 
-.notification-warning {
-  --mdc-snackbar-container-color: #ff9800;
-  --mdc-snackbar-supporting-text-color: white;
-  --mat-snack-bar-button-color: white;
+.margin-top {
+  margin-top: 16px;
 }
 
-.notification-info {
-  --mdc-snackbar-container-color: #2196f3;
-  --mdc-snackbar-supporting-text-color: white;
-  --mat-snack-bar-button-color: white;
+.margin-bottom {
+  margin-bottom: 16px;
 }

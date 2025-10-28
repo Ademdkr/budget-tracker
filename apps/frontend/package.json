@@ -10,7 +10,7 @@
     "build:prod": "ng build --configuration production",
     "test": "ng test --watch=false --browsers=ChromeHeadless",
     "lint": "eslint \"src/**/*.{ts,html}\" --ext .ts,.html --ignore-path ../../.eslintignore",
-    "preview": "npx http-server ./dist/apps/frontend -p 4200"
+    "preview": "npx http-server ./dist/apps/frontend -p 4201"
   },
   "dependencies": {
     "@angular/animations": "^18.2.0",

@@ -26,8 +26,8 @@ async function bootstrap() {
   console.log(`Backend listening on http://localhost:${port}`);
 
   const config = new DocumentBuilder()
-    .setTitle('Template API')
-    .setDescription('API-Dokumentation')
+    .setTitle('Budget Tracker API')
+    .setDescription('Budget-Tracker API-Dokumentation')
     .setVersion('1.0.0')
     .build();
   const doc = SwaggerModule.createDocument(app, config);

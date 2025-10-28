@@ -464,4 +464,4 @@ pnpm wrangler secret list
 
 ---
 
-Bei Fragen oder Problemen, erstelle ein [GitHub Issue](https://github.com/Ademdkr/fullstack-template/issues)!
+Bei Fragen oder Problemen, erstelle ein [GitHub Issue](https://github.com/Ademdkr/budget-tracker/issues)!

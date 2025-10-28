@@ -41,8 +41,8 @@ const args = Object.fromEntries(process.argv.slice(2).map(a => {
 const APP_NAME = args.name || 'My App';
 const APP_SLUG = (args.slug || APP_NAME)
   .toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '');
-const PORT_WEB = String(args.portWeb || 4200);
-const PORT_API = String(args.portApi || 3000);
+const PORT_WEB = String(args.portWeb || 4201);
+const PORT_API = String(args.portApi || 3001);
 const GITHUB_USER = args.user || 'YOUR_GITHUB_USERNAME';
 const DATE = new Date().toISOString().slice(0, 10);
 

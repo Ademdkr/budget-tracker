@@ -1,18 +1,28 @@
 # Dependencies
 node_modules/
-.pnpm-debug.log
+.pnpm-debug.log*
+.pnpm-store/
 
-# Builds
+# Build outputs
 dist/
+build/
 apps/**/dist/
-.angular/
+apps/**/build/
 
-# Environment files
+# Angular specific
+.angular/
+.angular-cache/
+
+# Environment files (always ignored for security)
 .env
 .env.local
 .env.*.local
+.env.production
+.env.development
 apps/**/.env
 apps/**/.env.local
+apps/**/.env.production
+apps/**/.env.development
 !.env.example
 !**/.env.example
 
@@ -20,24 +30,58 @@ apps/**/.env.local
 .wrangler/
 .dev.vars
 
-# Database
+# Database files
 *.db
 *.db-journal
-apps/backend/.env.neon
-!apps/backend/.env.neon.example
+*.sqlite
+*.sqlite3
 
-# OS/IDE
+# Prisma generated files and cache
+node_modules/.prisma/
+apps/backend/node_modules/.prisma/
+apps/backend/prisma/migrations/.applied
+apps/backend/prisma/dev.db*
+
+# Cache directories
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+.vuepress/dist/
+.serverless/
+.fusebox/
+
+# OS generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+desktop.ini
+
+# IDE files
 .idea/
-.vscode/
+.vscode/settings.json
+.vscode/launch.json
+# Allow shared VS Code configurations
+!.vscode/extensions.json
+!.vscode/tasks.json
 *.swp
 *.swo
 *~
+.project
+.classpath
+.settings/
 
 # Testing
 coverage/
 .nyc_output/
+.jest-cache/
+.vitest/
+test-results/
+playwright-report/
 
 # Logs
 logs/
@@ -47,3 +91,28 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# Temporary folders
+tmp/
+temp/

@@ -11,8 +11,8 @@ Voraussetzungen
 1. Repository klonen
 
 ```bash
-git clone https://github.com/Ademdkr/fullstack-template.git
-cd fullstack-template
+git clone https://github.com/Ademdkr/budget-tracker.git
+cd budget-tracker
 ```
 
 2. Environment vorbereiten
@@ -54,13 +54,13 @@ pnpm dev
 Nur Frontend:
 
 ```bash
-pnpm --filter @template/frontend dev
+pnpm --filter @budget-tracker/frontend dev
 ```
 
 Nur Backend:
 
 ```bash
-pnpm --filter @template/backend start:dev
+pnpm --filter @budget-tracker/backend start:dev
 ```
 
 7. Build / CI
@@ -69,12 +69,12 @@ Die GitHub Actions CI (falls aktiviert) führt `pnpm install --ignore-scripts`, 
 
 Fehlerbehebung
 
-- Wenn `prisma generate` in CI/Install fehlschlägt: benutze `pnpm install --ignore-scripts` in CI und führe `pnpm --filter @template/backend prisma:generate` manuell danach.
+- Wenn `prisma generate` in CI/Install fehlschlägt: benutze `pnpm install --ignore-scripts` in CI und führe `pnpm --filter @budget-tracker/backend prisma:generate` manuell danach.
 
 Frontend-Tests (Karma/ChromeHeadless)
 
 - Lokale Ausführung der Frontend-Tests benötigt eine Chrome/Chromium-Installation.
-- Beispiel (lokal): `pnpm --filter @template/frontend test -- --watch=false --browsers=ChromeHeadless`
+- Beispiel (lokal): `pnpm --filter @budget-tracker/frontend test -- --watch=false --browsers=ChromeHeadless`
 - In CI werden Frontend-Tests in einem separaten Job ausgeführt, der Chromium installiert. Falls du die Frontend-Tests in deinem CI nicht benötigst, kannst du den entsprechenden Job in `.github/workflows/ci.yml` deaktivieren.
 
 Sicherheit / Geheimnisse

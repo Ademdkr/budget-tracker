@@ -1,7 +1,7 @@
 {
   "name": "@budget-tracker/backend",
   "version": "0.0.1",
-  "description": "Fullstack Template Backend (NestJS)",
+  "description": "Budget Tracker Backend (NestJS)",
   "author": "Adem Dokur",
   "private": true,
   "license": "MIT",
