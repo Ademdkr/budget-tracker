@@ -35,7 +35,7 @@ export class CreateTransactionDto {
   @IsNotEmpty()
   budgetId!: string;
 
-  @IsOptional()
   @IsString()
-  categoryId?: string;
+  @IsNotEmpty()
+  categoryId!: string;
 }

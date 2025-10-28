@@ -1,5 +1,10 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { CategoriesApiService, CreateCategoryDto, UpdateCategoryDto } from './categories-api.service';
+import { BudgetsApiService } from '../budgets/budgets-api.service';
+import { AccountSelectionService } from '../shared/services/account-selection.service';
+import { AccountsApiService } from '../accounts/accounts-api.service';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -10,17 +15,20 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatBadgeModule } from '@angular/material/badge';
+import { TransactionsApiService, Transaction } from '../transactions/transactions-api.service';
 
 // Enhanced Category interface with transaction count
 export interface CategoryWithStats {
   id: string;
   name: string;
-  emoji: string;
-  color: string;
-  type: 'income' | 'expense' | 'both';
+  emoji?: string;
+  icon?: string;
+  color?: string;
+  type?: 'income' | 'expense' | 'both';
   transactionCount: number;
   totalAmount: number;
   description?: string;
+  budgetLimit?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,6 +38,7 @@ export interface CategoryWithStats {
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     MatButtonModule,
     MatCardModule,
     MatIconModule,
@@ -51,17 +60,36 @@ export class CategoriesComponent implements OnInit {
   categories: CategoryWithStats[] = [];
   incomeCategories: CategoryWithStats[] = [];
   expenseCategories: CategoryWithStats[] = [];
-  
+
   // UI states
   isLoading = true;
   hasError = false;
   isEmpty = false;
-  
+
   // View settings
   viewMode: 'grid' | 'list' = 'grid';
   selectedFilter: 'all' | 'income' | 'expense' = 'all';
 
+  private categoriesApi = inject(CategoriesApiService);
+  private budgetsApi = inject(BudgetsApiService);
+  private transactionsApi = inject(TransactionsApiService);
+  private accountSelection = inject(AccountSelectionService);
+  private accountsApi = inject(AccountsApiService);
+
+  private initialLoadCompleted = false;
+
   ngOnInit() {
+    // Zuerst den AccountSelectionService initialisieren
+    this.accountSelection.initialize();
+
+    // Subscribe to account selection changes
+    this.accountSelection.selectedAccount$.subscribe(() => {
+      // Nur neu laden wenn bereits initial geladen wurde
+      if (this.initialLoadCompleted) {
+        this.loadCategories();
+      }
+    });
+
     this.loadCategories();
   }
 
@@ -69,82 +97,102 @@ export class CategoriesComponent implements OnInit {
     this.isLoading = true;
     this.hasError = false;
 
-    // Simulate API call
-    setTimeout(() => {
-      try {
-        this.categories = this.generateMockCategories();
+    const selectedAccountId = this.accountSelection.getSelectedAccountId();
+    console.log('🔍 Loading categories with accountId:', selectedAccountId);
+    console.log('🏦 Selected account:', this.accountSelection.getSelectedAccount());
+
+    // Kein Konto ausgewählt? Zeige leere Liste
+    if (!selectedAccountId) {
+      console.log('⚠️ No account selected, showing empty categories list');
+      this.categories = [];
+      this.filterCategories();
+      this.checkEmptyState();
+      this.isLoading = false;
+      this.initialLoadCompleted = true;
+      return;
+    }
+
+    this.categoriesApi.getAll(selectedAccountId).toPromise()
+      .then(categories => {
+        console.log('📂 Categories API response:', categories);
+        console.log('📊 Total categories loaded:', (categories ?? []).length);
+        console.log('🎯 Category names:', (categories ?? []).map(c => c.name));
+        this.categories = (categories ?? []).map(cat => {
+          const emoji = (cat.emoji && cat.emoji.trim() !== '')
+            ? cat.emoji
+            : (cat.icon && String(cat.icon).trim() !== '' ? String(cat.icon) : '📦');
+
+          // Backend liefert kein "type"-Feld – sinnvolle Defaults setzen
+          // Heuristik: Kategorie "Gehalt" als income, sonst expense
+          const type = cat.type ?? (cat.name?.toLowerCase().includes('gehalt') ? 'income' : 'expense');
+
+          return {
+            ...cat,
+            emoji,
+            type,
+            transactionCount: 0,
+            totalAmount: 0,
+            createdAt: cat.createdAt ? new Date(cat.createdAt) : new Date(),
+            updatedAt: cat.updatedAt ? new Date(cat.updatedAt) : new Date()
+          } as CategoryWithStats;
+        });
+        return this.loadAndApplyTransactionStats();
+      })
+      .then(() => {
         this.filterCategories();
         this.checkEmptyState();
-        
         this.isLoading = false;
-      } catch {
+        this.initialLoadCompleted = true;
+      })
+      .catch(() => {
         this.hasError = true;
         this.isLoading = false;
-      }
-    }, 1000);
+        this.initialLoadCompleted = true;
+      });
   }
 
-  private generateMockCategories(): CategoryWithStats[] {
-    const baseCategories = [
-      // Income Categories
-      { 
-        id: '1', name: 'Gehalt', emoji: '💰', color: '#4caf50', type: 'income' as const,
-        transactionCount: 12, totalAmount: 42000, description: 'Monatliches Gehalt'
-      },
-      { 
-        id: '2', name: 'Freelancing', emoji: '💻', color: '#2196f3', type: 'income' as const,
-        transactionCount: 8, totalAmount: 12500, description: 'Freiberufliche Projekte'
-      },
-      { 
-        id: '3', name: 'Investitionen', emoji: '📈', color: '#9c27b0', type: 'income' as const,
-        transactionCount: 5, totalAmount: 3200, description: 'Dividenden und Zinsen'
-      },
-      { 
-        id: '4', name: 'Verkäufe', emoji: '🏪', color: '#ff9800', type: 'income' as const,
-        transactionCount: 3, totalAmount: 850, description: 'Verkauf von Gegenständen'
-      },
-      
-      // Expense Categories
-      { 
-        id: '5', name: 'Lebensmittel', emoji: '🍕', color: '#ff9800', type: 'expense' as const,
-        transactionCount: 45, totalAmount: -1200, description: 'Einkäufe und Restaurants'
-      },
-      { 
-        id: '6', name: 'Transport', emoji: '🚗', color: '#f44336', type: 'expense' as const,
-        transactionCount: 28, totalAmount: -850, description: 'Auto, ÖPNV, Taxi'
-      },
-      { 
-        id: '7', name: 'Unterhaltung', emoji: '🎬', color: '#e91e63', type: 'expense' as const,
-        transactionCount: 22, totalAmount: -680, description: 'Kino, Streaming, Events'
-      },
-      { 
-        id: '8', name: 'Gesundheit', emoji: '💊', color: '#03dac6', type: 'expense' as const,
-        transactionCount: 15, totalAmount: -420, description: 'Arzt, Apotheke, Fitness'
-      },
-      { 
-        id: '9', name: 'Shopping', emoji: '🛍️', color: '#ff5722', type: 'expense' as const,
-        transactionCount: 18, totalAmount: -950, description: 'Kleidung, Elektronik'
-      },
-      { 
-        id: '10', name: 'Bildung', emoji: '📚', color: '#673ab7', type: 'expense' as const,
-        transactionCount: 6, totalAmount: -280, description: 'Kurse, Bücher'
-      },
-      { 
-        id: '11', name: 'Wohnen', emoji: '🏠', color: '#795548', type: 'expense' as const,
-        transactionCount: 12, totalAmount: -2400, description: 'Miete, Nebenkosten, Reparaturen'
-      },
-      { 
-        id: '12', name: 'Versicherungen', emoji: '🛡️', color: '#607d8b', type: 'expense' as const,
-        transactionCount: 12, totalAmount: -1800, description: 'Alle Versicherungen'
-      }
-    ];
+  private async loadAndApplyTransactionStats(): Promise<void> {
+    try {
+      const transactions = await this.transactionsApi.getAll().toPromise();
+      type CatStats = { incomeCount: number; incomeTotal: number; expenseCount: number; expenseTotal: number };
+      const byCategory = new Map<string, CatStats>();
 
-    return baseCategories.map(cat => ({
-      ...cat,
-      createdAt: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000),
-      updatedAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
-    }));
+      (transactions ?? []).forEach((t: Transaction) => {
+        const cid = t.categoryId;
+        if (!cid) return; // skip transactions without category
+        const prev: CatStats = byCategory.get(cid) || { incomeCount: 0, incomeTotal: 0, expenseCount: 0, expenseTotal: 0 };
+        if (t.type === 'INCOME') {
+          prev.incomeCount += 1;
+          prev.incomeTotal += Math.abs(t.amount);
+        } else {
+          prev.expenseCount += 1;
+          prev.expenseTotal += Math.abs(t.amount);
+        }
+        byCategory.set(cid, prev);
+      });
+
+      this.categories = this.categories.map(c => {
+        const stats: CatStats = byCategory.get(c.id) || { incomeCount: 0, incomeTotal: 0, expenseCount: 0, expenseTotal: 0 };
+        // Bestimme Typ automatisch anhand vorhandener Transaktionen
+        let typeAuto: 'income' | 'expense' | 'both' | undefined = c.type;
+        if (stats.incomeCount > 0 && stats.expenseCount === 0) typeAuto = 'income';
+        else if (stats.expenseCount > 0 && stats.incomeCount === 0) typeAuto = 'expense';
+        else if (stats.incomeCount > 0 && stats.expenseCount > 0) typeAuto = c.type ?? 'expense';
+
+        const isIncome = typeAuto === 'income';
+        return {
+          ...c,
+          type: typeAuto ?? c.type,
+          transactionCount: isIncome ? stats.incomeCount : stats.expenseCount,
+          totalAmount: isIncome ? stats.incomeTotal : -stats.expenseTotal, // negative for expense for coloring logic
+        };
+      });
+    } catch (e) {
+      console.error('Konnte Transaktionsstatistiken nicht laden:', e);
+      // Fallback: Behalte 0-Werte, UI bleibt funktionsfähig
+    }
   }
+
 
   private filterCategories() {
     switch (this.selectedFilter) {
@@ -179,6 +227,12 @@ export class CategoriesComponent implements OnInit {
   }
 
   addCategory() {
+    // Überprüfen ob ein Konto ausgewählt ist
+    if (!this.hasAccountSelection()) {
+      alert('Bitte wählen Sie zunächst ein Konto aus, um eine Kategorie zu erstellen.');
+      return;
+    }
+
     import('./category-form/category-form.component').then(({ CategoryFormComponent }) => {
       const dialogRef = this.dialog.open(CategoryFormComponent, {
         width: '500px',
@@ -191,21 +245,81 @@ export class CategoriesComponent implements OnInit {
       });
 
       dialogRef.afterClosed().subscribe(result => {
-        if (result) {
-          const newCategory: CategoryWithStats = {
-            ...result,
-            id: `cat_${Date.now()}`,
-            transactionCount: 0,
-            totalAmount: 0,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          };
-          
-          this.categories.push(newCategory);
-          this.filterCategories();
-          
-          console.log('Category added:', newCategory);
-        }
+        if (!result) return;
+
+        this.isLoading = true;
+        this.resolveCurrentBudgetId()
+          .then((budgetId) => {
+            if (!budgetId) {
+              this.isLoading = false;
+              alert('Kein aktives Budget gefunden. Bitte erstellen Sie zunächst ein Budget.');
+              return;
+            }
+
+            const dto: CreateCategoryDto = {
+              name: String(result.name).trim(),
+              description: result.description || undefined,
+              color: result.color || undefined,
+              icon: result.emoji || '📦',
+              budgetId,
+            };
+
+            this.categoriesApi.create(dto).subscribe({
+              next: (created) => {
+                // Map Backend -> UI
+                const emoji = (created.icon || '📦');
+                const type = (result.type ?? (created.name?.toLowerCase().includes('gehalt') ? 'income' : 'expense')) as 'income' | 'expense' | 'both';
+                const createdAt = created.createdAt ? new Date(created.createdAt) : new Date();
+                const updatedAt = created.updatedAt ? new Date(created.updatedAt) : new Date();
+
+                const newCategory: CategoryWithStats = {
+                  id: created.id,
+                  name: created.name,
+                  emoji,
+                  icon: created.icon,
+                  color: created.color,
+                  type,
+                  transactionCount: 0,
+                  totalAmount: 0,
+                  description: created.description,
+                  budgetLimit: created.budgetLimit,
+                  createdAt,
+                  updatedAt,
+                };
+
+                this.categories.unshift(newCategory);
+                this.filterCategories();
+                this.checkEmptyState();
+
+                // Automatisch dem ausgewählten Konto zuordnen
+                const selectedAccountId = this.accountSelection.getSelectedAccountId();
+                if (selectedAccountId) {
+                  this.accountsApi.assignCategory(selectedAccountId, created.id).subscribe({
+                    next: () => {
+                      console.log('✅ Kategorie automatisch dem Konto zugeordnet');
+                    },
+                    error: (error) => {
+                      console.log('⚠️ Automatische Kontozuordnung fehlgeschlagen:', error);
+                    }
+                  });
+                }
+
+                this.isLoading = false;
+                console.log('Kategorie erstellt:', newCategory);
+              },
+              error: (error) => {
+                console.error('Fehler beim Erstellen der Kategorie:', error);
+                this.isLoading = false;
+                const message = (error && error.message) ? error.message : 'Kategorie konnte nicht erstellt werden.';
+                alert(message);
+              }
+            });
+          })
+          .catch((e) => {
+            console.error('Fehler beim Ermitteln des Budgets:', e);
+            this.isLoading = false;
+            alert('Budget konnte nicht ermittelt werden.');
+          });
       });
     });
   }
@@ -226,41 +340,79 @@ export class CategoriesComponent implements OnInit {
       });
 
       dialogRef.afterClosed().subscribe(result => {
-        if (result) {
-          const index = this.categories.findIndex(c => c.id === category.id);
-          if (index !== -1) {
-            this.categories[index] = {
-              ...category,
-              ...result,
-              updatedAt: new Date()
-            };
+        if (!result) return;
+        this.isLoading = true;
+
+        const dto: UpdateCategoryDto = {
+          name: String(result.name).trim(),
+          description: result.description || undefined,
+          color: result.color || undefined,
+          icon: result.emoji || category.emoji || '📦',
+        };
+
+        this.categoriesApi.update(category.id, dto).subscribe({
+          next: (updated) => {
+            const index = this.categories.findIndex(c => c.id === category.id);
+            if (index !== -1) {
+              const emoji = (updated.icon || '📦');
+              const type = (result.type ?? category.type ?? (updated.name?.toLowerCase().includes('gehalt') ? 'income' : 'expense')) as 'income' | 'expense' | 'both';
+              const updatedAt = updated.updatedAt ? new Date(updated.updatedAt) : new Date();
+              this.categories[index] = {
+                ...this.categories[index],
+                name: updated.name,
+                emoji,
+                icon: updated.icon,
+                color: updated.color,
+                type,
+                description: updated.description,
+                budgetLimit: updated.budgetLimit,
+                updatedAt,
+              };
+            }
             this.filterCategories();
-            
-            console.log('Category updated:', result);
+            this.checkEmptyState();
+            this.isLoading = false;
+            console.log('Kategorie aktualisiert:', updated);
+          },
+          error: (error) => {
+            console.error('Fehler beim Aktualisieren der Kategorie:', error);
+            this.isLoading = false;
+            alert('Kategorie konnte nicht aktualisiert werden.');
           }
-        }
+        });
       });
     });
   }
 
   deleteCategory(category: CategoryWithStats) {
     const hasTransactions = category.transactionCount > 0;
-    
+
     let confirmMessage = `Möchten Sie die Kategorie "${category.name}" wirklich löschen?`;
     if (hasTransactions) {
       confirmMessage += `\n\nWarnung: Diese Kategorie hat ${category.transactionCount} Transaktionen. Diese werden ebenfalls betroffen sein.`;
     }
-    
+
     const confirmed = window.confirm(confirmMessage);
-    
+
     if (confirmed) {
-      const index = this.categories.findIndex(c => c.id === category.id);
-      if (index !== -1) {
-        this.categories.splice(index, 1);
-        this.filterCategories();
-        
-        console.log('Category deleted:', category);
-      }
+      this.isLoading = true;
+      this.categoriesApi.delete(category.id).subscribe({
+        next: () => {
+          const index = this.categories.findIndex(c => c.id === category.id);
+          if (index !== -1) {
+            this.categories.splice(index, 1);
+          }
+          this.filterCategories();
+          this.checkEmptyState();
+          this.isLoading = false;
+          console.log('Kategorie erfolgreich gelöscht:', category.name);
+        },
+        error: (error) => {
+          console.error('Fehler beim Löschen der Kategorie:', error);
+          this.isLoading = false;
+          alert('Kategorie konnte nicht gelöscht werden. Bitte versuchen Sie es erneut.');
+        }
+      });
     }
   }
 
@@ -275,16 +427,16 @@ export class CategoriesComponent implements OnInit {
     return amount >= 0 ? 'income' : 'expense';
   }
 
-  getCategoryTypeLabel(type: string): string {
+  getCategoryTypeLabel(type?: string): string {
     switch (type) {
       case 'income': return 'Einnahme';
       case 'expense': return 'Ausgabe';
       case 'both': return 'Beide';
-      default: return type;
+      default: return type || 'Unbekannt';
     }
   }
 
-  getCategoryTypeColor(type: string): string {
+  getCategoryTypeColor(type?: string): string {
     switch (type) {
       case 'income': return 'success';
       case 'expense': return 'error';
@@ -295,5 +447,29 @@ export class CategoriesComponent implements OnInit {
 
   retry() {
     this.loadCategories();
+  }
+
+  // Account Selection Helper Methods
+  getSelectedAccountName(): string {
+    const selected = this.accountSelection.getSelectedAccount();
+    return selected ? selected.name : '';
+  }
+
+  hasAccountSelection(): boolean {
+    return this.accountSelection.hasSelection();
+  }
+
+  clearAccountFilter(): void {
+    this.accountSelection.clearSelection();
+  }
+
+  private async resolveCurrentBudgetId(): Promise<string | null> {
+    try {
+      const budgets = await this.budgetsApi.getAll().toPromise();
+      const first = (budgets ?? [])[0];
+      return first?.id ?? null;
+    } catch {
+      return null;
+    }
   }
 }

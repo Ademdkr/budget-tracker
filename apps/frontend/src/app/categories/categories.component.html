@@ -1,24 +1,42 @@
 <div class="categories-container">
-  
   <!-- Header -->
   <div class="categories-header">
     <div class="header-content">
       <h1 class="page-title">
         <mat-icon>category</mat-icon>
-        Kategorien
+        <span *ngIf="hasAccountSelection(); else noAccountTitle">
+          Kategorien für {{ getSelectedAccountName() }}
+          <button
+            mat-icon-button
+            (click)="clearAccountFilter()"
+            matTooltip="Konto-Auswahl ändern"
+            class="clear-filter-btn"
+          >
+            <mat-icon>swap_horiz</mat-icon>
+          </button>
+        </span>
+        <ng-template #noAccountTitle> Kategorien </ng-template>
       </h1>
       <div class="header-actions">
         <button mat-raised-button color="primary" (click)="addCategory()">
           <mat-icon>add</mat-icon>
           Kategorie hinzufügen
         </button>
-        <button mat-icon-button 
-                [matTooltip]="viewMode === 'grid' ? 'Listenansicht' : 'Gitteransicht'"
-                (click)="toggleViewMode()">
+        <button
+          mat-icon-button
+          [matTooltip]="viewMode === 'grid' ? 'Listenansicht' : 'Gitteransicht'"
+          (click)="toggleViewMode()"
+        >
           <mat-icon>{{ viewMode === 'grid' ? 'view_list' : 'view_module' }}</mat-icon>
         </button>
       </div>
     </div>
+    <p *ngIf="hasAccountSelection()" class="filter-subtitle">
+      Zeigt nur Kategorien mit Transaktionen oder expliziten Zuordnungen für dieses Konto
+    </p>
+    <p *ngIf="!hasAccountSelection()" class="filter-subtitle">
+      Wählen Sie ein Konto aus, um kontospezifische Kategorien anzuzeigen
+    </p>
   </div>
 
   <!-- Loading State -->
@@ -50,17 +68,37 @@
     </mat-card>
   </div>
 
+  <!-- No Account Selected State -->
+  <div *ngIf="!hasAccountSelection() && !isLoading && !hasError" class="empty-container">
+    <mat-card class="empty-card">
+      <mat-card-content>
+        <div class="empty-content">
+          <mat-icon class="empty-icon">account_balance_wallet</mat-icon>
+          <h3>Kein Konto ausgewählt</h3>
+          <p>Wählen Sie zunächst ein Konto aus, um die entsprechenden Kategorien anzuzeigen.</p>
+          <button mat-raised-button color="primary" routerLink="/accounts">
+            <mat-icon>account_balance</mat-icon>
+            Zu den Konten
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
   <!-- Empty State -->
-  <div *ngIf="isEmpty && !isLoading && !hasError" class="empty-container">
+  <div *ngIf="isEmpty && !isLoading && !hasError && hasAccountSelection()" class="empty-container">
     <mat-card class="empty-card">
       <mat-card-content>
         <div class="empty-content">
           <mat-icon class="empty-icon">category</mat-icon>
-          <h3>Keine Kategorien gefunden</h3>
-          <p>Erstellen Sie Ihre erste Kategorie, um zu beginnen.</p>
+          <h3>Keine Kategorien für dieses Konto</h3>
+          <p>
+            Dieses Konto hat noch keine Kategorien. Erstellen Sie eine Kategorie oder verwenden Sie
+            Transaktionen mit Kategorien.
+          </p>
           <button mat-raised-button color="primary" (click)="addCategory()">
             <mat-icon>add</mat-icon>
-            Erste Kategorie erstellen
+            Kategorie für dieses Konto erstellen
           </button>
         </div>
       </mat-card-content>
@@ -69,24 +107,21 @@
 
   <!-- Main Content -->
   <div *ngIf="!isLoading && !hasError && !isEmpty" class="categories-content">
-    
     <!-- Filter Tabs -->
     <div class="filter-tabs">
-      <button mat-button 
-              [class.active]="selectedFilter === 'all'"
-              (click)="setFilter('all')">
+      <button mat-button [class.active]="selectedFilter === 'all'" (click)="setFilter('all')">
         <mat-icon>all_inclusive</mat-icon>
         Alle ({{ categories.length }})
       </button>
-      <button mat-button 
-              [class.active]="selectedFilter === 'income'"
-              (click)="setFilter('income')">
+      <button mat-button [class.active]="selectedFilter === 'income'" (click)="setFilter('income')">
         <mat-icon>trending_up</mat-icon>
         Einnahmen ({{ incomeCategories.length }})
       </button>
-      <button mat-button 
-              [class.active]="selectedFilter === 'expense'"
-              (click)="setFilter('expense')">
+      <button
+        mat-button
+        [class.active]="selectedFilter === 'expense'"
+        (click)="setFilter('expense')"
+      >
         <mat-icon>trending_down</mat-icon>
         Ausgaben ({{ expenseCategories.length }})
       </button>
@@ -98,7 +133,7 @@
         <mat-icon class="section-icon income">trending_up</mat-icon>
         Einnahme-Kategorien
       </h2>
-      
+
       <!-- Grid View -->
       <div *ngIf="viewMode === 'grid'" class="categories-grid">
         <mat-card *ngFor="let category of incomeCategories" class="category-card income-card">
@@ -122,7 +157,7 @@
               </button>
             </mat-menu>
           </mat-card-header>
-          
+
           <mat-card-content>
             <div class="category-stats">
               <div class="stat-item">
@@ -136,7 +171,7 @@
                 <span class="stat-value income">{{ formatCurrency(category.totalAmount) }}</span>
               </div>
             </div>
-            
+
             <div class="category-meta">
               <mat-chip class="type-chip income">
                 {{ getCategoryTypeLabel(category.type) }}
@@ -159,7 +194,7 @@
                 <p class="category-description">{{ category.description }}</p>
               </div>
             </div>
-            
+
             <div class="category-metrics">
               <div class="metric">
                 <span class="metric-value">{{ category.transactionCount }}</span>
@@ -170,12 +205,17 @@
                 <span class="metric-label">Gesamt</span>
               </div>
             </div>
-            
+
             <div class="category-actions">
               <button mat-icon-button (click)="editCategory(category)" matTooltip="Bearbeiten">
                 <mat-icon>edit</mat-icon>
               </button>
-              <button mat-icon-button (click)="deleteCategory(category)" matTooltip="Löschen" class="delete-button">
+              <button
+                mat-icon-button
+                (click)="deleteCategory(category)"
+                matTooltip="Löschen"
+                class="delete-button"
+              >
                 <mat-icon>delete</mat-icon>
               </button>
             </div>
@@ -190,7 +230,7 @@
         <mat-icon class="section-icon expense">trending_down</mat-icon>
         Ausgaben-Kategorien
       </h2>
-      
+
       <!-- Grid View -->
       <div *ngIf="viewMode === 'grid'" class="categories-grid">
         <mat-card *ngFor="let category of expenseCategories" class="category-card expense-card">
@@ -214,7 +254,7 @@
               </button>
             </mat-menu>
           </mat-card-header>
-          
+
           <mat-card-content>
             <div class="category-stats">
               <div class="stat-item">
@@ -228,7 +268,7 @@
                 <span class="stat-value expense">{{ formatCurrency(category.totalAmount) }}</span>
               </div>
             </div>
-            
+
             <div class="category-meta">
               <mat-chip class="type-chip expense">
                 {{ getCategoryTypeLabel(category.type) }}
@@ -240,7 +280,10 @@
 
       <!-- List View -->
       <div *ngIf="viewMode === 'list'" class="categories-list">
-        <mat-card *ngFor="let category of expenseCategories" class="category-list-item expense-item">
+        <mat-card
+          *ngFor="let category of expenseCategories"
+          class="category-list-item expense-item"
+        >
           <div class="list-item-content">
             <div class="category-info">
               <div class="category-avatar small" [style.background-color]="category.color">
@@ -251,7 +294,7 @@
                 <p class="category-description">{{ category.description }}</p>
               </div>
             </div>
-            
+
             <div class="category-metrics">
               <div class="metric">
                 <span class="metric-value">{{ category.transactionCount }}</span>
@@ -262,12 +305,17 @@
                 <span class="metric-label">Gesamt</span>
               </div>
             </div>
-            
+
             <div class="category-actions">
               <button mat-icon-button (click)="editCategory(category)" matTooltip="Bearbeiten">
                 <mat-icon>edit</mat-icon>
               </button>
-              <button mat-icon-button (click)="deleteCategory(category)" matTooltip="Löschen" class="delete-button">
+              <button
+                mat-icon-button
+                (click)="deleteCategory(category)"
+                matTooltip="Löschen"
+                class="delete-button"
+              >
                 <mat-icon>delete</mat-icon>
               </button>
             </div>
@@ -275,6 +323,5 @@
         </mat-card>
       </div>
     </div>
-
   </div>
 </div>

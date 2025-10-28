@@ -1,0 +1,1 @@
+import {PrismaClient} from '@prisma/client'; const p = new PrismaClient(); p.budget.findMany().then(b => {console.log('Budgets:'); b.forEach(x => console.log(x.id, x.name)); return p.dollar_disconnect();}).catch(console.error);

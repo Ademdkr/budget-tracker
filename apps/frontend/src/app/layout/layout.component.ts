@@ -85,7 +85,7 @@ export class LayoutComponent {
     // Set initial month to current month
     const now = new Date();
     this.monthControl.setValue(new Date(now.getFullYear(), now.getMonth(), 1));
-    
+
     // Set default date range (current month)
     this.startDateControl.setValue(new Date(now.getFullYear(), now.getMonth(), 1));
     this.endDateControl.setValue(new Date(now.getFullYear(), now.getMonth() + 1, 0));
@@ -124,7 +124,7 @@ export class LayoutComponent {
 
   getCurrentFilter(): DateFilter {
     const filterType = this.filterTypeControl.value || 'month';
-    
+
     if (filterType === 'month') {
       const selectedMonth = this.monthControl.value || new Date();
       return {

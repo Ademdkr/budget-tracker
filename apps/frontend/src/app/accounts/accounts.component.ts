@@ -10,7 +10,12 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatTableModule } from '@angular/material/table';
 import { MatBadgeModule } from '@angular/material/badge';
+import { MatDividerModule } from '@angular/material/divider';
 import { AccountFormComponent, AccountDialogData } from './account-form/account-form.component';
+import { CategoryAssignmentDialogData } from './category-assignment/category-assignment.component';
+import { AccountsApiService, Account, AccountWithCalculatedBalance } from './accounts-api.service';
+import { AccountSelectionService, SelectedAccount } from '../shared/services/account-selection.service';
+import { finalize } from 'rxjs/operators';
 
 // Enhanced Account interface with statistics
 export interface AccountWithStats {
@@ -48,40 +53,52 @@ export interface AccountType {
     MatProgressSpinnerModule,
     MatDialogModule,
     MatTableModule,
-    MatBadgeModule
+    MatBadgeModule,
+    MatDividerModule
   ],
   templateUrl: './accounts.component.html',
   styleUrl: './accounts.component.scss'
 })
 export class AccountsComponent implements OnInit {
   private dialog = inject(MatDialog);
+  private accountsApi = inject(AccountsApiService);
+  private accountSelection = inject(AccountSelectionService);
 
   // Data properties
   accounts: AccountWithStats[] = [];
   accountTypes: AccountType[] = [];
-  
+  selectedAccountId: string | null = null;
+
   // Helper for template
   Object = Object;
-  
+
   // UI states
   isLoading = true;
   hasError = false;
   isEmpty = false;
-  
+
   // View settings
   viewMode: 'cards' | 'table' = 'cards';
-  
+
   // Statistics
   stats = {
     totalAccounts: 0,
     totalBalance: 0,
     totalTransactions: 0
   };
-  
+
   // Table columns
   displayedColumns: string[] = ['name', 'type', 'balance', 'transactions', 'lastActivity', 'actions'];
 
   ngOnInit() {
+    // Initialize account selection service
+    this.accountSelection.initialize();
+
+    // Subscribe to selected account changes
+    this.accountSelection.selectedAccount$.subscribe(account => {
+      this.selectedAccountId = account?.id || null;
+    });
+
     this.loadInitialData();
   }
 
@@ -89,19 +106,22 @@ export class AccountsComponent implements OnInit {
     this.isLoading = true;
     this.hasError = false;
 
-    // Simulate API call
-    setTimeout(() => {
-      try {
-        this.loadAccountTypes();
-        this.loadAccounts();
-        this.checkEmptyState();
-        
-        this.isLoading = false;
-      } catch {
-        this.hasError = true;
-        this.isLoading = false;
-      }
-    }, 1000);
+    this.loadAccountTypes();
+
+    // Verwende die neue API mit berechneten Salden
+    this.accountsApi.getAccountsWithCalculatedBalances()
+      .pipe(finalize(() => this.isLoading = false))
+      .subscribe({
+        next: (accounts) => {
+          this.accounts = this.mapCalculatedAccountsToAccountWithStats(accounts);
+          this.checkEmptyState();
+          this.calculateStats();
+        },
+        error: (error) => {
+          console.error('Error loading accounts:', error);
+          this.hasError = true;
+        }
+      });
   }
 
   private loadAccountTypes() {
@@ -151,84 +171,46 @@ export class AccountsComponent implements OnInit {
     ];
   }
 
-  private loadAccounts() {
-    // Generate mock accounts with realistic data
-    this.accounts = [
-      {
-        id: '1',
-        name: 'Sparkasse Hauptkonto',
-        type: 'checking',
-        currentBalance: 2847.35,
-        note: 'Hauptkonto für Gehalt und tägliche Ausgaben',
-        transactionCount: 89,
-        lastTransactionDate: new Date('2025-10-25'),
-        createdAt: new Date('2020-01-15'),
-        updatedAt: new Date('2025-10-25'),
-        isActive: true
-      },
-      {
-        id: '2',
-        name: 'ING Tagesgeld',
-        type: 'savings',
-        currentBalance: 15240.80,
-        note: 'Notgroschen und kurzfristige Ersparnisse',
-        transactionCount: 24,
-        lastTransactionDate: new Date('2025-10-20'),
-        createdAt: new Date('2021-03-10'),
-        updatedAt: new Date('2025-10-20'),
-        isActive: true
-      },
-      {
-        id: '3',
-        name: 'DKB Visa Card',
-        type: 'credit',
-        currentBalance: -542.15,
-        note: 'Kreditkarte für Online-Einkäufe und Reisen',
-        transactionCount: 34,
-        lastTransactionDate: new Date('2025-10-24'),
-        createdAt: new Date('2022-06-01'),
-        updatedAt: new Date('2025-10-24'),
-        isActive: true
-      },
-      {
-        id: '4',
-        name: 'Trade Republic',
-        type: 'investment',
-        currentBalance: 8950.42,
-        note: 'ETF-Sparplan und Einzelaktien',
-        transactionCount: 12,
-        lastTransactionDate: new Date('2025-10-15'),
-        createdAt: new Date('2023-02-01'),
-        updatedAt: new Date('2025-10-15'),
-        isActive: true
-      },
-      {
-        id: '5',
-        name: 'Bargeld',
-        type: 'cash',
-        currentBalance: 127.50,
-        note: 'Portemonnaie und Spardose',
-        transactionCount: 45,
-        lastTransactionDate: new Date('2025-10-23'),
-        createdAt: new Date('2020-01-01'),
-        updatedAt: new Date('2025-10-23'),
-        isActive: true
-      },
-      {
-        id: '6',
-        name: 'Freelancer Konto',
-        type: 'business',
-        currentBalance: 3240.00,
-        note: 'Separates Konto für freiberufliche Tätigkeiten',
-        transactionCount: 18,
-        lastTransactionDate: new Date('2025-10-22'),
-        createdAt: new Date('2024-01-01'),
-        updatedAt: new Date('2025-10-22'),
-        isActive: true
-      }
-    ];
-    
-    this.calculateStats();
+  private mapAccountsToAccountWithStats(accounts: Account[]): AccountWithStats[] {
+    return accounts.map(account => ({
+      id: account.id,
+      name: account.name,
+      type: this.mapAccountType(account.type),
+      currentBalance: account.balance,
+      note: account.note,
+      transactionCount: 0, // TODO: Get from backend when available
+      lastTransactionDate: undefined, // TODO: Get from backend when available
+      createdAt: new Date(account.createdAt || Date.now()),
+      updatedAt: new Date(account.updatedAt || Date.now()),
+      isActive: account.isActive
+    }));
+  }
+
+  private mapCalculatedAccountsToAccountWithStats(accounts: AccountWithCalculatedBalance[]): AccountWithStats[] {
+    return accounts.map(account => ({
+      id: account.id,
+      name: account.name,
+      type: this.mapAccountType(account.type),
+      currentBalance: account.calculatedBalance, // Verwende den berechneten Saldo
+      note: account.note,
+      transactionCount: account.transactionCount,
+      lastTransactionDate: account.lastTransactionDate ? new Date(account.lastTransactionDate) : undefined,
+      createdAt: new Date(account.createdAt || Date.now()),
+      updatedAt: new Date(account.updatedAt || Date.now()),
+      isActive: account.isActive
+    }));
+  }
+
+  private mapAccountType(backendType: Account['type']): string {
+    const typeMap: { [key in Account['type']]: string } = {
+      'CHECKING': 'checking',
+      'SAVINGS': 'savings',
+      'CREDIT_CARD': 'credit',
+      'CASH': 'cash',
+      'INVESTMENT': 'investment',
+      'OTHER': 'business'
+    };
+    return typeMap[backendType] || 'checking';
   }
 
   private checkEmptyState() {
@@ -265,7 +247,7 @@ export class AccountsComponent implements OnInit {
             updatedAt: new Date(),
             isActive: true
           };
-          
+
           this.accounts.push(newAccount);
           console.log('Account added:', newAccount);
         }
@@ -298,10 +280,35 @@ export class AccountsComponent implements OnInit {
               ...result,
               updatedAt: new Date()
             };
-            
+
             console.log('Account updated:', result);
           }
         }
+      });
+    });
+  }
+
+  manageCategoriesForAccount(account: AccountWithStats) {
+    import('./category-assignment/category-assignment.component').then(({ CategoryAssignmentComponent }) => {
+      const dialogRef = this.dialog.open(CategoryAssignmentComponent, {
+        width: '600px',
+        maxWidth: '90vw',
+        maxHeight: '80vh',
+        data: {
+          account: {
+            id: account.id,
+            name: account.name,
+            type: account.type,
+            icon: this.getAccountTypeInfo(account.type)?.icon,
+            color: this.getAccountTypeInfo(account.type)?.color
+          }
+        } as CategoryAssignmentDialogData,
+        disableClose: false
+      });
+
+      dialogRef.afterClosed().subscribe(() => {
+        // No specific action needed after closing
+        console.log('Category assignment dialog closed');
       });
     });
   }
@@ -334,7 +341,7 @@ export class AccountsComponent implements OnInit {
 
   getAccountsByType(): { [key: string]: AccountWithStats[] } {
     const grouped: { [key: string]: AccountWithStats[] } = {};
-    
+
     this.accounts
       .filter(account => account.isActive)
       .forEach(account => {
@@ -343,7 +350,7 @@ export class AccountsComponent implements OnInit {
         }
         grouped[account.type].push(account);
       });
-    
+
     return grouped;
   }
 
@@ -365,11 +372,11 @@ export class AccountsComponent implements OnInit {
 
   getTimeSinceLastTransaction(date: Date | undefined): string {
     if (!date) return 'Keine Aktivität';
-    
+
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 1) return 'Gestern';
     if (diffDays < 7) return `vor ${diffDays} Tagen`;
     if (diffDays < 30) return `vor ${Math.ceil(diffDays / 7)} Wochen`;
@@ -379,6 +386,55 @@ export class AccountsComponent implements OnInit {
 
   retry() {
     this.loadInitialData();
+  }
+
+  recalculateBalances() {
+    this.isLoading = true;
+    this.accountsApi.recalculateAccountBalances()
+      .pipe(finalize(() => this.isLoading = false))
+      .subscribe({
+        next: () => {
+          console.log('Account balances recalculated successfully');
+          this.loadInitialData(); // Lade die Daten neu
+        },
+        error: (error) => {
+          console.error('Error recalculating balances:', error);
+        }
+      });
+  }
+
+  // Account Selection Methods
+  selectAccount(account: AccountWithStats): void {
+    const selectedAccount: SelectedAccount = {
+      id: account.id,
+      name: account.name,
+      type: this.getAccountTypeInfo(account.type)?.name || account.type,
+      balance: account.currentBalance,
+      icon: this.getAccountTypeInfo(account.type)?.icon,
+      color: this.getAccountTypeInfo(account.type)?.color
+    };
+
+    this.accountSelection.selectAccount(selectedAccount);
+    console.log('✅ Account selected:', selectedAccount.name);
+    console.log('🏦 Selected account details:', selectedAccount);
+  }
+
+  clearAccountSelection(): void {
+    this.accountSelection.clearSelection();
+    console.log('Account selection cleared');
+  }
+
+  isAccountSelected(accountId: string): boolean {
+    return this.selectedAccountId === accountId;
+  }
+
+  hasAccountSelection(): boolean {
+    return this.accountSelection.hasSelection();
+  }
+
+  getSelectedAccountName(): string {
+    const selected = this.accountSelection.getSelectedAccount();
+    return selected ? selected.name : '';
   }
 
   // Account CRUD Operations
@@ -429,66 +485,86 @@ export class AccountsComponent implements OnInit {
   }
 
   createAccount(accountData: Partial<AccountWithStats>): void {
-    const newAccount: AccountWithStats = {
-      id: this.generateId(),
+    const createDto = {
       name: accountData.name || '',
-      type: accountData.type || 'CHECKING',
-      currentBalance: accountData.currentBalance || 0,
+      type: this.mapFrontendTypeToBackend(accountData.type || 'checking'),
+      balance: accountData.currentBalance || 0,
+      currency: 'EUR',
       note: accountData.note,
-      transactionCount: 0,
-      lastTransactionDate: undefined,
-      createdAt: new Date(),
-      updatedAt: new Date(),
       isActive: true
     };
 
-    this.accounts.unshift(newAccount);
-    this.calculateStats();
-    
-    // Show success message
-    console.log('Konto erstellt:', newAccount.name);
+    this.accountsApi.create(createDto).subscribe({
+      next: (account) => {
+        const newAccount = this.mapAccountsToAccountWithStats([account])[0];
+        this.accounts.unshift(newAccount);
+        this.calculateStats();
+        console.log('Konto erstellt:', account.name);
+      },
+      error: (error) => {
+        console.error('Error creating account:', error);
+      }
+    });
+  }
+
+  private mapFrontendTypeToBackend(frontendType: string): Account['type'] {
+    const typeMap: { [key: string]: Account['type'] } = {
+      'checking': 'CHECKING',
+      'savings': 'SAVINGS',
+      'credit': 'CREDIT_CARD',
+      'cash': 'CASH',
+      'investment': 'INVESTMENT',
+      'business': 'OTHER'
+    };
+    return typeMap[frontendType] || 'CHECKING';
   }
 
   updateAccount(accountId: string, accountData: Partial<AccountWithStats>): void {
-    const index = this.accounts.findIndex(a => a.id === accountId);
-    if (index !== -1) {
-      this.accounts[index] = {
-        ...this.accounts[index],
-        ...accountData,
-        updatedAt: new Date()
-      };
-      this.calculateStats();
-      
-      // Show success message
-      console.log('Konto aktualisiert:', this.accounts[index].name);
-    }
+    const updateDto = {
+      name: accountData.name,
+      type: accountData.type ? this.mapFrontendTypeToBackend(accountData.type) : undefined,
+      balance: accountData.currentBalance,
+      note: accountData.note,
+      isActive: accountData.isActive
+    };
+
+    this.accountsApi.update(accountId, updateDto).subscribe({
+      next: (account) => {
+        const index = this.accounts.findIndex(a => a.id === accountId);
+        if (index !== -1) {
+          this.accounts[index] = this.mapAccountsToAccountWithStats([account])[0];
+          this.calculateStats();
+          console.log('Konto aktualisiert:', account.name);
+        }
+      },
+      error: (error) => {
+        console.error('Error updating account:', error);
+      }
+    });
   }
 
   deleteAccount(account: AccountWithStats): void {
     const hasTransactions = account.transactionCount > 0;
-    
+
     let confirmMessage = `Möchten Sie das Konto "${account.name}" wirklich löschen?`;
     if (hasTransactions) {
       confirmMessage += `\n\nHinweis: Dieses Konto hat ${account.transactionCount} Transaktionen. Das Konto wird deaktiviert und bleibt in Filtern verfügbar.`;
     }
-    
+
     const confirmed = confirm(confirmMessage);
     if (confirmed) {
-      if (hasTransactions) {
-        // Deactivate account instead of deleting
-        const index = this.accounts.findIndex(a => a.id === account.id);
-        if (index !== -1) {
-          this.accounts[index].isActive = false;
-          this.accounts[index].updatedAt = new Date();
+      this.accountsApi.delete(account.id).subscribe({
+        next: () => {
+          this.accounts = this.accounts.filter(a => a.id !== account.id);
           this.calculateStats();
-          console.log('Konto deaktiviert:', account.name);
+          console.log('Konto gelöscht:', account.name);
+        },
+        error: (error) => {
+          console.error('Error deleting account:', error);
+          // If delete failed, try to refresh the list to see current state
+          this.loadInitialData();
         }
-      } else {
-        // Actually delete the account
-        this.accounts = this.accounts.filter(a => a.id !== account.id);
-        this.calculateStats();
-        console.log('Konto gelöscht:', account.name);
-      }
+      });
     }
   }
 
@@ -498,7 +574,7 @@ export class AccountsComponent implements OnInit {
 
   private calculateStats(): void {
     const activeAccounts = this.accounts.filter(a => a.isActive);
-    
+
     this.stats = {
       totalAccounts: activeAccounts.length,
       totalBalance: activeAccounts.reduce((sum, account) => sum + account.currentBalance, 0),

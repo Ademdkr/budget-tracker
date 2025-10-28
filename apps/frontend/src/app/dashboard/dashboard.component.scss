@@ -7,14 +7,44 @@
 // Header
 .dashboard-header {
   margin-bottom: 2rem;
-  
+
   .dashboard-title {
     margin: 0 0 0.5rem 0;
     font-size: 2rem;
     font-weight: 500;
     color: var(--mat-sys-on-surface);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    .account-filter-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--mat-sys-primary-container);
+      color: var(--mat-sys-on-primary-container);
+      padding: 0.5rem 1rem;
+      border-radius: 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      animation: slideIn 0.3s ease-out;
+
+      .clear-filter-btn {
+        margin-left: 0.25rem;
+        width: 1.5rem;
+        height: 1.5rem;
+
+        .mat-icon {
+          font-size: 1rem;
+          width: 1rem;
+          height: 1rem;
+          line-height: 1rem;
+        }
+      }
+    }
   }
-  
+
   .dashboard-subtitle {
     margin: 0;
     color: var(--mat-sys-on-surface-variant);
@@ -44,7 +74,7 @@
 .empty-content {
   text-align: center;
   padding: 2rem;
-  
+
   .loading-spinner {
     width: 40px;
     height: 40px;
@@ -54,7 +84,7 @@
     animation: spin 1s linear infinite;
     margin: 0 auto 1rem;
   }
-  
+
   .error-icon,
   .empty-icon {
     font-size: 3rem;
@@ -63,12 +93,12 @@
     color: var(--mat-sys-on-surface-variant);
     margin-bottom: 1rem;
   }
-  
+
   h3 {
     margin: 0 0 1rem 0;
     color: var(--mat-sys-on-surface);
   }
-  
+
   p {
     margin: 0 0 1.5rem 0;
     color: var(--mat-sys-on-surface-variant);
@@ -76,8 +106,23 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 // Main Dashboard Content
@@ -101,50 +146,50 @@
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1rem;
   }
-  
+
   .kpi-card {
     position: relative;
-    
+
     &.kpi-primary {
       border-left: 4px solid var(--mat-sys-primary);
     }
-    
+
     &.kpi-success {
       border-left: 4px solid #4caf50;
     }
-    
+
     &.kpi-error {
       border-left: 4px solid var(--mat-sys-error);
     }
-    
+
     .kpi-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 1rem;
-      
+
       .kpi-icon {
         font-size: 2rem;
         width: 2rem;
         height: 2rem;
         color: var(--mat-sys-primary);
       }
-      
+
       .kpi-trend {
         display: flex;
         align-items: center;
         gap: 0.25rem;
         font-size: 0.875rem;
         font-weight: 500;
-        
+
         &.trend-up {
           color: #4caf50;
         }
-        
+
         &.trend-down {
           color: var(--mat-sys-error);
         }
-        
+
         .trend-icon {
           font-size: 1rem;
           width: 1rem;
@@ -152,7 +197,7 @@
         }
       }
     }
-    
+
     .kpi-content {
       .kpi-title {
         margin: 0 0 0.5rem 0;
@@ -162,7 +207,7 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
       }
-      
+
       .kpi-value {
         font-size: 1.75rem;
         font-weight: 600;
@@ -179,23 +224,23 @@
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 1rem;
   }
-  
+
   .budget-card {
     .budget-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 1rem;
-      
+
       .budget-category {
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        
+
         .category-emoji {
           font-size: 1.5rem;
         }
-        
+
         .category-name {
           margin: 0;
           font-size: 1rem;
@@ -203,39 +248,39 @@
           color: var(--mat-sys-on-surface);
         }
       }
-      
+
       .budget-chip {
         font-weight: 600;
       }
     }
-    
+
     .budget-amounts {
       margin-bottom: 1rem;
-      
+
       .amount-row {
         display: flex;
         justify-content: space-between;
         margin-bottom: 0.5rem;
-        
+
         .amount-label {
           color: var(--mat-sys-on-surface-variant);
           font-size: 0.875rem;
         }
-        
+
         .amount-value {
           font-weight: 500;
-          
+
           &.spent {
             color: var(--mat-sys-error);
           }
-          
+
           &.remaining {
             color: #4caf50;
           }
         }
       }
     }
-    
+
     .progress-container {
       margin-top: 1rem;
     }
@@ -249,16 +294,16 @@
     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
     gap: 1.5rem;
   }
-  
+
   .chart-card {
     .chart-content {
       padding: 1rem 0;
-      
+
       .chart-container {
         position: relative;
         height: 300px;
         width: 100%;
-        
+
         canvas {
           max-height: 300px;
         }
@@ -273,10 +318,16 @@
     .table-container {
       overflow-x: auto;
       margin-bottom: 1rem;
-      
+
       .transactions-table {
         width: 100%;
-        
+        // Ensure amount column is only as wide as its content
+        .mat-column-amount {
+          width: 1%;
+          white-space: nowrap;
+          text-align: right;
+        }
+
         .mat-mdc-header-cell {
           font-weight: 600;
           color: var(--mat-sys-on-surface-variant);
@@ -284,36 +335,37 @@
           letter-spacing: 0.5px;
           font-size: 0.75rem;
         }
-        
+
         .mat-mdc-cell {
           border-bottom: 1px solid var(--mat-sys-outline-variant);
-          
+
           .category-cell {
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            
+
             .category-emoji {
               font-size: 1.25rem;
             }
-            
+
             .category-name {
               font-weight: 500;
             }
           }
-          
+
           .amount {
             font-weight: 600;
-            
+            white-space: nowrap; // keep currency in one line
+
             &.income {
               color: #4caf50;
             }
-            
+
             &.expense {
               color: var(--mat-sys-error);
             }
           }
-          
+
           .transaction-note {
             color: var(--mat-sys-on-surface-variant);
             font-size: 0.875rem;
@@ -321,7 +373,7 @@
         }
       }
     }
-    
+
     .table-actions {
       display: flex;
       justify-content: center;
@@ -336,19 +388,19 @@
   .dashboard-container {
     padding: 1rem;
   }
-  
+
   .kpi-section .kpi-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .budget-section .budget-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .charts-section .charts-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .dashboard-header {
     .dashboard-title {
       font-size: 1.5rem;

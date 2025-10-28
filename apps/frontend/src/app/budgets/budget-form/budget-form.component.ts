@@ -105,7 +105,7 @@ export interface BudgetDialogData {
               min="0.01"
             >
             <mat-icon matPrefix>euro</mat-icon>
-            <span matSuffix>€</span>
+            <span matSuffix class="currency-suffix">€</span>
             <mat-hint>Geben Sie den gewünschten Budgetbetrag für den Monat ein</mat-hint>
             <mat-error *ngIf="budgetForm.get('targetAmount')?.hasError('required')">
               Budget-Betrag ist erforderlich
@@ -158,7 +158,7 @@ export interface BudgetDialogData {
             Abbrechen
           </button>
         </div>
-        
+
         <div class="actions-right">
           <button
             mat-button
@@ -170,7 +170,7 @@ export interface BudgetDialogData {
             <mat-icon>refresh</mat-icon>
             Zurücksetzen
           </button>
-          
+
           <button
             mat-raised-button
             color="primary"
@@ -208,7 +208,7 @@ export class BudgetFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadAvailableCategories();
-    
+
     if (this.data.isEdit && this.data.budget) {
       this.populateForm(this.data.budget);
     }
@@ -217,7 +217,7 @@ export class BudgetFormComponent implements OnInit {
   private createForm(): FormGroup {
     return this.fb.group({
       categoryId: ['', [Validators.required]],
-      targetAmount: [0, [
+      targetAmount: [null, [
         Validators.required,
         Validators.min(0.01),
         Validators.max(999999.99)
@@ -232,7 +232,7 @@ export class BudgetFormComponent implements OnInit {
     } else {
       // For creating, exclude categories that already have budgets for this period
       const existingCategoryIds = this.data.existingBudgets.map(b => b.categoryId);
-      this.availableCategories = this.data.categories.filter(c => 
+      this.availableCategories = this.data.categories.filter(c =>
         c.isActive && !existingCategoryIds.includes(c.id)
       );
     }
@@ -311,7 +311,7 @@ export class BudgetFormComponent implements OnInit {
         return;
       }
     }
-    
+
     this.dialogRef.close();
   }
 
@@ -321,7 +321,7 @@ export class BudgetFormComponent implements OnInit {
     } else {
       this.budgetForm.reset({
         categoryId: '',
-        targetAmount: 0
+        targetAmount: null
       });
     }
     this.budgetForm.markAsUntouched();

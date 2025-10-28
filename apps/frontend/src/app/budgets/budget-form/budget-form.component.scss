@@ -1,26 +1,26 @@
 .budget-form-dialog {
   width: 100%;
   max-width: 600px;
-  
+
   .dialog-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 1.5rem 1.5rem 0 1.5rem;
     margin: 0;
-    
+
     .header-content {
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      
+
       .header-icon {
         font-size: 1.5rem;
         width: 1.5rem;
         height: 1.5rem;
         color: var(--mat-sys-primary);
       }
-      
+
       h2 {
         margin: 0;
         font-size: 1.5rem;
@@ -28,26 +28,26 @@
         color: var(--mat-sys-on-surface);
       }
     }
-    
+
     .close-button {
       color: var(--mat-sys-on-surface-variant);
     }
   }
-  
+
   .dialog-content {
     padding: 1.5rem;
     max-height: 70vh;
     overflow-y: auto;
-    
+
     .budget-form {
       display: flex;
       flex-direction: column;
       gap: 1.5rem;
-      
+
       .full-width {
         width: 100%;
       }
-      
+
       // Period Info
       .period-info {
         display: flex;
@@ -58,18 +58,18 @@
         border-radius: 8px;
         color: var(--mat-sys-on-primary-container);
         font-weight: 500;
-        
+
         mat-icon {
           color: var(--mat-sys-primary);
         }
       }
-      
+
       // Category Option Styling
       .category-option {
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        
+
         .category-icon {
           width: 24px;
           height: 24px;
@@ -80,12 +80,12 @@
           font-size: 0.875rem;
           color: white;
         }
-        
+
         span {
           font-weight: 500;
         }
       }
-      
+
       // Budget Preview
       .budget-preview {
         display: flex;
@@ -94,7 +94,7 @@
         background: var(--mat-sys-surface-container-high);
         border: 1px solid var(--mat-sys-outline-variant);
         border-radius: 8px;
-        
+
         mat-icon {
           color: var(--mat-sys-primary);
           font-size: 1.5rem;
@@ -102,32 +102,32 @@
           height: 1.5rem;
           margin-top: 0.25rem;
         }
-        
+
         .preview-content {
           flex: 1;
-          
+
           h4 {
             margin: 0 0 0.75rem 0;
             font-size: 1rem;
             font-weight: 600;
             color: var(--mat-sys-on-surface);
           }
-          
+
           .preview-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 0.5rem;
-            
+
             &:last-child {
               margin-bottom: 0;
             }
-            
+
             .preview-label {
               font-size: 0.875rem;
               color: var(--mat-sys-on-surface-variant);
             }
-            
+
             .preview-value {
               font-weight: 600;
               color: var(--mat-sys-on-surface);
@@ -135,7 +135,7 @@
           }
         }
       }
-      
+
       // Form Status
       .form-status {
         display: flex;
@@ -147,7 +147,7 @@
         border-radius: 8px;
         color: var(--mat-sys-error);
         font-size: 0.875rem;
-        
+
         mat-icon {
           font-size: 1.125rem;
           width: 1.125rem;
@@ -156,30 +156,30 @@
       }
     }
   }
-  
+
   .dialog-actions {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 1.5rem 1.5rem 1.5rem;
     gap: 1rem;
-    
+
     .actions-left,
     .actions-right {
       display: flex;
       align-items: center;
       gap: 0.75rem;
     }
-    
+
     .actions-right {
       margin-left: auto;
     }
-    
+
     button {
       min-width: 120px;
       height: 40px;
       font-weight: 500;
-      
+
       mat-icon {
         margin-right: 0.5rem;
         font-size: 1.125rem;
@@ -187,27 +187,27 @@
         height: 1.125rem;
       }
     }
-    
+
     .cancel-button {
       color: var(--mat-sys-on-surface-variant);
-      
+
       &:hover {
         background: color-mix(in srgb, var(--mat-sys-on-surface) 8%, transparent);
       }
     }
-    
+
     .reset-button {
       color: var(--mat-sys-outline);
-      
+
       &:hover:not(:disabled) {
         background: color-mix(in srgb, var(--mat-sys-outline) 8%, transparent);
       }
-      
+
       &:disabled {
         opacity: 0.5;
       }
     }
-    
+
     .submit-button {
       &:disabled {
         opacity: 0.6;
@@ -226,14 +226,31 @@
             color: var(--mat-sys-on-surface-variant);
             padding-right: 0.75rem;
           }
-          
+
           .mat-mdc-form-field-icon-suffix {
             color: var(--mat-sys-on-surface-variant);
             padding-left: 0.75rem;
           }
         }
       }
-      
+
+      // Currency Suffix Styling
+      .currency-suffix {
+        padding-right: 1rem;
+        color: var(--mat-sys-on-surface-variant);
+      }
+
+      // Align select arrow with currency suffix
+      .mat-mdc-form-field-type-mat-select {
+        .mat-mdc-text-field-wrapper {
+          .mat-mdc-form-field-flex {
+            .mat-mdc-form-field-infix {
+              padding-right: 0.5rem;
+            }
+          }
+        }
+      }
+
       .mat-mdc-form-field-subscript-wrapper {
         .mat-mdc-form-field-hint-wrapper {
           .mat-mdc-form-field-hint {
@@ -241,7 +258,7 @@
             color: var(--mat-sys-on-surface-variant);
           }
         }
-        
+
         .mat-mdc-form-field-error-wrapper {
           .mat-mdc-form-field-error {
             font-size: 0.75rem;
@@ -250,7 +267,7 @@
         }
       }
     }
-    
+
     // Select Panel Styling
     .mat-mdc-select-panel {
       .mat-mdc-option {
@@ -261,11 +278,22 @@
         }
       }
     }
-    
+
     // Number Input Styling
     .mat-mdc-input-element {
-      &[type="number"] {
+      &[type='number'] {
         text-align: right;
+
+        // Entferne Spinner-Pfeile (Chrome, Safari, Edge, Opera)
+        &::-webkit-outer-spin-button,
+        &::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+
+        // Entferne Spinner-Pfeile (Firefox)
+        appearance: textfield;
+        -moz-appearance: textfield;
       }
     }
   }
@@ -276,7 +304,7 @@
   &.loading {
     position: relative;
     color: transparent !important;
-    
+
     &::after {
       content: '';
       position: absolute;
@@ -294,36 +322,40 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 // Responsive Design
 @media (max-width: 768px) {
   .budget-form-dialog {
     max-width: calc(100vw - 2rem);
-    
+
     .dialog-header {
       padding: 1rem 1rem 0 1rem;
-      
+
       .header-content {
         h2 {
           font-size: 1.25rem;
         }
       }
     }
-    
+
     .dialog-content {
       padding: 1rem;
       max-height: 60vh;
-      
+
       .budget-form {
         gap: 1rem;
-        
+
         .budget-preview {
           flex-direction: column;
           gap: 0.75rem;
-          
+
           mat-icon {
             align-self: flex-start;
             margin-top: 0;
@@ -331,24 +363,24 @@
         }
       }
     }
-    
+
     .dialog-actions {
       padding: 0 1rem 1rem 1rem;
       flex-direction: column;
       align-items: stretch;
       gap: 0.75rem;
-      
+
       .actions-left,
       .actions-right {
         width: 100%;
         justify-content: center;
       }
-      
+
       .actions-right {
         margin-left: 0;
         flex-direction: row-reverse;
       }
-      
+
       button {
         flex: 1;
         min-width: auto;
@@ -365,12 +397,12 @@
         flex-direction: column;
         gap: 0.5rem;
       }
-      
+
       button {
         width: 100%;
       }
     }
-    
+
     .budget-preview {
       .preview-content {
         .preview-item {

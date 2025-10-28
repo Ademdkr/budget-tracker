@@ -45,6 +45,7 @@ model Category {
   budgetId     String
   budget       Budget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
   transactions Transaction[]
+  accounts     CategoryAccount[] // Many-to-Many zu Accounts
   
   @@map("categories")
 }
@@ -65,8 +66,57 @@ model Transaction {
   budget      Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
   categoryId  String?
   category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  accountId   String?  // Optional, da bestehende Transaktionen keinen Account haben
+  account     Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
   
   @@map("transactions")
+}
+
+// Account Model für verschiedene Konten (Girokonto, Sparkonto, etc.)
+model Account {
+  id            String      @id @default(cuid())
+  name          String
+  type          AccountType @default(CHECKING)
+  balance       Float       @default(0)
+  currency      String      @default("EUR")
+  icon          String?     // Icon name für UI
+  color         String?     // Hex color code für UI
+  note          String?     // Optionale Notiz
+  isActive      Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  // Relationen
+  transactions  Transaction[]
+  categories    CategoryAccount[] // Many-to-Many zu Categories
+  
+  @@map("accounts")
+}
+
+// Junction Table für Many-to-Many Beziehung zwischen Categories und Accounts
+model CategoryAccount {
+  id         String   @id @default(cuid())
+  categoryId String
+  accountId  String
+  createdAt  DateTime @default(now())
+  
+  // Relationen
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  account    Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  
+  // Unique constraint um Duplikate zu vermeiden
+  @@unique([categoryId, accountId])
+  @@map("category_accounts")
+}
+
+// Enum für Account-Typen
+enum AccountType {
+  CHECKING      // Girokonto
+  SAVINGS       // Sparkonto
+  CREDIT_CARD   // Kreditkarte
+  INVESTMENT    // Investmentkonto
+  CASH          // Bargeld
+  OTHER         // Sonstiges
 }
 
 // Enum für Transaction-Typen

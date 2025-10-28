@@ -1,8 +1,24 @@
 <div class="dashboard-container">
   <!-- Header -->
   <div class="dashboard-header">
-    <h1 class="dashboard-title">Dashboard</h1>
-    <p class="dashboard-subtitle">Überblick über Ihre Finanzen</p>
+    <h1 class="dashboard-title">
+      Dashboard
+      <span *ngIf="getSelectedAccountName()" class="account-filter-badge">
+        für {{ getSelectedAccountName() }}
+        <button
+          mat-icon-button
+          (click)="clearAccountFilter()"
+          matTooltip="Account-Filter entfernen"
+          class="clear-filter-btn"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </span>
+    </h1>
+    <p class="dashboard-subtitle">
+      Überblick über Ihre Finanzen
+      <span *ngIf="hasAccountSelection()"> - Gefiltert nach ausgewähltem Konto</span>
+    </p>
   </div>
 
   <!-- Loading State -->
@@ -47,7 +63,6 @@
 
   <!-- Main Content -->
   <div *ngIf="!isLoading && !hasError && !isEmpty" class="dashboard-content">
-    
     <!-- KPI Cards -->
     <section class="kpi-section">
       <h2 class="section-title">Monatsübersicht</h2>
@@ -56,11 +71,11 @@
           <mat-card-content>
             <div class="kpi-header">
               <mat-icon class="kpi-icon">{{ kpi.icon }}</mat-icon>
-              <div class="kpi-trend" [ngClass]="'trend-' + kpi.trend?.direction">
+              <div class="kpi-trend" [ngClass]="'trend-' + kpi.trend.direction">
                 <mat-icon class="trend-icon">
-                  {{ kpi.trend?.direction === 'up' ? 'trending_up' : 'trending_down' }}
+                  {{ kpi.trend.direction === 'up' ? 'trending_up' : 'trending_down' }}
                 </mat-icon>
-                <span class="trend-value">{{ kpi.trend?.value }}%</span>
+                <span class="trend-value">{{ kpi.trend.value }}%</span>
               </div>
             </div>
             <div class="kpi-content">
@@ -84,10 +99,10 @@
                 <h3 class="category-name">{{ budget.category }}</h3>
               </div>
               <mat-chip class="budget-chip" [color]="getProgressColor(budget.percentage)">
-                {{ budget.percentage }}%
+                {{ formatPercentage(budget.percentage) }}%
               </mat-chip>
             </div>
-            
+
             <div class="budget-amounts">
               <div class="amount-row">
                 <span class="amount-label">Geplant:</span>
@@ -104,10 +119,11 @@
             </div>
 
             <div class="progress-container">
-              <mat-progress-bar 
-                mode="determinate" 
+              <mat-progress-bar
+                mode="determinate"
                 [value]="budget.percentage"
-                [color]="getProgressColor(budget.percentage)">
+                [color]="getProgressColor(budget.percentage)"
+              >
               </mat-progress-bar>
             </div>
           </mat-card-content>
@@ -119,7 +135,6 @@
     <section class="charts-section">
       <h2 class="section-title">Diagramme</h2>
       <div class="charts-grid">
-        
         <!-- Pie Chart - Expenses by Category -->
         <mat-card class="chart-card">
           <mat-card-header>
@@ -128,11 +143,12 @@
           </mat-card-header>
           <mat-card-content class="chart-content">
             <div class="chart-container">
-              <canvas 
+              <canvas
                 baseChart
                 [data]="pieChartData"
                 [options]="pieChartOptions"
-                [type]="pieChartType">
+                [type]="pieChartType"
+              >
               </canvas>
             </div>
           </mat-card-content>
@@ -146,16 +162,16 @@
           </mat-card-header>
           <mat-card-content class="chart-content">
             <div class="chart-container">
-              <canvas 
+              <canvas
                 baseChart
                 [data]="lineChartData"
                 [options]="lineChartOptions"
-                [type]="lineChartType">
+                [type]="lineChartType"
+              >
               </canvas>
             </div>
           </mat-card-content>
         </mat-card>
-
       </div>
     </section>
 
@@ -166,12 +182,11 @@
         <mat-card-content>
           <div class="table-container">
             <table mat-table [dataSource]="recentTransactions" class="transactions-table">
-              
               <!-- Date Column -->
               <ng-container matColumnDef="date">
                 <th mat-header-cell *matHeaderCellDef>Datum</th>
                 <td mat-cell *matCellDef="let transaction">
-                  {{ transaction.date | date:'dd.MM.yyyy' }}
+                  {{ transaction.date | date: 'dd.MM.yyyy' }}
                 </td>
               </ng-container>
 
@@ -186,21 +201,24 @@
                 </td>
               </ng-container>
 
-              <!-- Account Column -->
+              <!-- Account Column - Removed (no account field in schema) -->
+              <!--
               <ng-container matColumnDef="account">
                 <th mat-header-cell *matHeaderCellDef>Konto</th>
                 <td mat-cell *matCellDef="let transaction">
                   {{ transaction.account }}
                 </td>
               </ng-container>
+              -->
 
               <!-- Amount Column -->
               <ng-container matColumnDef="amount">
                 <th mat-header-cell *matHeaderCellDef>Betrag</th>
                 <td mat-cell *matCellDef="let transaction">
-                  <span 
-                    class="amount" 
-                    [ngClass]="transaction.type === 'income' ? 'income' : 'expense'">
+                  <span
+                    class="amount"
+                    [ngClass]="transaction.type === 'income' ? 'income' : 'expense'"
+                  >
                     {{ formatCurrency(transaction.amount) }}
                   </span>
                 </td>
@@ -215,12 +233,12 @@
               </ng-container>
 
               <tr mat-header-row *matHeaderRowDef="transactionColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: transactionColumns;"></tr>
+              <tr mat-row *matRowDef="let row; columns: transactionColumns"></tr>
             </table>
           </div>
-          
+
           <div class="table-actions">
-            <button mat-button color="primary">
+            <button mat-button color="primary" routerLink="/transactions">
               Alle Transaktionen anzeigen
               <mat-icon>arrow_forward</mat-icon>
             </button>
@@ -228,6 +246,5 @@
         </mat-card-content>
       </mat-card>
     </section>
-
   </div>
 </div>

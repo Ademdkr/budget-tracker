@@ -41,7 +41,7 @@ export class CategoryFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private dialogRef = inject(MatDialogRef<CategoryFormComponent>);
   public data = inject(MAT_DIALOG_DATA) as CategoryFormData;
-  
+
   categoryForm!: FormGroup;
   mode: 'create' | 'edit' = 'create';
   isSubmitting = false;
@@ -72,7 +72,7 @@ export class CategoryFormComponent implements OnInit {
 
     this.categoryForm = this.fb.group({
       name: [
-        data.category?.name || '', 
+        data.category?.name || '',
         [Validators.required, Validators.minLength(2), this.uniqueNameValidator.bind(this)]
       ],
       emoji: [data.category?.emoji || '💰', [Validators.required]],
@@ -90,10 +90,10 @@ export class CategoryFormComponent implements OnInit {
   // Custom validator for unique category names
   uniqueNameValidator(control: AbstractControl) {
     if (!control.value) return null;
-    
+
     const normalizedValue = control.value.toLowerCase().trim();
     const isDuplicate = this.existingNames.includes(normalizedValue);
-    
+
     return isDuplicate ? { uniqueName: { value: control.value } } : null;
   }
 
@@ -125,17 +125,17 @@ export class CategoryFormComponent implements OnInit {
     const r = parseInt(hexColor.substr(1, 2), 16);
     const g = parseInt(hexColor.substr(3, 2), 16);
     const b = parseInt(hexColor.substr(5, 2), 16);
-    
+
     // Calculate luminance
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    
+
     return luminance > 0.5 ? '#000000' : '#ffffff';
   }
 
   onSubmit() {
     if (this.categoryForm.valid && !this.isSubmitting) {
       this.isSubmitting = true;
-      
+
       const formValue = this.categoryForm.value;
       const category = {
         ...formValue,
@@ -165,11 +165,11 @@ export class CategoryFormComponent implements OnInit {
 
   getErrorMessage(fieldName: string): string {
     const field = this.categoryForm.get(fieldName);
-    
+
     if (field?.hasError('required')) {
       return 'Dieses Feld ist erforderlich';
     }
-    
+
     if (fieldName === 'name') {
       if (field?.hasError('minlength')) {
         return 'Der Name muss mindestens 2 Zeichen lang sein';
@@ -178,7 +178,7 @@ export class CategoryFormComponent implements OnInit {
         return 'Eine Kategorie mit diesem Namen existiert bereits';
       }
     }
-    
+
     return '';
   }
 }
