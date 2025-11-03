@@ -91,26 +91,4 @@ export class AccountsController {
     console.log('✅ Account deleted successfully');
     return { success: true };
   }
-
-  // Category-Account Relationship Endpoints
-  @Post(':id/categories/:categoryId')
-  assignCategory(
-    @Param('id') accountId: string,
-    @Param('categoryId') categoryId: string,
-  ) {
-    return this.accountsService.assignCategory(accountId, categoryId);
-  }
-
-  @Delete(':id/categories/:categoryId')
-  removeCategory(
-    @Param('id') accountId: string,
-    @Param('categoryId') categoryId: string,
-  ) {
-    return this.accountsService.removeCategory(accountId, categoryId);
-  }
-
-  @Get(':id/categories')
-  getAssignedCategories(@Param('id') accountId: string) {
-    return this.accountsService.getAssignedCategories(accountId);
-  }
 }

@@ -314,21 +314,4 @@ export class AccountsService {
       };
     });
   }
-
-  // Category-Account Relationship Management (vereinfacht, da das neue Schema CategoryAccount nicht hat)
-  async assignCategory() {
-    // Das neue Schema hat keine CategoryAccount-Tabelle mehr
-    // Diese Funktionalität müsste anders implementiert werden
-    throw new Error('Category assignment not implemented in new schema');
-  }
-
-  async removeCategory() {
-    // Das neue Schema hat keine CategoryAccount-Tabelle mehr
-    throw new Error('Category assignment not implemented in new schema');
-  }
-
-  async getAssignedCategories() {
-    // Das neue Schema hat keine CategoryAccount-Tabelle mehr
-    throw new Error('Category assignment not implemented in new schema');
-  }
 }
