@@ -5,10 +5,9 @@ import { Injectable } from '@angular/core';
  * Eliminiert Wiederholungen in allen Komponenten
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class TrackByUtilsService {
-
   /**
    * TrackBy für Objekte mit id-Property
    */
@@ -83,8 +82,8 @@ export class TrackByUtilsService {
    * TrackBy für Objekte mit kombinierter ID (z.B. category-month Kombinationen)
    */
   trackByCombinedId<T extends { categoryId?: string; month?: number; year?: number }>(
-    index: number, 
-    item: T
+    index: number,
+    item: T,
   ): string {
     if (item.categoryId && item.month !== undefined && item.year !== undefined) {
       return `${item.categoryId}-${item.year}-${item.month}`;

@@ -12,6 +12,7 @@ import {
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
+import { ImportRequestDto } from './dto/import-transactions.dto';
 
 @Controller('transactions')
 export class TransactionsController {
@@ -60,5 +61,11 @@ export class TransactionsController {
   remove(@Param('id') id: string, @Headers() headers: any) {
     const userId = this.getUserIdFromHeaders(headers);
     return this.transactionsService.remove(id, userId);
+  }
+
+  @Post('import')
+  import(@Body() importRequest: ImportRequestDto, @Headers() headers: any) {
+    const userId = this.getUserIdFromHeaders(headers);
+    return this.transactionsService.importTransactions(importRequest, userId);
   }
 }

@@ -22,15 +22,6 @@
           <mat-icon>add</mat-icon>
           Transaktion hinzufügen
         </button>
-        <button mat-icon-button [matMenuTriggerFor]="exportMenu" matTooltip="Exportieren">
-          <mat-icon>download</mat-icon>
-        </button>
-        <mat-menu #exportMenu="matMenu">
-          <button mat-menu-item (click)="exportTransactions()">
-            <mat-icon>file_download</mat-icon>
-            Als CSV exportieren
-          </button>
-        </mat-menu>
       </div>
     </div>
     <p class="transactions-subtitle">

@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
+import {
+  ImportRequestDto,
+  ImportResultDto,
+} from './dto/import-transactions.dto';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -221,5 +225,215 @@ export class TransactionsService {
     await this.prisma.transaction.delete({
       where: { id: BigInt(id) },
     });
+  }
+
+  async importTransactions(
+    importRequest: ImportRequestDto,
+    userId: string,
+  ): Promise<ImportResultDto> {
+    const { data, options } = importRequest;
+    const result: ImportResultDto = {
+      total: data.length,
+      successful: 0,
+      skipped: 0,
+      errors: 0,
+      errorDetails: [],
+      createdTransactions: [],
+    };
+
+    // Verify account belongs to user
+    const account = await this.prisma.account.findFirst({
+      where: {
+        id: BigInt(options.targetAccountId),
+        userId: BigInt(userId),
+      },
+    });
+
+    if (!account) {
+      throw new Error('Account not found or access denied');
+    }
+
+    // Pre-create both INCOME and EXPENSE "Unbekannt" categories to avoid race conditions
+    const categoryPromises = [
+      {
+        type: 'INCOME' as const,
+        name: 'Unbekannte Einnahmen',
+        emoji: '❓',
+        color: '#4CAF50',
+      },
+      {
+        type: 'EXPENSE' as const,
+        name: 'Unbekannte Ausgaben',
+        emoji: '❓',
+        color: '#F44336',
+      },
+    ].map(async (categoryConfig) => {
+      const existing = await this.prisma.category.findFirst({
+        where: {
+          accountId: BigInt(options.targetAccountId),
+          name: categoryConfig.name,
+          transactionType: categoryConfig.type,
+        },
+      });
+
+      if (!existing) {
+        try {
+          return await this.prisma.category.create({
+            data: {
+              name: categoryConfig.name,
+              emoji: categoryConfig.emoji,
+              color: categoryConfig.color,
+              transactionType: categoryConfig.type,
+              accountId: BigInt(options.targetAccountId),
+            },
+          });
+        } catch {
+          // If creation fails due to race condition, fetch existing
+          return await this.prisma.category.findFirst({
+            where: {
+              accountId: BigInt(options.targetAccountId),
+              name: categoryConfig.name,
+              transactionType: categoryConfig.type,
+            },
+          });
+        }
+      }
+      return existing;
+    });
+
+    await Promise.all(categoryPromises);
+
+    // Process each transaction
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      const rowNumber = i + 1 + (options.skipFirstRow ? 1 : 0);
+
+      try {
+        // Parse date
+        const parsedDate = this.parseDate(row.date, options.dateFormat);
+        if (!parsedDate) {
+          throw new Error(`Ungültiges Datum: ${row.date}`);
+        }
+
+        // Parse amount
+        const parsedAmount = this.parseAmount(
+          row.amount.toString(),
+          options.amountFormat,
+        );
+        if (isNaN(parsedAmount)) {
+          throw new Error(`Ungültiger Betrag: ${row.amount}`);
+        }
+
+        // Determine transaction type
+        const transactionType = parsedAmount >= 0 ? 'INCOME' : 'EXPENSE';
+        const absoluteAmount = Math.abs(parsedAmount);
+        const categoryName =
+          transactionType === 'INCOME'
+            ? 'Unbekannte Einnahmen'
+            : 'Unbekannte Ausgaben';
+
+        // Find the appropriate category (should exist now)
+        const category = await this.prisma.category.findFirst({
+          where: {
+            accountId: BigInt(options.targetAccountId),
+            name: categoryName,
+            transactionType,
+          },
+        });
+
+        if (!category) {
+          throw new Error(
+            `Kategorie "${categoryName}" für ${transactionType} nicht gefunden`,
+          );
+        }
+
+        // Create transaction
+        const transaction = await this.prisma.transaction.create({
+          data: {
+            date: parsedDate,
+            amount: absoluteAmount,
+            note: row.note || null,
+            categoryId: category.id,
+            accountId: BigInt(options.targetAccountId),
+          },
+          include: {
+            category: true,
+            account: true,
+          },
+        });
+
+        result.successful++;
+        result.createdTransactions?.push(
+          this.convertBigIntsToStrings(transaction),
+        );
+      } catch (error) {
+        result.errors++;
+        result.errorDetails.push({
+          row: rowNumber,
+          data: row,
+          error: error instanceof Error ? error.message : 'Unbekannter Fehler',
+        });
+      }
+    }
+
+    return result;
+  }
+
+  private parseDate(dateStr: string, format: string): Date | null {
+    try {
+      const parts = dateStr.split(/[.\-\/]/);
+      let day: number, month: number, year: number;
+
+      switch (format) {
+        case 'DD.MM.YYYY':
+        case 'DD-MM-YYYY':
+          day = parseInt(parts[0], 10);
+          month = parseInt(parts[1], 10) - 1;
+          year = parseInt(parts[2], 10);
+          break;
+        case 'MM/DD/YYYY':
+          month = parseInt(parts[0], 10) - 1;
+          day = parseInt(parts[1], 10);
+          year = parseInt(parts[2], 10);
+          break;
+        case 'YYYY-MM-DD':
+          year = parseInt(parts[0], 10);
+          month = parseInt(parts[1], 10) - 1;
+          day = parseInt(parts[2], 10);
+          break;
+        default:
+          return null;
+      }
+
+      // Use UTC to avoid timezone issues
+      const date = new Date(Date.UTC(year, month, day, 12, 0, 0, 0));
+      return isNaN(date.getTime()) ? null : date;
+    } catch {
+      return null;
+    }
+  }
+
+  private parseAmount(amountStr: string, format: string): number {
+    try {
+      let cleaned = amountStr.trim();
+
+      switch (format) {
+        case 'de':
+          // German: 1.234,56
+          cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+          break;
+        case 'en':
+          // English: 1,234.56
+          cleaned = cleaned.replace(/,/g, '');
+          break;
+        case 'simple':
+          // Simple: 1234.56
+          break;
+      }
+
+      return parseFloat(cleaned);
+    } catch {
+      return NaN;
+    }
   }
 }

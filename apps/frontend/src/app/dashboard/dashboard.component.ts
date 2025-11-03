@@ -1,4 +1,11 @@
-import { Component, inject, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  OnDestroy,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
@@ -76,7 +83,7 @@ export interface MonthlyData {
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardComponent extends BaseComponent implements OnInit, OnDestroy {
   protected componentKey = 'dashboard';
@@ -126,11 +133,11 @@ export class DashboardComponent extends BaseComponent implements OnInit, OnDestr
     },
   };
 
-  lineChartOptions: ChartConfiguration<'line'>['options'] = {
+  lineChartOptions: ChartConfiguration<'bar'>['options'] = {
     responsive: true,
     plugins: {
       legend: {
-        position: 'top',
+        display: false,
       },
     },
     scales: {
@@ -142,7 +149,7 @@ export class DashboardComponent extends BaseComponent implements OnInit, OnDestr
 
   // Chart types - Fixed types for ng2-charts
   pieChartType = 'pie' as const;
-  lineChartType = 'line' as const;
+  lineChartType = 'bar' as const;
 
   // Table columns
   transactionColumns: string[] = ['date', 'category', 'amount', 'note'];
@@ -153,7 +160,7 @@ export class DashboardComponent extends BaseComponent implements OnInit, OnDestr
   ngOnInit() {
     // BaseComponent initialisieren
     this.initializeLoadingState();
-    
+
     // Zuerst den AccountSelectionService initialisieren
     this.accountSelection.initialize();
 
@@ -174,7 +181,8 @@ export class DashboardComponent extends BaseComponent implements OnInit, OnDestr
     const selectedAccountId = this.accountSelection.getSelectedAccountId();
 
     // Use the optimized getAllDashboardData method instead of multiple API calls
-    this.dashboardApi.getAllDashboardData(selectedAccountId || undefined)
+    this.dashboardApi
+      .getAllDashboardData(selectedAccountId || undefined)
       .toPromise()
       .then((dashboardData) => {
         if (!dashboardData) return;
@@ -204,7 +212,7 @@ export class DashboardComponent extends BaseComponent implements OnInit, OnDestr
         // Set chart data
         this.pieChartData = dashboardData.statistics.categoryBreakdown;
         this.lineChartData = dashboardData.statistics.monthlyTrend;
-        
+
         this.checkEmptyState();
         this.setSuccess(this.isEmpty);
         this.initialLoadCompleted = true;
@@ -227,7 +235,19 @@ export class DashboardComponent extends BaseComponent implements OnInit, OnDestr
 
   // TrackBy functions for performance optimization - using inherited methods
   trackByKPI = this.trackByUtils.trackByKPITitle.bind(this.trackByUtils);
-  trackByBudget(index: number, budget: { budgetName: string; spent: number; limit: number; percentage: number; category: string; emoji: string; budgeted: number; remaining: number; }): string {
+  trackByBudget(
+    index: number,
+    budget: {
+      budgetName: string;
+      spent: number;
+      limit: number;
+      percentage: number;
+      category: string;
+      emoji: string;
+      budgeted: number;
+      remaining: number;
+    },
+  ): string {
     return budget.budgetName || index.toString();
   }
   trackByTransaction = this.trackByUtils.trackByTransactionId.bind(this.trackByUtils);
@@ -257,7 +277,7 @@ export class DashboardComponent extends BaseComponent implements OnInit, OnDestr
   }
 
   clearAccountFilter(): void {
-    this.accountSelection.clearSelection().catch(err => {
+    this.accountSelection.clearSelection().catch((err) => {
       console.error('Error clearing account filter:', err);
     });
   }

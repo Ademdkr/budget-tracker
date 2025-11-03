@@ -16,7 +16,7 @@ export interface LoadingState {
  * Eliminiert Wiederholungen in allen Komponenten
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class LoadingStateService {
   private states = new Map<string, BehaviorSubject<LoadingState>>();
@@ -26,11 +26,14 @@ export class LoadingStateService {
    */
   initializeState(componentKey: string): void {
     if (!this.states.has(componentKey)) {
-      this.states.set(componentKey, new BehaviorSubject<LoadingState>({
-        isLoading: false,
-        hasError: false,
-        isEmpty: false
-      }));
+      this.states.set(
+        componentKey,
+        new BehaviorSubject<LoadingState>({
+          isLoading: false,
+          hasError: false,
+          isEmpty: false,
+        }),
+      );
     }
   }
 
@@ -57,7 +60,7 @@ export class LoadingStateService {
     this.updateState(componentKey, {
       isLoading: true,
       hasError: false,
-      isEmpty: false
+      isEmpty: false,
     });
   }
 
@@ -69,7 +72,7 @@ export class LoadingStateService {
       isLoading: false,
       hasError: true,
       isEmpty: false,
-      errorMessage
+      errorMessage,
     });
   }
 
@@ -80,7 +83,7 @@ export class LoadingStateService {
     this.updateState(componentKey, {
       isLoading: false,
       hasError: false,
-      isEmpty: true
+      isEmpty: true,
     });
   }
 
@@ -91,7 +94,7 @@ export class LoadingStateService {
     this.updateState(componentKey, {
       isLoading: false,
       hasError: false,
-      isEmpty
+      isEmpty,
     });
   }
 
@@ -102,7 +105,7 @@ export class LoadingStateService {
     this.updateState(componentKey, {
       isLoading: false,
       hasError: false,
-      isEmpty: false
+      isEmpty: false,
     });
   }
 

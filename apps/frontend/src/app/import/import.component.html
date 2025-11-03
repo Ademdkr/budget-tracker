@@ -156,6 +156,7 @@
                   <!-- Required Mappings -->
                   <div class="mapping-section">
                     <h4>Erforderliche Felder</h4>
+                    <p class="section-hint">Alle drei Felder müssen zugeordnet werden</p>
 
                     <mat-form-field appearance="outline">
                       <mat-label>Datum</mat-label>
@@ -166,6 +167,7 @@
                       </mat-select>
                       <mat-icon matPrefix>calendar_today</mat-icon>
                       <mat-error>Datum-Spalte ist erforderlich</mat-error>
+                      <mat-hint>Spalte mit dem Transaktionsdatum</mat-hint>
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
@@ -177,48 +179,19 @@
                       </mat-select>
                       <mat-icon matPrefix>euro</mat-icon>
                       <mat-error>Betrag-Spalte ist erforderlich</mat-error>
+                      <mat-hint>Spalte mit dem Transaktionsbetrag</mat-hint>
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
-                      <mat-label>Verwendungszweck/Notiz</mat-label>
-                      <mat-select formControlName="descriptionColumn">
+                      <mat-label>Notiz / Verwendungszweck</mat-label>
+                      <mat-select formControlName="noteColumn">
                         <mat-option *ngFor="let header of csvPreview.headers" [value]="header">
                           {{ header }}
                         </mat-option>
                       </mat-select>
                       <mat-icon matPrefix>description</mat-icon>
-                      <mat-error>Beschreibung-Spalte ist erforderlich</mat-error>
-                    </mat-form-field>
-                  </div>
-
-                  <mat-divider></mat-divider>
-
-                  <!-- Optional Mappings -->
-                  <div class="mapping-section">
-                    <h4>Optionale Felder</h4>
-
-                    <mat-form-field appearance="outline">
-                      <mat-label>Kategorie (optional)</mat-label>
-                      <mat-select formControlName="categoryColumn">
-                        <mat-option value="">-- Nicht zuordnen --</mat-option>
-                        <mat-option *ngFor="let header of csvPreview.headers" [value]="header">
-                          {{ header }}
-                        </mat-option>
-                      </mat-select>
-                      <mat-icon matPrefix>category</mat-icon>
-                      <mat-hint>Falls leer, wird Standard-Kategorie verwendet</mat-hint>
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline">
-                      <mat-label>Konto (optional)</mat-label>
-                      <mat-select formControlName="accountColumn">
-                        <mat-option value="">-- Nicht zuordnen --</mat-option>
-                        <mat-option *ngFor="let header of csvPreview.headers" [value]="header">
-                          {{ header }}
-                        </mat-option>
-                      </mat-select>
-                      <mat-icon matPrefix>account_balance</mat-icon>
-                      <mat-hint>Falls leer, wird Ziel-Konto verwendet</mat-hint>
+                      <mat-error>Notiz-Spalte ist erforderlich</mat-error>
+                      <mat-hint>Spalte mit der Beschreibung/Notiz</mat-hint>
                     </mat-form-field>
                   </div>
                 </div>
@@ -262,7 +235,10 @@
             <form [formGroup]="optionsForm" class="options-form">
               <!-- Account Selection -->
               <div class="options-section">
-                <h4>Konto-Einstellungen</h4>
+                <h4>Ziel-Konto</h4>
+                <p class="section-hint">
+                  Alle importierten Transaktionen werden diesem Konto zugeordnet
+                </p>
 
                 <mat-form-field appearance="outline" class="full-width">
                   <mat-label>Ziel-Konto</mat-label>
@@ -278,21 +254,6 @@
                   <mat-icon matPrefix>account_balance</mat-icon>
                   <mat-error>Ziel-Konto ist erforderlich</mat-error>
                   <mat-hint>Transaktionen werden diesem Konto zugeordnet</mat-hint>
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Standard-Kategorie (optional)</mat-label>
-                  <mat-select formControlName="defaultCategoryId">
-                    <mat-option value="">-- Keine Standard-Kategorie --</mat-option>
-                    <mat-option *ngFor="let category of categories" [value]="category.id">
-                      <div class="category-option">
-                        <span class="category-icon">{{ category.icon }}</span>
-                        <span class="category-name">{{ category.name }}</span>
-                      </div>
-                    </mat-option>
-                  </mat-select>
-                  <mat-icon matPrefix>category</mat-icon>
-                  <mat-hint>Wird verwendet, wenn keine Kategorie-Spalte zugeordnet ist</mat-hint>
                 </mat-form-field>
               </div>
 
@@ -310,6 +271,7 @@
                     </mat-option>
                   </mat-select>
                   <mat-icon matPrefix>date_range</mat-icon>
+                  <mat-hint>Format der Datumsspalte in der CSV</mat-hint>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
@@ -320,6 +282,7 @@
                     </mat-option>
                   </mat-select>
                   <mat-icon matPrefix>euro</mat-icon>
+                  <mat-hint>Format der Betragsspalte in der CSV</mat-hint>
                 </mat-form-field>
               </div>
 
@@ -333,17 +296,11 @@
                   <mat-checkbox formControlName="skipFirstRow">
                     Erste Zeile überspringen (Kopfzeile)
                   </mat-checkbox>
-
-                  <mat-checkbox formControlName="enableDuplicateCheck">
-                    Duplikat-Prüfung aktivieren
-                  </mat-checkbox>
                 </div>
 
-                <mat-hint
-                  class="duplicate-hint"
-                  *ngIf="optionsForm.get('enableDuplicateCheck')?.value"
-                >
-                  Duplikate werden anhand von Datum + Betrag + Beschreibung erkannt
+                <mat-hint class="format-hint">
+                  <strong>Hinweis:</strong> Positive Beträge = Einnahmen, Negative Beträge =
+                  Ausgaben
                 </mat-hint>
               </div>
             </form>

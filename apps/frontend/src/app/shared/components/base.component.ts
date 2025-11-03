@@ -9,11 +9,11 @@ import { LoadingStateService } from '../services/loading-state.service';
  * Reduziert Code-Wiederholungen in allen abgeleiteten Komponenten
  */
 @Component({
-  template: ''
+  template: '',
 })
 export abstract class BaseComponent implements OnDestroy {
   protected destroy$ = new Subject<void>();
-  
+
   // Injected Services
   protected formatUtils = inject(FormatUtilsService);
   protected trackByUtils = inject(TrackByUtilsService);
@@ -37,7 +37,7 @@ export abstract class BaseComponent implements OnDestroy {
   }
 
   // === Formatting Methods ===
-  
+
   formatCurrency(amount: number): string {
     return this.formatUtils.formatCurrency(amount);
   }
@@ -59,7 +59,7 @@ export abstract class BaseComponent implements OnDestroy {
   }
 
   // === TrackBy Methods ===
-  
+
   trackById = this.trackByUtils.trackById.bind(this.trackByUtils);
   trackByTransactionId = this.trackByUtils.trackByTransactionId.bind(this.trackByUtils);
   trackByBudgetId = this.trackByUtils.trackByBudgetId.bind(this.trackByUtils);
@@ -70,7 +70,7 @@ export abstract class BaseComponent implements OnDestroy {
   trackByIndex = this.trackByUtils.trackByIndex.bind(this.trackByUtils);
 
   // === Loading State Methods ===
-  
+
   get isLoading(): boolean {
     return this.loadingStateService.isLoading(this.componentKey);
   }
@@ -108,13 +108,19 @@ export abstract class BaseComponent implements OnDestroy {
   /**
    * Sicherer Zugriff auf verschachtelte Objekt-Properties
    */
-  protected safeGet<T>(obj: Record<string, unknown> | null | undefined, path: string, defaultValue?: T): T | undefined {
+  protected safeGet<T>(
+    obj: Record<string, unknown> | null | undefined,
+    path: string,
+    defaultValue?: T,
+  ): T | undefined {
     if (!obj) return defaultValue;
-    return path.split('.').reduce((current: unknown, key: string) => {
-      return current && typeof current === 'object' && current !== null 
-        ? (current as Record<string, unknown>)[key] 
-        : undefined;
-    }, obj) as T | undefined ?? defaultValue;
+    return (
+      (path.split('.').reduce((current: unknown, key: string) => {
+        return current && typeof current === 'object' && current !== null
+          ? (current as Record<string, unknown>)[key]
+          : undefined;
+      }, obj) as T | undefined) ?? defaultValue
+    );
   }
 
   /**
@@ -140,7 +146,7 @@ export abstract class BaseComponent implements OnDestroy {
    */
   protected debounce<T extends (...args: unknown[]) => void>(
     func: T,
-    delay: number
+    delay: number,
   ): (...args: Parameters<T>) => void {
     let timeoutId: number;
     return (...args: Parameters<T>) => {

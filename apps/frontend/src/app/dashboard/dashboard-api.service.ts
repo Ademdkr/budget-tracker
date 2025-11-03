@@ -168,11 +168,21 @@ export class DashboardApiService {
           }]
         };
 
+        // Category spending breakdown as bar chart for current month
+        const categorySpendingData = Array.from(categoryMap.entries())
+          .sort((a, b) => b[1] - a[1]) // Sort by amount descending
+          .slice(0, 10); // Top 10 categories
+
         const monthlyTrend: ChartData = {
-          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+          labels: categorySpendingData.map(([id]) => catMetaById.get(id)?.name || 'Unbekannt'),
           datasets: [
-            { label: 'Einnahmen', data: [0, 0, 0, 0, 0, income], borderColor: '#4caf50', backgroundColor: 'rgba(76, 175, 80, 0.1)' },
-            { label: 'Ausgaben', data: [0, 0, 0, 0, 0, expenses], borderColor: '#f44336', backgroundColor: 'rgba(244, 67, 54, 0.1)' }
+            { 
+              label: 'Ausgaben', 
+              data: categorySpendingData.map(([, amount]) => amount), 
+              borderColor: '#f44336', 
+              backgroundColor: categorySpendingData.map(([id]) => catMetaById.get(id)?.color || '#f44336'),
+              borderWidth: 1
+            }
           ]
         };
 

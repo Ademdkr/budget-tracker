@@ -32,23 +32,23 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
     MatSelectModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    
+
     // Layout
     MatCardModule,
     MatTableModule,
     MatPaginatorModule,
     MatSortModule,
-    
+
     // Navigation
     MatMenuModule,
     MatDialogModule,
-    
+
     // Indicators
     MatIconModule,
     MatChipsModule,
     MatProgressSpinnerModule,
     MatProgressBarModule,
     MatTooltipModule,
-  ]
+  ],
 })
 export class MaterialModule {}

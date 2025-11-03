@@ -88,7 +88,7 @@ export class BudgetFormComponent implements OnInit {
     console.log('🔍 Budget Form Dialog Data:', this.data);
     console.log('🔍 Categories received:', this.data.categories);
     console.log('🔍 Existing budgets:', this.data.existingBudgets);
-    
+
     this.loadAvailableCategories();
 
     console.log('🔍 Available categories after filtering:', this.availableCategories);

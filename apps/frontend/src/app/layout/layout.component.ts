@@ -52,10 +52,10 @@ export interface DateFilter {
     MatDatepickerModule,
     MatInputModule,
     MatProgressBarModule,
-    MatNativeDateModule
+    MatNativeDateModule,
   ],
   templateUrl: './layout.component.html',
-  styleUrl: './layout.component.scss'
+  styleUrl: './layout.component.scss',
 })
 export class LayoutComponent {
   private authService = inject(AuthService);
@@ -72,7 +72,7 @@ export class LayoutComponent {
     { icon: 'savings', label: 'Budgets', route: '/budgets' },
     { icon: 'category', label: 'Kategorien', route: '/categories' },
     { icon: 'account_balance', label: 'Konten', route: '/accounts' },
-    { icon: 'upload_file', label: 'Import', route: '/import' }
+    { icon: 'upload_file', label: 'Import', route: '/import' },
   ];
 
   // Date filter controls
@@ -125,13 +125,13 @@ export class LayoutComponent {
       return {
         type: 'month',
         startDate: new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1),
-        endDate: new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0)
+        endDate: new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0),
       };
     } else {
       return {
         type: 'range',
         startDate: this.startDateControl.value || new Date(),
-        endDate: this.endDateControl.value || new Date()
+        endDate: this.endDateControl.value || new Date(),
       };
     }
   }

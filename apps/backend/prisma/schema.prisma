@@ -1,6 +1,6 @@
 generator client {
   provider   = "prisma-client-js"
-  engineType = "library" // Pflicht für Workers/Edge
+  engineType = "library"
 }
 
 datasource db {
@@ -9,37 +9,31 @@ datasource db {
   directUrl = env("DIRECT_DATABASE_URL")
 }
 
-// User Model
 model User {
-  id        BigInt   @id @default(autoincrement())
-  name      String   @db.VarChar(255)
-  surname   String   @db.VarChar(255)
-  email     String   @unique(map: "user_email_unique") @db.VarChar(255)
-  password  String   @db.VarChar(255)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(0)
-
-  // Relationen
-  accounts Account[]
+  id        BigInt    @id @default(autoincrement())
+  name      String    @db.VarChar(255)
+  surname   String    @db.VarChar(255)
+  email     String    @unique(map: "user_email_unique") @db.VarChar(255)
+  password  String    @db.VarChar(255)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
+  accounts  Account[]
 
   @@map("User")
 }
 
-// Account Model
 model Account {
-  id             BigInt      @id @default(autoincrement())
-  userId         BigInt      @map("user_id")
-  name           String      @db.VarChar(255)
+  id             BigInt        @id @default(autoincrement())
+  userId         BigInt        @map("user_id")
+  name           String        @db.VarChar(255)
   type           AccountType
-  initialBalance Decimal     @map("initial_balance") @db.Decimal(8, 2)
-  note           String?     @db.Text
-  isActive       Boolean     @default(true) @map("is_active")
-  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamp(0)
-  updatedAt      DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
-
-  // Relationen
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade, map: "account_user_id_foreign")
-  categories   Category[]
-  transactions Transaction[]
+  initialBalance Decimal       @map("initial_balance") @db.Decimal(8, 2)
+  note           String?
+  isActive       Boolean       @default(true) @map("is_active")
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt      DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade, map: "account_user_id_foreign")
+  categories     Category[]
+  transactions   Transaction[]
 
   @@index([userId], map: "idx_account_user_id")
   @@index([type], map: "idx_account_type")
@@ -47,22 +41,19 @@ model Account {
   @@map("Account")
 }
 
-// Category Model
 model Category {
   id              BigInt          @id @default(autoincrement())
   accountId       BigInt          @map("account_id")
   name            String          @db.VarChar(255)
-  description     String?         @db.Text
+  description     String?
   transactionType TransactionType @map("transaction_type")
   emoji           String          @db.VarChar(10)
-  color           String          @db.VarChar(7) // Must be valid hex color (validated in application)
+  color           String          @db.VarChar(7)
   createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamp(0)
   updatedAt       DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
-
-  // Relationen
-  account      Account       @relation(fields: [accountId], references: [id], onDelete: Cascade, map: "category_account_id_foreign")
-  budgets      Budget[]
-  transactions Transaction[]
+  budgets         Budget[]
+  account         Account         @relation(fields: [accountId], references: [id], onDelete: Cascade, map: "category_account_id_foreign")
+  transactions    Transaction[]
 
   @@unique([accountId, name], map: "category_account_id_name_unique")
   @@index([accountId], map: "idx_category_account_id")
@@ -70,18 +61,15 @@ model Category {
   @@map("Category")
 }
 
-// Budget Model
 model Budget {
   id          BigInt   @id @default(autoincrement())
   categoryId  BigInt   @map("category_id")
-  year        Int // z.B. 2025
-  month       Int // z.B. 10 (Oktober), 1-12
-  totalAmount Decimal  @map("total_amount") @db.Decimal(8, 2) // Must be > 0 (validated in application)
+  totalAmount Decimal  @map("total_amount") @db.Decimal(8, 2)
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(0)
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
-
-  // Relationen
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade, map: "budget_category_id_foreign")
+  month       Int
+  year        Int
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade, map: "budget_category_id_foreign")
 
   @@unique([categoryId, year, month], map: "budget_category_year_month_unique")
   @@index([categoryId], map: "idx_budget_category_id")
@@ -90,20 +78,17 @@ model Budget {
   @@map("Budget")
 }
 
-// Transaction Model
 model Transaction {
   id         BigInt   @id @default(autoincrement())
   categoryId BigInt   @map("category_id")
   accountId  BigInt   @map("account_id")
   date       DateTime @default(now()) @db.Date
-  amount     Decimal  @db.Decimal(8, 2) // Must be > 0 (validated in application)
-  note       String?  @db.Text
+  amount     Decimal  @db.Decimal(8, 2)
+  note       String?
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(0)
   updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
-
-  // Relationen
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade, map: "transaction_category_id_foreign")
-  account  Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, map: "transaction_account_id_foreign")
+  account    Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, map: "transaction_account_id_foreign")
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade, map: "transaction_category_id_foreign")
 
   @@index([categoryId], map: "idx_transaction_category_id")
   @@index([accountId], map: "idx_transaction_account_id")
@@ -112,7 +97,6 @@ model Transaction {
   @@map("Transaction")
 }
 
-// Enum für Account-Typen
 enum AccountType {
   CHECKING
   SAVINGS
@@ -122,7 +106,6 @@ enum AccountType {
   OTHER
 }
 
-// Enum für Transaction-Typen
 enum TransactionType {
   INCOME
   EXPENSE

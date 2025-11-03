@@ -18,6 +18,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { RouterModule } from '@angular/router';
+import { AccountsApiService, Account } from '../accounts/accounts-api.service';
+import { ApiService } from '../shared/services/api.service';
 
 // Import interfaces
 export interface CSVRow {
@@ -33,15 +35,11 @@ export interface CSVPreview {
 export interface ColumnMapping {
   date?: string;
   amount?: string;
-  description?: string;
-  category?: string;
-  account?: string;
+  note?: string;
 }
 
 export interface ImportOptions {
   targetAccountId: string;
-  defaultCategoryId?: string;
-  enableDuplicateCheck: boolean;
   dateFormat: string;
   amountFormat: string;
   skipFirstRow: boolean;
@@ -61,20 +59,7 @@ export interface ImportError {
   error: string;
 }
 
-export interface Account {
-  id: string;
-  name: string;
-  type: string;
-  icon: string;
-  color: string;
-}
 
-export interface Category {
-  id: string;
-  name: string;
-  icon: string;
-  color: string;
-}
 
 @Component({
   selector: 'app-import',
@@ -106,6 +91,8 @@ export class ImportComponent extends BaseComponent implements OnInit {
   protected componentKey = 'import';
   private fb = inject(FormBuilder);
   private snackBar = inject(MatSnackBar);
+  private accountsApi = inject(AccountsApiService);
+  private api = inject(ApiService);
 
   // Make Object accessible in template
   Object = Object;
@@ -124,7 +111,6 @@ export class ImportComponent extends BaseComponent implements OnInit {
   csvPreview: CSVPreview | null = null;
   selectedFile: File | null = null;
   accounts: Account[] = [];
-  categories: Category[] = [];
   
   // Import state
   isUploading = false;
@@ -155,7 +141,7 @@ export class ImportComponent extends BaseComponent implements OnInit {
 
   ngOnInit() {
     this.initializeForms();
-    this.loadMockData();
+    this.loadAccounts();
   }
 
   private initializeForms() {
@@ -166,41 +152,30 @@ export class ImportComponent extends BaseComponent implements OnInit {
     this.mappingForm = this.fb.group({
       dateColumn: ['', [Validators.required]],
       amountColumn: ['', [Validators.required]],
-      descriptionColumn: ['', [Validators.required]],
-      categoryColumn: [''],
-      accountColumn: ['']
+      noteColumn: ['', [Validators.required]]
     });
 
     this.optionsForm = this.fb.group({
       targetAccountId: ['', [Validators.required]],
-      defaultCategoryId: [''],
-      enableDuplicateCheck: [true],
       dateFormat: ['DD.MM.YYYY', [Validators.required]],
       amountFormat: ['de', [Validators.required]],
       skipFirstRow: [true]
     });
   }
 
-  private loadMockData() {
-    // Mock accounts
-    this.accounts = [
-      { id: '1', name: 'Sparkasse Hauptkonto', type: 'checking', icon: '🏦', color: '#FF5722' },
-      { id: '2', name: 'ING Tagesgeld', type: 'savings', icon: '🏛️', color: '#FF9800' },
-      { id: '3', name: 'DKB Visa Card', type: 'credit_card', icon: '💳', color: '#2196F3' },
-      { id: '4', name: 'Bargeld', type: 'cash', icon: '💵', color: '#4CAF50' }
-    ];
-
-    // Mock categories
-    this.categories = [
-      { id: '1', name: 'Lebensmittel', icon: '🛒', color: '#4CAF50' },
-      { id: '2', name: 'Transport', icon: '🚗', color: '#2196F3' },
-      { id: '3', name: 'Unterhaltung', icon: '🎬', color: '#FF9800' },
-      { id: '4', name: 'Kleidung', icon: '👕', color: '#E91E63' },
-      { id: '5', name: 'Gesundheit', icon: '🏥', color: '#00BCD4' },
-      { id: '6', name: 'Restaurants', icon: '🍽️', color: '#FF5722' },
-      { id: '7', name: 'Shopping', icon: '🛍️', color: '#673AB7' },
-      { id: '8', name: 'Sonstiges', icon: '📦', color: '#607D8B' }
-    ];
+  private loadAccounts() {
+    this.accountsApi.getAll().subscribe({
+      next: (accounts) => {
+        this.accounts = accounts;
+        console.log('Konten geladen:', accounts);
+      },
+      error: (error) => {
+        console.error('Fehler beim Laden der Konten:', error);
+        this.snackBar.open('Fehler beim Laden der Konten', 'Schließen', {
+          duration: 3000
+        });
+      }
+    });
   }
 
   // File Upload Methods
@@ -355,30 +330,60 @@ export class ImportComponent extends BaseComponent implements OnInit {
   }
 
   private performImport() {
-    // Mock import results
-    const totalRows = this.csvPreview?.totalRows || 0;
-    const successful = Math.floor(totalRows * 0.85);
-    const skipped = Math.floor(totalRows * 0.1);
-    const errors = totalRows - successful - skipped;
-    
-    const errorDetails: ImportError[] = [];
-    
-    // Generate mock errors
-    for (let i = 0; i < errors; i++) {
-      errorDetails.push({
-        row: i + 1,
-        data: this.csvPreview?.rows[i] || {},
-        error: 'Ungültiges Datumsformat'
-      });
+    if (!this.csvPreview) {
+      return;
     }
-    
-    this.importResult = {
-      total: totalRows,
-      successful,
-      skipped,
-      errors,
-      errorDetails
+
+    const mapping = this.mappingForm.value;
+    const options = this.optionsForm.value;
+
+    // Prepare import data
+    const importData = this.csvPreview.rows.map((row) => ({
+      date: row[mapping.dateColumn],
+      amount: parseFloat(row[mapping.amountColumn]),
+      note: row[mapping.noteColumn] || '',
+    }));
+
+    const importRequest = {
+      data: importData,
+      mapping: {
+        date: mapping.dateColumn,
+        amount: mapping.amountColumn,
+        note: mapping.noteColumn,
+      },
+      options: {
+        targetAccountId: options.targetAccountId,
+        dateFormat: options.dateFormat,
+        amountFormat: options.amountFormat,
+        skipFirstRow: options.skipFirstRow,
+      },
     };
+
+    // Call API
+    this.api.post<ImportResult>('transactions/import', importRequest).subscribe({
+      next: (result) => {
+        this.importResult = result;
+        this.isImporting = false;
+        this.currentStep = 3;
+
+        if (result.successful > 0) {
+          this.snackBar.open(
+            `${result.successful} Transaktionen erfolgreich importiert`,
+            'Schließen',
+            { duration: 5000 }
+          );
+        }
+      },
+      error: (error) => {
+        console.error('Import-Fehler:', error);
+        this.isImporting = false;
+        this.snackBar.open(
+          'Fehler beim Import: ' + (error.error?.message || error.message),
+          'Schließen',
+          { duration: 5000 }
+        );
+      },
+    });
   }
 
   // Helper Methods
@@ -403,10 +408,6 @@ export class ImportComponent extends BaseComponent implements OnInit {
     return this.accounts.find(a => a.id === id);
   }
 
-  getCategoryById(id: string): Category | undefined {
-    return this.categories.find(c => c.id === id);
-  }
-
   // Reset Methods
   resetImport() {
     this.currentStep = 0;
@@ -416,7 +417,6 @@ export class ImportComponent extends BaseComponent implements OnInit {
     this.uploadForm.reset();
     this.mappingForm.reset();
     this.optionsForm.patchValue({
-      enableDuplicateCheck: true,
       dateFormat: 'DD.MM.YYYY',
       amountFormat: 'de',
       skipFirstRow: true

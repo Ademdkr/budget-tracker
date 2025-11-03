@@ -5,17 +5,16 @@ import { Injectable } from '@angular/core';
  * Eliminiert Wiederholungen in allen Komponenten
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class FormatUtilsService {
-  
   /**
    * Formatiert Beträge als deutsche Währung
    */
   formatCurrency(amount: number): string {
     return new Intl.NumberFormat('de-DE', {
       style: 'currency',
-      currency: 'EUR'
+      currency: 'EUR',
     }).format(amount);
   }
 
@@ -24,12 +23,12 @@ export class FormatUtilsService {
    */
   formatDate(date: Date | string | undefined): string {
     if (!date) return '-';
-    
+
     const dateObj = typeof date === 'string' ? new Date(date) : date;
     return new Intl.DateTimeFormat('de-DE', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric'
+      year: 'numeric',
     }).format(dateObj);
   }
 
@@ -38,14 +37,14 @@ export class FormatUtilsService {
    */
   formatDateTime(date: Date | string | undefined): string {
     if (!date) return '-';
-    
+
     const dateObj = typeof date === 'string' ? new Date(date) : date;
     return new Intl.DateTimeFormat('de-DE', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     }).format(dateObj);
   }
 
@@ -56,7 +55,7 @@ export class FormatUtilsService {
     return new Intl.NumberFormat('de-DE', {
       style: 'percent',
       minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals
+      maximumFractionDigits: decimals,
     }).format(value / 100);
   }
 
@@ -66,7 +65,7 @@ export class FormatUtilsService {
   formatNumber(value: number, decimals: number = 0): string {
     return new Intl.NumberFormat('de-DE', {
       minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals
+      maximumFractionDigits: decimals,
     }).format(value);
   }
 
@@ -83,11 +82,11 @@ export class FormatUtilsService {
    */
   formatFileSize(bytes: number): string {
     if (bytes === 0) return '0 Bytes';
-    
+
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
+
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 }
