@@ -6,7 +6,7 @@
 .form-header {
   padding: 1.5rem 1.5rem 0;
   border-bottom: 1px solid var(--mat-sys-outline-variant);
-  
+
   h2 {
     display: flex;
     align-items: center;
@@ -15,7 +15,7 @@
     font-size: 1.5rem;
     font-weight: 500;
     color: var(--mat-sys-on-surface);
-    
+
     mat-icon {
       color: var(--mat-sys-primary);
       font-size: 1.5rem;
@@ -37,7 +37,7 @@
   gap: 2rem;
 }
 
-.form-section {  
+.form-section {
   .section-title {
     margin: 0 0 1rem 0;
     font-size: 1rem;
@@ -50,73 +50,54 @@
   }
 }
 
-// Transaction Type Radio Group
-.type-radio-group {
+// Transaction Type Display
+.type-display {
   display: flex;
-  gap: 1rem;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 2px solid var(--mat-sys-outline-variant);
+  border-radius: 8px;
+  background-color: var(--mat-sys-surface-variant);
   margin: 1rem 0;
-  
-  .type-radio {
-    flex: 1;
-    border: 2px solid var(--mat-sys-outline-variant);
-    border-radius: 8px;
-    padding: 1rem;
-    transition: all 0.2s ease;
-    
-    &.mat-mdc-radio-checked {
-      border-color: var(--mat-sys-primary);
-      background-color: var(--mat-sys-primary-container);
-      
-      &.income {
-        border-color: #4caf50;
-        background-color: rgba(76, 175, 80, 0.1);
-      }
-      
-      &.expense {
-        border-color: var(--mat-sys-error);
-        background-color: var(--mat-sys-error-container);
-      }
+
+  mat-icon {
+    font-size: 1.5rem;
+    width: 1.5rem;
+    height: 1.5rem;
+
+    &.income-icon {
+      color: #4caf50;
     }
-    
-    .radio-content {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
-      pointer-events: none;
-      
-      mat-icon {
-        font-size: 2rem;
-        width: 2rem;
-        height: 2rem;
-        
-        .income & {
-          color: #4caf50;
-        }
-        
-        .expense & {
-          color: var(--mat-sys-error);
-        }
-      }
-      
-      span {
-        font-weight: 500;
-        color: var(--mat-sys-on-surface);
-      }
+
+    &.expense-icon {
+      color: var(--mat-sys-error);
     }
+  }
+
+  .type-text {
+    font-weight: 500;
+    color: var(--mat-sys-on-surface);
+  }
+
+  .type-hint {
+    font-size: 0.875rem;
+    color: var(--mat-sys-on-surface-variant);
+    font-style: italic;
+    margin-left: auto;
   }
 }
 
-// Form Layout  
+// Form Layout
 .form-row {
   display: flex;
   gap: 1rem;
   margin-bottom: 1rem;
-  
+
   .full-width {
     flex: 1;
   }
-  
+
   .half-width {
     flex: 0.5;
   }
@@ -125,11 +106,17 @@
 // Custom Form Field Styles
 .mat-mdc-form-field {
   width: 100%;
-  
+
+  // Currency Suffix Styling
+  .currency-suffix {
+    padding-right: 1rem;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
   &.full-width {
     width: 100%;
   }
-  
+
   .mat-mdc-form-field-input-control input {
     &.error {
       border-color: var(--mat-sys-error);
@@ -143,17 +130,17 @@
   align-items: center;
   gap: 0.5rem;
   width: 100%;
-  
+
   .category-emoji {
     font-size: 1.25rem;
     min-width: 1.5rem;
   }
-  
+
   .category-name {
     flex: 1;
     font-weight: 500;
   }
-  
+
   .category-color {
     width: 12px;
     height: 12px;
@@ -167,18 +154,18 @@
   align-items: center;
   gap: 0.5rem;
   width: 100%;
-  
+
   .account-icon {
     font-size: 1.25rem;
     width: 1.25rem;
     height: 1.25rem;
     color: var(--mat-sys-on-surface-variant);
   }
-  
+
   .account-name {
     font-weight: 500;
   }
-  
+
   .account-type {
     margin-left: auto;
     font-size: 0.875rem;
@@ -194,10 +181,10 @@
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
-  
+
   button {
     min-width: 100px;
-    
+
     &.loading {
       mat-icon {
         animation: spin 1s linear infinite;
@@ -207,8 +194,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 // Responsive Design
@@ -220,17 +211,17 @@
     height: 100vh;
     max-height: 100vh;
   }
-  
+
   .form-content {
     padding: 1rem;
     max-height: calc(100vh - 200px);
   }
-  
+
   .type-radio-group {
     flex-direction: column;
     gap: 0.5rem;
   }
-  
+
   .form-row {
     flex-direction: column;
     gap: 0.5rem;

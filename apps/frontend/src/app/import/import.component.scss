@@ -7,29 +7,13 @@
 // Header
 .import-header {
   margin-bottom: 2rem;
-  
+
   .header-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    
-    .page-title {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin: 0;
-      font-size: 2rem;
-      font-weight: 500;
-      color: var(--mat-sys-on-surface);
-      
-      mat-icon {
-        font-size: 2rem;
-        width: 2rem;
-        height: 2rem;
-        color: var(--mat-sys-primary);
-      }
-    }
-    
+    // page-title styling is provided globally
+
     .header-actions {
       display: flex;
       align-items: center;
@@ -42,27 +26,27 @@
 .import-stepper {
   .step-card {
     margin: 1.5rem 0;
-    
+
     .mat-mdc-card-header {
       .mat-mdc-card-title {
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        
+
         mat-icon {
           color: var(--mat-sys-primary);
         }
       }
     }
   }
-  
+
   .step-content {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
     margin: 1.5rem 0;
   }
-  
+
   .step-actions {
     display: flex;
     justify-content: space-between;
@@ -82,28 +66,28 @@
     text-align: center;
     transition: all 0.3s ease;
     background: var(--mat-sys-surface-container);
-    
+
     &:hover {
       border-color: var(--mat-sys-primary);
       background: var(--mat-sys-surface-container-high);
     }
-    
+
     &.has-file {
       border-color: var(--mat-sys-primary);
       background: var(--mat-sys-primary-container);
     }
-    
+
     &.is-parsing {
       border-color: var(--mat-sys-secondary);
       background: var(--mat-sys-secondary-container);
     }
-    
+
     .upload-content {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 1rem;
-      
+
       .upload-icon {
         font-size: 4rem;
         width: 4rem;
@@ -111,37 +95,37 @@
         color: var(--mat-sys-on-surface-variant);
         margin-bottom: 1rem;
       }
-      
+
       h3 {
         margin: 0;
         color: var(--mat-sys-on-surface);
         font-weight: 500;
       }
-      
+
       p {
         margin: 0;
         color: var(--mat-sys-on-surface-variant);
         font-size: 0.875rem;
       }
     }
-    
+
     .parsing-content {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 1rem;
-      
+
       h3 {
         margin: 0;
         color: var(--mat-sys-on-surface);
       }
-      
+
       p {
         margin: 0;
         color: var(--mat-sys-on-surface-variant);
       }
     }
-    
+
     .file-info {
       display: flex;
       align-items: center;
@@ -149,26 +133,26 @@
       padding: 1rem;
       background: white;
       border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
       .file-icon {
         font-size: 2rem;
         width: 2rem;
         height: 2rem;
         color: var(--mat-sys-primary);
       }
-      
+
       .file-details {
         flex: 1;
         text-align: left;
-        
+
         h4 {
           margin: 0 0 0.25rem 0;
           font-size: 1rem;
           font-weight: 500;
           color: var(--mat-sys-on-surface);
         }
-        
+
         p {
           margin: 0;
           font-size: 0.75rem;
@@ -186,10 +170,10 @@
     max-height: 400px;
     border: 1px solid var(--mat-sys-outline-variant);
     border-radius: 8px;
-    
+
     .preview-table {
       width: 100%;
-      
+
       .mat-mdc-header-cell {
         background: var(--mat-sys-surface-container-high);
         font-weight: 600;
@@ -199,7 +183,7 @@
         font-size: 0.75rem;
         border-bottom: 2px solid var(--mat-sys-outline-variant);
       }
-      
+
       .mat-mdc-cell {
         font-size: 0.875rem;
         border-bottom: 1px solid var(--mat-sys-outline-variant);
@@ -208,23 +192,23 @@
         text-overflow: ellipsis;
         white-space: nowrap;
       }
-      
+
       .mat-mdc-row {
         &:hover {
           background: var(--mat-sys-surface-container-high);
         }
-        
+
         &:last-child .mat-mdc-cell {
           border-bottom: none;
         }
       }
     }
   }
-  
+
   .more-columns {
     margin-top: 1rem;
     text-align: center;
-    
+
     mat-chip {
       background: var(--mat-sys-secondary-container);
       color: var(--mat-sys-on-secondary-container);
@@ -239,7 +223,7 @@
       display: flex;
       flex-direction: column;
       gap: 2rem;
-      
+
       .mapping-section {
         h4 {
           margin: 0 0 1.5rem 0;
@@ -249,11 +233,11 @@
           align-items: center;
           gap: 0.5rem;
         }
-        
+
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         gap: 1rem;
-        
+
         mat-form-field {
           width: 100%;
         }
@@ -267,7 +251,7 @@
   .options-form {
     .options-section {
       margin-bottom: 2rem;
-      
+
       h4 {
         margin: 0 0 1.5rem 0;
         color: var(--mat-sys-on-surface);
@@ -275,7 +259,7 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        
+
         &::before {
           content: '';
           width: 4px;
@@ -284,27 +268,27 @@
           border-radius: 2px;
         }
       }
-      
+
       .full-width {
         width: 100%;
         margin-bottom: 1rem;
       }
-      
+
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 1rem;
-      
+
       .checkbox-options {
         display: flex;
         flex-direction: column;
         gap: 1rem;
         grid-column: 1 / -1;
-        
+
         mat-checkbox {
           font-size: 0.875rem;
         }
       }
-      
+
       .duplicate-hint {
         font-size: 0.75rem;
         color: var(--mat-sys-on-surface-variant);
@@ -324,17 +308,17 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  
+
   .account-icon,
   .category-icon {
     font-size: 1.25rem;
   }
-  
+
   .account-name,
   .category-name {
     font-weight: 500;
   }
-  
+
   .account-type {
     font-size: 0.75rem;
     color: var(--mat-sys-on-surface-variant);
@@ -356,63 +340,63 @@
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
-    
+
     .stat-item {
       display: flex;
       align-items: center;
       gap: 1rem;
       padding: 1rem;
       border-radius: 8px;
-      
+
       &.total {
         background: var(--mat-sys-surface-container-high);
-        
+
         mat-icon {
           color: var(--mat-sys-on-surface);
         }
       }
-      
+
       &.successful {
         background: color-mix(in srgb, #4caf50 15%, transparent);
-        
+
         mat-icon {
           color: #4caf50;
         }
       }
-      
+
       &.skipped {
         background: color-mix(in srgb, #ff9800 15%, transparent);
-        
+
         mat-icon {
           color: #ff9800;
         }
       }
-      
+
       &.errors {
         background: color-mix(in srgb, var(--mat-sys-error) 15%, transparent);
-        
+
         mat-icon {
           color: var(--mat-sys-error);
         }
       }
-      
+
       mat-icon {
         font-size: 2rem;
         width: 2rem;
         height: 2rem;
       }
-      
+
       .stat-details {
         display: flex;
         flex-direction: column;
-        
+
         .stat-label {
           font-size: 0.875rem;
           color: var(--mat-sys-on-surface-variant);
           text-transform: uppercase;
           letter-spacing: 0.5px;
         }
-        
+
         .stat-value {
           font-size: 1.5rem;
           font-weight: 600;
@@ -421,21 +405,21 @@
       }
     }
   }
-  
+
   .progress-info {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    
+
     .success-progress {
       height: 8px;
       border-radius: 4px;
-      
+
       ::ng-deep .mat-mdc-progress-bar-fill::after {
         background: #4caf50;
       }
     }
-    
+
     .progress-text {
       font-size: 0.875rem;
       color: var(--mat-sys-on-surface-variant);
@@ -451,30 +435,30 @@
     gap: 1rem;
     max-height: 400px;
     overflow-y: auto;
-    
+
     .error-item {
       padding: 1rem;
       border: 1px solid var(--mat-sys-error);
       border-radius: 8px;
       background: color-mix(in srgb, var(--mat-sys-error) 5%, transparent);
-      
+
       .error-header {
         display: flex;
         align-items: center;
         gap: 0.75rem;
         margin-bottom: 0.5rem;
-        
+
         .error-row {
           font-weight: 600;
           color: var(--mat-sys-on-surface);
         }
-        
+
         .error-message {
           font-size: 0.875rem;
           color: var(--mat-sys-error);
         }
       }
-      
+
       .error-data {
         mat-chip-set {
           mat-chip {
@@ -484,10 +468,10 @@
         }
       }
     }
-    
+
     .more-errors {
       text-align: center;
-      
+
       mat-chip {
         background: var(--mat-sys-error-container);
         color: var(--mat-sys-on-error-container);
@@ -501,27 +485,26 @@
   .import-container {
     padding: 1rem;
   }
-  
+
   .import-header {
     .header-content {
       flex-direction: column;
       align-items: stretch;
       gap: 1rem;
-      
+
       .page-title {
-        font-size: 1.5rem;
         justify-content: center;
       }
-      
+
       .header-actions {
         justify-content: center;
       }
     }
   }
-  
+
   .upload-area {
     padding: 2rem 1rem !important;
-    
+
     .upload-content {
       .upload-icon {
         font-size: 3rem !important;
@@ -529,14 +512,14 @@
         height: 3rem !important;
       }
     }
-    
+
     .file-info {
       flex-direction: column;
       text-align: center;
       gap: 0.75rem;
     }
   }
-  
+
   .mapping-form {
     .mapping-grid {
       .mapping-section {
@@ -544,21 +527,21 @@
       }
     }
   }
-  
+
   .options-form {
     .options-section {
       grid-template-columns: 1fr;
     }
   }
-  
+
   .summary-stats {
     grid-template-columns: 1fr !important;
   }
-  
+
   .step-actions {
     flex-direction: column;
     gap: 1rem;
-    
+
     button {
       width: 100%;
     }
@@ -573,7 +556,7 @@
       font-size: 0.75rem !important;
     }
   }
-  
+
   .error-item {
     .error-header {
       flex-direction: column;
@@ -596,20 +579,20 @@
 .error-list {
   scrollbar-width: thin;
   scrollbar-color: var(--mat-sys-outline-variant) transparent;
-  
+
   &::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
-  
+
   &::-webkit-scrollbar-track {
     background: transparent;
   }
-  
+
   &::-webkit-scrollbar-thumb {
     background: var(--mat-sys-outline-variant);
     border-radius: 3px;
-    
+
     &:hover {
       background: var(--mat-sys-outline);
     }

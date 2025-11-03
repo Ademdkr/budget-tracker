@@ -27,7 +27,7 @@ export interface CreateTransactionDto {
   date: Date | string;
   amount: number;
   categoryId: string;
-  budgetId: string;
+  accountId: string;
   type: 'INCOME' | 'EXPENSE'; // Backend uses uppercase enum
 }
 
@@ -37,6 +37,7 @@ export interface UpdateTransactionDto {
   date?: Date | string;
   amount?: number;
   categoryId?: string;
+  accountId?: string;
   type?: 'INCOME' | 'EXPENSE'; // Backend uses uppercase enum
 }
 

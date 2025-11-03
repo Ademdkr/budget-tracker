@@ -5,9 +5,21 @@
       <h1 class="page-title">
         <mat-icon>account_balance_wallet</mat-icon>
         Konten
+        <span *ngIf="getSelectedAccountName()" class="account-filter-badge">
+          für {{ getSelectedAccountName() }}
+          <button
+            mat-icon-button
+            (click)="clearAccountFilter()"
+            matTooltip="Account-Filter entfernen"
+            class="clear-filter-btn"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        </span>
       </h1>
+
       <div class="header-actions">
-        <button mat-raised-button color="primary" (click)="addAccount()">
+        <button mat-raised-button color="primary" (click)="openCreateAccountDialog()">
           <mat-icon>add</mat-icon>
           Konto hinzufügen
         </button>
@@ -20,9 +32,13 @@
         </button>
       </div>
     </div>
+    <p class="accounts-subtitle">
+      Überblick über Ihre Konten
+      <span *ngIf="hasAccountSelection()"> - Gefiltert nach ausgewähltem Konto</span>
+    </p>
 
     <!-- Summary -->
-    <div class="accounts-summary">
+    <div class="accounts-summary" *ngIf="!isEmpty || isLoading">
       <mat-card class="summary-card">
         <mat-card-content>
           <div class="summary-content">
@@ -102,7 +118,7 @@
           <mat-icon class="empty-icon">account_balance_wallet</mat-icon>
           <h3>Keine Konten gefunden</h3>
           <p>Fügen Sie Ihr erstes Konto hinzu, um zu beginnen.</p>
-          <button mat-raised-button color="primary" (click)="addAccount()">
+          <button mat-raised-button color="primary" (click)="openCreateAccountDialog()">
             <mat-icon>add</mat-icon>
             Erstes Konto hinzufügen
           </button>
@@ -115,18 +131,21 @@
   <div *ngIf="!isLoading && !hasError && !isEmpty" class="accounts-content">
     <!-- Cards View -->
     <div *ngIf="viewMode === 'cards'" class="accounts-cards">
-      <div *ngFor="let typeId of Object.keys(getAccountsByType())" class="account-type-section">
+      <div
+        *ngFor="let typeId of accountTypeKeys; trackBy: trackByTypeId"
+        class="account-type-section"
+      >
         <h2 class="type-title">
           <mat-icon [style.color]="getAccountTypeInfo(typeId)?.color">
             {{ getAccountTypeInfo(typeId)?.icon }}
           </mat-icon>
           {{ getAccountTypeInfo(typeId)?.name }}
-          <mat-chip class="count-chip">{{ getAccountsByType()[typeId].length }}</mat-chip>
+          <mat-chip class="count-chip">{{ accountsByType[typeId].length }}</mat-chip>
         </h2>
 
         <div class="accounts-grid">
           <mat-card
-            *ngFor="let account of getAccountsByType()[typeId]"
+            *ngFor="let account of accountsByType[typeId]; trackBy: trackByAccountId"
             class="account-card"
             [class.selected]="isAccountSelected(account.id)"
           >
@@ -166,7 +185,7 @@
                   Auswahl aufheben
                 </button>
                 <mat-divider></mat-divider>
-                <button mat-menu-item (click)="editAccount(account)">
+                <button mat-menu-item (click)="openEditAccountDialog(account)">
                   <mat-icon>edit</mat-icon>
                   Bearbeiten
                 </button>
@@ -311,7 +330,11 @@
                     >
                       <mat-icon>check_circle</mat-icon>
                     </button>
-                    <button mat-icon-button (click)="editAccount(account)" matTooltip="Bearbeiten">
+                    <button
+                      mat-icon-button
+                      (click)="openEditAccountDialog(account)"
+                      matTooltip="Bearbeiten"
+                    >
                       <mat-icon>edit</mat-icon>
                     </button>
                     <button
@@ -336,7 +359,7 @@
               <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
               <tr
                 mat-row
-                *matRowDef="let row; columns: displayedColumns"
+                *matRowDef="let row; columns: displayedColumns; trackBy: trackByAccountId"
                 class="account-row"
                 [class.selected]="isAccountSelected(row.id)"
               ></tr>

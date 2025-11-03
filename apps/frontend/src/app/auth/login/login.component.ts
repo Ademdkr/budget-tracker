@@ -1,8 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../auth.service';
+import { UserService, UserInfo } from '../user.service';
 
 // Angular Material imports
 import { MatCardModule } from '@angular/material/card';
@@ -11,6 +12,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
+import { MatDividerModule } from '@angular/material/divider';
 
 @Component({
   selector: 'app-login',
@@ -23,20 +26,25 @@ import { MatIconModule } from '@angular/material/icon';
     MatInputModule,
     MatButtonModule,
     MatProgressSpinnerModule,
-    MatIconModule
+    MatIconModule,
+    MatSelectModule,
+    MatDividerModule
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private authService = inject(AuthService);
-  
+  private userService = inject(UserService);
+
   loginForm: FormGroup;
   isLoading = false;
   errorMessage = '';
   hidePassword = true;
+  availableUsers: UserInfo[] = [];
+  isLoadingUsers = false;
 
   constructor() {
     this.loginForm = this.fb.group({
@@ -45,23 +53,49 @@ export class LoginComponent {
     });
   }
 
+  ngOnInit() {
+    this.loadAvailableUsers();
+  }
+
+  loadAvailableUsers() {
+    this.isLoadingUsers = true;
+    this.userService.getUsers().subscribe({
+      next: (users) => {
+        this.availableUsers = users;
+        this.isLoadingUsers = false;
+      },
+      error: (error) => {
+        console.error('Error loading users:', error);
+        this.isLoadingUsers = false;
+      }
+    });
+  }
+
+  selectUser(user: UserInfo) {
+    this.loginForm.patchValue({
+      email: user.email,
+      password: 'password' // Default password for all demo users
+    });
+  }
+
   onSubmit() {
     if (this.loginForm.valid) {
       this.isLoading = true;
       this.errorMessage = '';
-      
+
       const { email, password } = this.loginForm.value;
-      
-      // Use simulated login for now
-      this.authService.simulateLogin(email, password)
-        .then(() => {
+
+      // Use real API login
+      this.authService.login({ email, password }).subscribe({
+        next: () => {
           this.isLoading = false;
           this.router.navigate(['/dashboard']);
-        })
-        .catch((error) => {
+        },
+        error: (error) => {
           this.isLoading = false;
           this.errorMessage = error.message || 'Ungültige E-Mail oder Passwort';
-        });
+        }
+      });
     } else {
       this.markFormGroupTouched();
     }

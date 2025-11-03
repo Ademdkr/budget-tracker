@@ -18,12 +18,16 @@ export interface AuthResponse {
   refreshToken: string;
   user: {
     id: string;
+    name: string;
+    surname: string;
     email: string;
   };
 }
 
 export interface User {
   id: string;
+  name: string;
+  surname: string;
   email: string;
 }
 
@@ -50,14 +54,14 @@ export class AuthService {
   }
 
   login(credentials: LoginRequest): Observable<AuthResponse> {
-    // TODO: Replace with actual API endpoint
-    const apiUrl = '/api/auth/login';
-    
+    const apiUrl = 'http://localhost:3001/api/auth/login';
+
     return this.http.post<AuthResponse>(apiUrl, credentials).pipe(
       tap(response => this.handleAuthSuccess(response)),
       catchError(error => {
         console.error('Login error:', error);
-        return throwError(() => new Error('Login fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.'));
+        const errorMessage = error?.error?.message || 'Login fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.';
+        return throwError(() => new Error(errorMessage));
       })
     );
   }
@@ -65,7 +69,7 @@ export class AuthService {
   register(userData: RegisterRequest): Observable<AuthResponse> {
     // TODO: Replace with actual API endpoint
     const apiUrl = '/api/auth/register';
-    
+
     return this.http.post<AuthResponse>(apiUrl, userData).pipe(
       tap(response => this.handleAuthSuccess(response)),
       catchError(error => {
@@ -91,7 +95,7 @@ export class AuthService {
 
     // TODO: Replace with actual API endpoint
     const apiUrl = '/api/auth/refresh';
-    
+
     return this.http.post<AuthResponse>(apiUrl, { refreshToken }).pipe(
       tap(response => this.handleAuthSuccess(response)),
       catchError(error => {
@@ -183,6 +187,8 @@ export class AuthService {
             refreshToken: 'mock-refresh-token',
             user: {
               id: '1',
+              name: 'Test',
+              surname: 'User',
               email: email
             }
           };
@@ -204,6 +210,8 @@ export class AuthService {
           refreshToken: 'mock-refresh-token',
           user: {
             id: Date.now().toString(),
+            name: 'New',
+            surname: 'User',
             email: email
           }
         };

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,9 +14,13 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatMenuModule } from '@angular/material/menu';
-import { BudgetFormComponent, BudgetDialogData, Category } from './budget-form/budget-form.component';
-import { CategoriesApiService } from '../categories/categories-api.service';
+import { RouterModule } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { BudgetFormComponent, BudgetDialogData } from './budget-form/budget-form.component';
+import { CategoriesApiService, Category } from '../categories/categories-api.service';
 import { TransactionsApiService } from '../transactions/transactions-api.service';
+import { AccountSelectionService } from '../shared/services/account-selection.service';
+import { BaseComponent } from '../shared/components/base.component';
 
 import { BudgetsApiService } from './budgets-api.service';
 
@@ -69,25 +73,31 @@ export interface MonthlyBudgetSummary {
     MatSelectModule,
     MatInputModule,
     MatChipsModule,
-    MatMenuModule
+    MatMenuModule,
+    RouterModule,
   ],
   templateUrl: './budgets.component.html',
-  styleUrl: './budgets.component.scss'
+  styleUrl: './budgets.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class BudgetsComponent implements OnInit {
+export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy {
+  protected componentKey = 'budgets';
   private dialog = inject(MatDialog);
+  private accountSelection = inject(AccountSelectionService);
+  private cdr = inject(ChangeDetectorRef);
 
   // Data properties
   budgets: BudgetWithStats[] = [];
   monthlyStats: MonthlyBudgetSummary | null = null;
+  private availableCategories: Category[] = [];
+  private accountSubscription?: Subscription;
 
   // Helper for template
   Math = Math;
 
   // UI states
-  isLoading = true;
-  hasError = false;
   isEmpty = false;
+  private initialLoadCompleted = false;
 
   // Date selection
   selectedMonth = new Date().getMonth(); // 0-11
@@ -108,22 +118,50 @@ export class BudgetsComponent implements OnInit {
     { value: 8, label: 'September' },
     { value: 9, label: 'Oktober' },
     { value: 10, label: 'November' },
-    { value: 11, label: 'Dezember' }
+    { value: 11, label: 'Dezember' },
   ];
 
   availableYears: number[] = [];
 
   // Table columns
-  displayedColumns: string[] = ['category', 'target', 'current', 'progress', 'remaining', 'actions'];
+  displayedColumns: string[] = [
+    'category',
+    'target',
+    'current',
+    'progress',
+    'remaining',
+    'actions',
+  ];
 
   private budgetsApi = inject(BudgetsApiService);
   private categoriesApi = inject(CategoriesApiService);
   private transactionsApi = inject(TransactionsApiService);
 
   ngOnInit() {
+    // BaseComponent initialisieren
+    this.initializeLoadingState();
+
     this.initializeYears();
     this.setupFormSubscriptions();
-    this.loadInitialData();
+
+    // Reagiere auf Account-Änderungen und lade Daten erst, wenn Account verfügbar ist
+    this.accountSubscription = this.accountSelection.selectedAccount$.subscribe((account) => {
+      // Nur neu laden wenn die initiale Ladung abgeschlossen ist
+      if (this.initialLoadCompleted && account) {
+        this.loadBudgetsForPeriod();
+      }
+    });
+
+    // Account Selection Service initialisieren und dann Daten laden
+    this.initializeAndLoadData();
+  }
+
+  private async initializeAndLoadData() {
+    // Warte auf die Initialisierung des AccountSelectionService
+    await this.accountSelection.initialize();
+    
+    // Dann Initial load
+    this.loadBudgetsForPeriod();
   }
 
   private initializeYears() {
@@ -137,14 +175,14 @@ export class BudgetsComponent implements OnInit {
   }
 
   private setupFormSubscriptions() {
-    this.monthControl.valueChanges.subscribe(month => {
+    this.monthControl.valueChanges.subscribe((month) => {
       if (month !== null) {
         this.selectedMonth = month;
         this.loadBudgetsForPeriod();
       }
     });
 
-    this.yearControl.valueChanges.subscribe(year => {
+    this.yearControl.valueChanges.subscribe((year) => {
       if (year !== null) {
         this.selectedYear = year;
         this.loadBudgetsForPeriod();
@@ -152,156 +190,119 @@ export class BudgetsComponent implements OnInit {
     });
   }
 
-  private loadInitialData() {
-    this.isLoading = true;
-    this.hasError = false;
 
-    this.loadBudgetsForPeriod();
-  }
 
   private loadBudgetsForPeriod() {
-    this.isLoading = true;
-    this.hasError = false;
+    console.log('🔄 Loading budgets for period:', this.selectedYear, this.selectedMonth);
+    
+    // Verwende die ausgewählte Account-ID
+    const selectedAccountId = this.accountSelection.getSelectedAccountId();
 
-    // Lade Budgets, Kategorien und Transaktionen für korrekte Berechnungen
+    // Wenn kein Account ausgewählt ist, lade keine Daten
+    if (!selectedAccountId) {
+      console.log('⚠️ No account selected, skipping budget load');
+      this.budgets = [];
+      this.availableCategories = [];
+      this.checkEmptyState();
+      this.setSuccess(true); // Beende Loading-State
+      return;
+    }
+
+    this.setLoading();
+
+    // Verwende die neue optimierte API mit bereits berechneten Statistiken
+    const budgetMonth = this.selectedMonth + 1; // Frontend: 0-11, Backend: 1-12
+    
+    // Lade nur Kategorien für Dialog-Zwecke, Budgets kommen bereits mit allen Statistiken
     Promise.all([
-      this.budgetsApi.getAll().toPromise(),
-      this.loadCategoriesForDialog(),
-      this.transactionsApi.getAll().toPromise()
-    ]).then(([budgets, categories, transactions]) => {
-        type InternalBudget = BudgetWithStats & { _startDate: Date; _endDate: Date; _hasIncomeTransactions: boolean };
-
-        // Berechne die Gesamtausgaben für den Zeitraum (für Einnahmen-Budgets)
-        const periodStart = new Date(this.selectedYear, this.selectedMonth, 1);
-        const periodEnd = new Date(this.selectedYear, this.selectedMonth + 1, 0);
+      this.budgetsApi.getBudgetsWithStats(this.selectedYear, budgetMonth, selectedAccountId).toPromise(),
+      this.categoriesApi.getAll(selectedAccountId).toPromise(), // Nur für Dialog-Zwecke
+    ])
+      .then(([budgetsWithStats, categories]) => {
+        // Store categories for reuse in dialogs
+        this.availableCategories = categories ?? [];
         
-        const totalExpensesInPeriod = (transactions ?? [])
-          .filter(t => 
-            t.type === 'EXPENSE' &&
-            new Date(t.date) >= periodStart &&
-            new Date(t.date) <= periodEnd
-          )
-          .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+        console.log('📊 Budgets with stats loaded:', budgetsWithStats?.length);
+        console.log('📊 Sample budget data:', budgetsWithStats?.[0]);
 
-        const all: InternalBudget[] = (budgets ?? []).map(budget => {
-          const totalAmount = budget.totalAmount ?? 0;
-          const start = new Date(budget.startDate);
-          const end = budget.endDate ? new Date(budget.endDate) : new Date(start.getFullYear(), start.getMonth() + 1, 0);
-
-          // Berechne tatsächliche Ausgaben aus Transaktionen dieses Budgets
-          const budgetTransactions = (transactions ?? []).filter(t =>
-            t.budgetId === budget.id &&
-            t.type === 'EXPENSE' &&
-            new Date(t.date) >= start &&
-            new Date(t.date) <= end
-          );
-
-          // Prüfe, ob dieses Budget INCOME-Transaktionen hat
-          const hasIncomeTransactions = (transactions ?? []).some(t =>
-            t.budgetId === budget.id &&
-            t.type === 'INCOME' &&
-            new Date(t.date) >= start &&
-            new Date(t.date) <= end
-          );
-
-          // Für Einnahmen-Budgets: Gesamtausgaben aller Budgets
-          // Für Ausgaben-Budgets: Nur die Ausgaben dieses Budgets
-          const actualSpent = hasIncomeTransactions ? totalExpensesInPeriod : budgetTransactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
-          
-          const transactionCount = budgetTransactions.length;
-          const lastTransaction = budgetTransactions.length > 0
-            ? budgetTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
-            : null;
-
-          const percentageUsed = totalAmount > 0 ? (actualSpent / totalAmount) * 100 : 0;
-
-          // Intelligente Icon-Zuordnung basierend auf Budget-Namen
-          const matchingCategory = this.findCategoryByBudgetName(budget.name, categories);
-          const categoryIcon = matchingCategory?.icon || '💰';
-          const categoryColor = matchingCategory?.color || '#4CAF50';
-
-          return {
-            id: budget.id,
-            categoryId: matchingCategory?.id || '',
-            categoryName: budget.name,
-            categoryIcon,
-            categoryColor,
-            targetAmount: totalAmount,
-            currentAmount: actualSpent,
-            remainingAmount: totalAmount - actualSpent,
-            percentageUsed,
-            transactionCount,
-            lastTransactionDate: lastTransaction ? new Date(lastTransaction.date) : undefined,
-            month: start.getMonth(),
-            year: start.getFullYear(),
-            createdAt: budget.createdAt ? new Date(budget.createdAt) : new Date(),
-            updatedAt: budget.updatedAt ? new Date(budget.updatedAt) : new Date(),
-            isActive: budget.isActive ?? true,
-            // Interne Felder zur Filterung
-            _startDate: start,
-            _endDate: end,
-            _hasIncomeTransactions: hasIncomeTransactions,
-          } as InternalBudget;
-        });
-
-        // Überlappung prüfen: (start <= periodEnd) && (end >= periodStart)
-        const filtered = all.filter(b => b._startDate <= periodEnd && b._endDate >= periodStart);
-
-        // interne Felder entfernen und Ergebnis setzen
-        this.budgets = filtered.map(b => ({
-          id: b.id,
-          categoryId: b.categoryId,
-          categoryName: b.categoryName,
-          categoryIcon: b.categoryIcon,
-          categoryColor: b.categoryColor,
-          targetAmount: b.targetAmount,
-          currentAmount: b.currentAmount,
-          remainingAmount: b.remainingAmount,
-          percentageUsed: b.percentageUsed,
-          transactionCount: b.transactionCount,
-          lastTransactionDate: b.lastTransactionDate,
-          month: b.month,
-          year: b.year,
-          createdAt: b.createdAt,
-          updatedAt: b.updatedAt,
-          isActive: b.isActive,
+        // Die neue API liefert bereits alle berechneten Statistiken
+        this.budgets = (budgetsWithStats ?? []).map((budget) => ({
+          id: budget.id,
+          categoryId: budget.categoryId,
+          categoryName: budget.categoryName,
+          categoryIcon: budget.categoryIcon,
+          categoryColor: budget.categoryColor,
+          targetAmount: budget.targetAmount,
+          currentAmount: budget.currentAmount,
+          remainingAmount: budget.remainingAmount,
+          percentageUsed: budget.percentageUsed,
+          transactionCount: budget.transactionCount,
+          lastTransactionDate: budget.lastTransactionDate ? new Date(budget.lastTransactionDate) : undefined,
+          month: budget.month - 1, // Backend: 1-12, Frontend: 0-11
+          year: budget.year,
+          createdAt: budget.createdAt ? new Date(budget.createdAt) : new Date(),
+          updatedAt: budget.updatedAt ? new Date(budget.updatedAt) : new Date(),
+          isActive: budget.isActive,
         }));
 
-        // Speichere die vollständigen Informationen für calculateMonthlyStats
-        this.calculateMonthlyStats(filtered);
+        // Berechne monatliche Statistiken
+        this.calculateMonthlyStats();
         this.checkEmptyState();
-        this.isLoading = false;
+        this.setSuccess(this.isEmpty);
+        this.initialLoadCompleted = true;
+        this.cdr.markForCheck();
       })
       .catch(() => {
-        this.hasError = true;
-        this.isLoading = false;
+        this.setError('Fehler beim Laden der Budgets');
+        this.initialLoadCompleted = true;
+        this.cdr.markForCheck();
       });
   }
 
-  private calculateMonthlyStats(filteredBudgets?: (BudgetWithStats & { _hasIncomeTransactions: boolean })[]) {
+  private calculateMonthlyStats() {
     if (this.budgets.length === 0) {
       this.monthlyStats = null;
       return;
     }
 
-    // Verwende die vollständigen Budget-Informationen wenn verfügbar
-    const budgetsWithIncomeInfo = filteredBudgets || this.budgets;
+    // GEPLANT: Summe aller Budget-Sollwerte (targetAmount) für den ausgewählten Monat
+    const totalTarget = this.budgets.reduce((sum, budget) => {
+      const amount = Number(budget.targetAmount) || 0;
+      console.log(
+        '🔢 Adding targetAmount:',
+        budget.categoryName,
+        amount,
+        'Type:',
+        typeof budget.targetAmount,
+      );
+      return sum + amount;
+    }, 0);
 
-    // Für GEPLANT (totalTarget) nur Budgets mit INCOME-Transaktionen berücksichtigen
-    const incomeBudgets = budgetsWithIncomeInfo.filter(b => 
-      '_hasIncomeTransactions' in b ? b._hasIncomeTransactions === true : false
-    );
-    const totalTarget = incomeBudgets.reduce((sum, budget) => sum + budget.targetAmount, 0);
-    
-    // Für AUSGEGEBEN (totalSpent) nur Budgets ohne INCOME-Transaktionen berücksichtigen
-    const expenseBudgets = budgetsWithIncomeInfo.filter(b => 
-      '_hasIncomeTransactions' in b ? b._hasIncomeTransactions !== true : true
-    );
-    const totalSpent = expenseBudgets.reduce((sum, budget) => sum + budget.currentAmount, 0);
-    
+    // AUSGEGEBEN: Summe aller tatsächlichen Ausgaben (currentAmount)
+    const totalSpent = this.budgets.reduce((sum, budget) => {
+      const amount = Number(budget.currentAmount) || 0;
+      return sum + amount;
+    }, 0);
+
+    console.log('📊 Monthly stats calculation:', {
+      month: this.selectedMonth,
+      year: this.selectedYear,
+      budgetCount: this.budgets.length,
+      totalTarget,
+      totalSpent,
+      budgets: this.budgets.map((b) => ({
+        id: b.id,
+        categoryName: b.categoryName,
+        targetAmount: b.targetAmount,
+        currentAmount: b.currentAmount,
+      })),
+    });
+
     const totalRemaining = totalTarget - totalSpent;
-    const overBudgetCount = this.budgets.filter(b => b.percentageUsed > 100).length;
-    const achievedCount = this.budgets.filter(b => b.percentageUsed >= 90 && b.percentageUsed <= 100).length;
+    const overBudgetCount = this.budgets.filter((b) => b.percentageUsed > 100).length;
+    const achievedCount = this.budgets.filter(
+      (b) => b.percentageUsed >= 90 && b.percentageUsed <= 100,
+    ).length;
 
     this.monthlyStats = {
       month: this.selectedMonth,
@@ -311,7 +312,7 @@ export class BudgetsComponent implements OnInit {
       totalRemaining,
       budgetCount: this.budgets.length,
       overBudgetCount,
-      achievedCount
+      achievedCount,
     };
   }
 
@@ -321,10 +322,7 @@ export class BudgetsComponent implements OnInit {
 
   // UI Helper Methods
   formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('de-DE', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
+    return this.formatUtils.formatCurrency(amount);
   }
 
   formatDate(date: Date | undefined): string {
@@ -332,13 +330,13 @@ export class BudgetsComponent implements OnInit {
     return new Intl.DateTimeFormat('de-DE', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric'
+      year: 'numeric',
     }).format(date);
   }
 
   getProgressBarColor(percentage: number): string {
     if (percentage <= 50) return 'primary'; // Blue
-    if (percentage <= 80) return 'accent';  // Orange
+    if (percentage <= 80) return 'accent'; // Orange
     if (percentage <= 100) return 'primary'; // Blue
     return 'warn'; // Red for over budget
   }
@@ -348,9 +346,9 @@ export class BudgetsComponent implements OnInit {
     if (budget.percentageUsed > 100) return 'danger';
     if (budget.percentageUsed >= 90) return 'success'; // Im Ziel
     if (budget.percentageUsed >= 80) return 'warning'; // Fast aufgebraucht
-    if (budget.percentageUsed >= 50) return 'info';    // Moderat
-    if (budget.percentageUsed > 0) return 'success';   // Auf Kurs
-    return 'info';                                     // Nicht verwendet
+    if (budget.percentageUsed >= 50) return 'info'; // Moderat
+    if (budget.percentageUsed > 0) return 'success'; // Auf Kurs
+    return 'info'; // Nicht verwendet
   }
 
   getBudgetStatusText(budget: BudgetWithStats): string {
@@ -364,20 +362,36 @@ export class BudgetsComponent implements OnInit {
   }
 
   getSelectedMonthName(): string {
-    return this.availableMonths.find(m => m.value === this.selectedMonth)?.label || '';
+    return this.availableMonths.find((m) => m.value === this.selectedMonth)?.label || '';
   }
 
   // Budget Actions
   async createBudget(): Promise<void> {
+    // Überprüfen ob ein Konto ausgewählt ist
+    const selectedAccountId = this.accountSelection.getSelectedAccountId();
+    if (!selectedAccountId) {
+      alert('Bitte wählen Sie zunächst ein Konto aus, um ein Budget zu erstellen.');
+      return;
+    }
+
     const categories = await this.loadCategoriesForDialog();
-    const existingBudgets = this.budgets.map(b => ({
+
+    // Wenn keine Kategorien für das Konto vorhanden sind
+    if (categories.length === 0) {
+      alert(
+        'Für das ausgewählte Konto sind keine Kategorien verfügbar. Erstellen Sie zunächst Kategorien für dieses Konto.',
+      );
+      return;
+    }
+
+    const existingBudgets = this.budgets.map((b) => ({
       id: b.id,
       categoryId: b.categoryId,
       categoryName: b.categoryName,
       targetAmount: b.targetAmount,
       month: b.month,
       year: b.year,
-      isActive: b.isActive
+      isActive: b.isActive,
     }));
 
     const dialogRef = this.dialog.open(BudgetFormComponent, {
@@ -388,13 +402,13 @@ export class BudgetsComponent implements OnInit {
         existingBudgets,
         month: this.selectedMonth,
         year: this.selectedYear,
-        isEdit: false
+        isEdit: false,
       } as BudgetDialogData,
       disableClose: true,
-      autoFocus: false
+      autoFocus: false,
     });
 
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed().subscribe((result) => {
       if (result && result.action === 'create') {
         this.createBudgetFromDialog(result.budget);
       }
@@ -404,15 +418,15 @@ export class BudgetsComponent implements OnInit {
   async editBudget(budget: BudgetWithStats): Promise<void> {
     const categories = await this.loadCategoriesForDialog();
     const existingBudgets = this.budgets
-      .filter(b => b.id !== budget.id)
-      .map(b => ({
+      .filter((b) => b.id !== budget.id)
+      .map((b) => ({
         id: b.id,
         categoryId: b.categoryId,
         categoryName: b.categoryName,
         targetAmount: b.targetAmount,
         month: b.month,
         year: b.year,
-        isActive: b.isActive
+        isActive: b.isActive,
       }));
 
     const dialogRef = this.dialog.open(BudgetFormComponent, {
@@ -426,19 +440,19 @@ export class BudgetsComponent implements OnInit {
           targetAmount: budget.targetAmount,
           month: budget.month,
           year: budget.year,
-          isActive: budget.isActive
+          isActive: budget.isActive,
         },
         categories,
         existingBudgets,
         month: this.selectedMonth,
         year: this.selectedYear,
-        isEdit: true
+        isEdit: true,
       } as BudgetDialogData,
       disableClose: true,
-      autoFocus: false
+      autoFocus: false,
     });
 
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed().subscribe((result) => {
       if (result && result.action === 'edit') {
         this.updateBudgetFromDialog(budget.id, result.budget);
       }
@@ -446,7 +460,9 @@ export class BudgetsComponent implements OnInit {
   }
 
   deleteBudget(budget: BudgetWithStats): void {
-    const confirmed = confirm(`Möchten Sie das Budget für "${budget.categoryName}" wirklich löschen?`);
+    const confirmed = confirm(
+      `Möchten Sie das Budget für "${budget.categoryName}" wirklich löschen?`,
+    );
     if (confirmed) {
       this.budgetsApi.delete(budget.id).subscribe({
         next: () => {
@@ -456,25 +472,53 @@ export class BudgetsComponent implements OnInit {
         error: (error) => {
           console.error('Fehler beim Löschen des Budgets:', error);
           alert('Budget konnte nicht gelöscht werden. Bitte versuchen Sie es erneut.');
-        }
+        },
       });
     }
   }
 
   retry(): void {
-    this.loadInitialData();
+    this.loadBudgetsForPeriod();
   }
 
   // Helper methods for dialog integration
   private async loadCategoriesForDialog(): Promise<Category[]> {
     try {
-      const categories = await this.categoriesApi.getAll().toPromise();
-      return (categories ?? []).map(cat => ({
+      // Versuche zuerst, bereits geladene Kategorien zu verwenden (aus loadBudgetsForPeriod)
+      if (this.availableCategories && this.availableCategories.length > 0) {
+        console.log('🔄 Reusing already loaded categories for dialog');
+        const expenseCategories = this.availableCategories.filter(
+          (cat: Category) => cat.transactionType !== 'INCOME',
+        );
+        return expenseCategories.map((cat: Category) => ({
+          id: cat.id,
+          name: cat.name,
+          icon: cat.icon || cat.emoji || '📦',
+          color: cat.color || '#4CAF50',
+          isActive: true,
+        }));
+      }
+
+      // Fallback: Lade Kategorien nur wenn noch nicht geladen
+      const selectedAccountId = this.accountSelection.getSelectedAccountId();
+
+      if (!selectedAccountId) {
+        console.warn('Kein Konto ausgewählt, lade keine Kategorien');
+        return [];
+      }
+
+      console.log('📥 Loading fresh categories for dialog (fallback)');
+      const categories = await this.categoriesApi.getAll(selectedAccountId).toPromise();
+      // Nur Ausgabekategorien für Budgeterstellung zulassen
+      const expenseCategories = (categories ?? []).filter(
+        (cat) => cat.transactionType !== 'INCOME',
+      );
+      return expenseCategories.map((cat) => ({
         id: cat.id,
         name: cat.name,
         icon: cat.icon || cat.emoji || '📦',
         color: cat.color || '#4CAF50',
-        isActive: true
+        isActive: true,
       }));
     } catch (error) {
       console.error('Fehler beim Laden der Kategorien:', error);
@@ -482,78 +526,62 @@ export class BudgetsComponent implements OnInit {
     }
   }
 
-  private findCategoryByBudgetName(budgetName: string, categories: Category[]): Category | undefined {
-    // Erste Strategie: Exakte Übereinstimmung mit Kategorie-Namen
-    let match = categories.find(cat =>
-      cat.name.toLowerCase() === budgetName.toLowerCase()
-    );
-
-    if (match) return match;
-
-    // Zweite Strategie: Budget-Name enthält Kategorie-Namen
-    match = categories.find(cat =>
-      budgetName.toLowerCase().includes(cat.name.toLowerCase())
-    );
-
-    if (match) return match;
-
-    // Dritte Strategie: Kategorie-Name ist in Budget-Name enthalten
-    match = categories.find(cat =>
-      cat.name.toLowerCase().includes(budgetName.toLowerCase())
-    );
-
-    if (match) return match;
-
-    // Vierte Strategie: Budget enthält "Budget für [Kategorie]" Pattern
-    const budgetForMatch = budgetName.match(/budget für (.+?) - /i);
-    if (budgetForMatch) {
-      const categoryNameFromBudget = budgetForMatch[1].trim();
-      match = categories.find(cat =>
-        cat.name.toLowerCase() === categoryNameFromBudget.toLowerCase()
-      );
-      if (match) return match;
-    }
-
-    return undefined;
-  }
-
-  private createBudgetFromDialog(budgetData: Partial<BudgetWithStats>): void {
-    const categoryName = budgetData.categoryName || '';
+  private async createBudgetFromDialog(budgetData: Partial<BudgetWithStats>): Promise<void> {
+    const categoryId = budgetData.categoryId || '';
     const targetAmount = budgetData.targetAmount || 0;
-    const month = budgetData.month || this.selectedMonth;
+    const month = (budgetData.month ?? this.selectedMonth) + 1; // Frontend: 0-11, Backend: 1-12
     const year = budgetData.year || this.selectedYear;
 
+    console.log('🔍 Budget data from dialog:', budgetData);
+    console.log('🔍 Selected month/year:', this.selectedMonth, this.selectedYear);
+    console.log('🔍 Calculated month (backend):', month);
+
     // Validierung
-    if (!categoryName || categoryName.trim() === '') {
-      alert('Kategoriename ist erforderlich.');
+    if (!categoryId || categoryId.trim() === '') {
+      console.error('❌ Kategorie-ID fehlt:', categoryId);
+      alert('Kategorie-ID ist erforderlich.');
       return;
     }
 
-    // Erstelle Start- und Enddatum für das Budget
-    const startDate = new Date(year, month, 1);
-    const endDate = new Date(year, month + 1, 0); // Letzter Tag des Monats
+    if (targetAmount <= 0) {
+      console.error('❌ Ungültiger Betrag:', targetAmount);
+      alert('Budget-Betrag muss größer als 0 sein.');
+      return;
+    }
+
+    // Zusätzliche Absicherung gegen Einnahme-Kategorien
+    try {
+      const cat = await this.categoriesApi.getById(categoryId.trim()).toPromise();
+      if (cat && cat.transactionType === 'INCOME') {
+        alert(
+          'Für Einnahme-Kategorien können keine Budgets erstellt werden. Bitte wählen Sie eine Ausgaben-Kategorie.',
+        );
+        return;
+      }
+    } catch {
+      console.warn('Kategorie konnte zur Validierung nicht geladen werden.');
+    }
 
     const createDto = {
-      name: categoryName.trim(),
-      description: `Budget für ${categoryName} - ${this.getSelectedMonthName()} ${year}`,
-      totalAmount: targetAmount,
-      currency: 'EUR',
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString()
+      categoryId: categoryId.trim(),
+      year: year,
+      month: month,
+      totalAmount: Number(targetAmount), // Explizit zu Number konvertieren
     };
 
-    console.log('Sending create request with:', createDto);
+    console.log('📤 Sending create request with:', createDto);
 
-        this.budgetsApi.create(createDto).subscribe({
+    this.budgetsApi.create(createDto).subscribe({
       next: (createdBudget) => {
-        console.log('Budget erfolgreich erstellt:', createdBudget);
+        console.log('✅ Budget erfolgreich erstellt:', createdBudget);
+        console.log('🔄 Aktualisiere Budget-Liste...');
         this.loadBudgetsForPeriod(); // Liste neu laden
       },
       error: (error) => {
         console.error('Fehler beim Erstellen des Budgets:', error);
         const errorMessage = error?.error?.message?.[0] || 'Budget konnte nicht erstellt werden.';
         alert(`Fehler: ${errorMessage}\nBitte versuchen Sie es erneut.`);
-      }
+      },
     });
   }
 
@@ -561,7 +589,7 @@ export class BudgetsComponent implements OnInit {
     const targetAmount = budgetData.targetAmount || 0;
 
     const updateDto = {
-      totalAmount: targetAmount
+      totalAmount: targetAmount,
     };
 
     this.budgetsApi.update(budgetId, updateDto).subscribe({
@@ -572,13 +600,40 @@ export class BudgetsComponent implements OnInit {
       error: (error) => {
         console.error('Fehler beim Aktualisieren des Budgets:', error);
         alert('Budget konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut.');
-      }
+      },
     });
   }
 
+  // Account Selection Helper Methods
+  hasAccountSelection(): boolean {
+    return !!this.accountSelection.getSelectedAccountId();
+  }
+
+  getSelectedAccountName(): string {
+    const account = this.accountSelection.getSelectedAccount();
+    return account?.name || '';
+  }
+
+  clearAccountFilter(): void {
+    this.accountSelection.clearSelection().catch(err => {
+      console.error('Error clearing account filter:', err);
+    });
+  }
+
+  // TrackBy functions for performance optimization - using inherited methods
+  trackByBudget = this.trackByUtils.trackById.bind(this.trackByUtils);
+  trackByCategory = this.trackByUtils.trackByCategoryId.bind(this.trackByUtils);
+
   // Die folgenden Helper wurden durch echte Kategorien ersetzt und sind nicht mehr nötig.
 
-  private generateId(): string {
+  protected generateId(): string {
     return 'budget_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  }
+
+  ngOnDestroy() {
+    // Cleanup subscriptions to prevent memory leaks and duplicate API calls during navigation
+    if (this.accountSubscription) {
+      this.accountSubscription.unsubscribe();
+    }
   }
 }

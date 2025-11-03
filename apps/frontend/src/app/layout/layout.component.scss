@@ -94,49 +94,49 @@
     display: none; // Hidden on desktop, will show on mobile
   }
 
-  .filter-section {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-left: 24px;
+  // .filter-section {
+  //   display: flex;
+  //   align-items: center;
+  //   gap: 16px;
+  //   margin-left: 24px;
 
-    .filter-type {
-      width: 140px;
-    }
+  //   .filter-type {
+  //     width: 140px;
+  //   }
 
-    .month-picker {
-      width: 180px;
-    }
+  //   .month-picker {
+  //     width: 180px;
+  //   }
 
-    .date-range {
-      display: flex;
-      align-items: center;
-      gap: 12px;
+  //   .date-range {
+  //     display: flex;
+  //     align-items: center;
+  //     gap: 12px;
 
-      .start-date,
-      .end-date {
-        width: 150px;
-      }
-    }
+  //     .start-date,
+  //     .end-date {
+  //       width: 150px;
+  //     }
+  //   }
 
-    mat-form-field {
-      .mat-mdc-text-field-wrapper {
-        background-color: rgba(255, 255, 255, 0.1);
-      }
+  //   mat-form-field {
+  //     .mat-mdc-text-field-wrapper {
+  //       background-color: rgba(255, 255, 255, 0.1);
+  //     }
 
-      .mat-mdc-form-field-label {
-        color: rgba(255, 255, 255, 0.8);
-      }
+  //     .mat-mdc-form-field-label {
+  //       color: rgba(255, 255, 255, 0.8);
+  //     }
 
-      .mat-mdc-input-element {
-        color: white;
-      }
+  //     .mat-mdc-input-element {
+  //       color: white;
+  //     }
 
-      .mat-mdc-form-field-icon-suffix {
-        color: rgba(255, 255, 255, 0.8);
-      }
-    }
-  }
+  //     .mat-mdc-form-field-icon-suffix {
+  //       color: rgba(255, 255, 255, 0.8);
+  //     }
+  //   }
+  // }
 
   .spacer {
     flex: 1;
@@ -209,29 +209,29 @@
       display: flex;
     }
 
-    .filter-section {
-      margin-left: 8px;
-      flex-wrap: wrap;
-      gap: 8px;
+    // .filter-section {
+    //   margin-left: 8px;
+    //   flex-wrap: wrap;
+    //   gap: 8px;
 
-      .filter-type {
-        width: 120px;
-      }
+    //   .filter-type {
+    //     width: 120px;
+    //   }
 
-      .month-picker {
-        width: 160px;
-      }
+    //   .month-picker {
+    //     width: 160px;
+    //   }
 
-      .date-range {
-        flex-direction: column;
-        gap: 8px;
+    //   .date-range {
+    //     flex-direction: column;
+    //     gap: 8px;
 
-        .start-date,
-        .end-date {
-          width: 140px;
-        }
-      }
-    }
+    //     .start-date,
+    //     .end-date {
+    //       width: 140px;
+    //     }
+    //   }
+    // }
 
     .add-transaction-fab {
       display: none; // Hide FAB on mobile, could be moved to content area
@@ -250,23 +250,23 @@
     flex-wrap: wrap;
     padding: 8px 12px;
 
-    .filter-section {
-      width: 100%;
-      margin-left: 0;
-      justify-content: space-around;
+    // .filter-section {
+    //   width: 100%;
+    //   margin-left: 0;
+    //   justify-content: space-around;
 
-      .filter-type,
-      .month-picker {
-        width: 100px;
-      }
+    //   .filter-type,
+    //   .month-picker {
+    //     width: 100px;
+    //   }
 
-      .date-range {
-        .start-date,
-        .end-date {
-          width: 120px;
-        }
-      }
-    }
+    //   .date-range {
+    //     .start-date,
+    //     .end-date {
+    //       width: 120px;
+    //     }
+    //   }
+    // }
   }
 
   .content-area {
@@ -300,7 +300,9 @@
 
 // FAB animation
 .add-transaction-fab {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 
   &:active {
     transform: scale(0.8);

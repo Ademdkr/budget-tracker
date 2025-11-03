@@ -4,36 +4,48 @@ import { ApiService } from '../shared/services/api.service';
 
 export interface Budget {
   id: string;
-  name: string;
-  description?: string;
+  categoryId: string;
+  year: number;
+  month: number; // 1-12
   totalAmount: number;
-  spent: number;
-  currency: string;
-  startDate: Date | string;
-  endDate?: Date | string;
-  isActive: boolean;
   createdAt?: Date | string;
   updatedAt?: Date | string;
+  category?: {
+    id: string;
+    name: string;
+    emoji?: string;
+    color?: string;
+  };
 }
 
 export interface CreateBudgetDto {
-  name: string;
-  description?: string;
-  totalAmount?: number;
-  currency?: string;
-  startDate?: Date | string;
-  endDate?: Date | string;
+  categoryId: string;
+  year: number;
+  month: number; // 1-12
+  totalAmount: number;
 }
 
 export interface UpdateBudgetDto {
-  name?: string;
-  description?: string;
   totalAmount?: number;
-  spent?: number;
-  currency?: string;
-  startDate?: Date | string;
-  endDate?: Date | string;
-  isActive?: boolean;
+}
+
+export interface BudgetWithStats {
+  id: string;
+  categoryId: string;
+  categoryName: string;
+  categoryIcon: string;
+  categoryColor: string;
+  targetAmount: number;
+  currentAmount: number;
+  remainingAmount: number;
+  percentageUsed: number;
+  transactionCount: number;
+  lastTransactionDate?: Date | string;
+  month: number;
+  year: number;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  isActive: boolean;
 }
 
 @Injectable({
@@ -75,5 +87,20 @@ export class BudgetsApiService {
    */
   delete(id: string): Observable<void> {
     return this.api.delete<void>(`budgets/${id}`);
+  }
+
+  /**
+   * Get budgets with calculated statistics for a specific period and account
+   */
+  getBudgetsWithStats(year?: number, month?: number, accountId?: string): Observable<BudgetWithStats[]> {
+    const params = new URLSearchParams();
+    if (year) params.append('year', year.toString());
+    if (month) params.append('month', month.toString());
+    if (accountId) params.append('accountId', accountId);
+    
+    const queryString = params.toString();
+    const url = queryString ? `budgets/with-stats?${queryString}` : 'budgets/with-stats';
+    
+    return this.api.get<BudgetWithStats[]>(url);
   }
 }

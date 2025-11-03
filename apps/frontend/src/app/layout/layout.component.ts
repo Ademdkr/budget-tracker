@@ -99,12 +99,7 @@ export class LayoutComponent {
     this.router.navigate([route]);
   }
 
-  addTransaction() {
-    // TODO: Open transaction dialog or navigate to transaction form
-    console.log('Add transaction clicked');
-  }
-
-  onFilterTypeChange() {
+  /* onFilterTypeChange() {
     // TODO: Emit filter change event or update service
     console.log('Filter type changed:', this.filterTypeControl.value);
   }
@@ -120,7 +115,7 @@ export class LayoutComponent {
       start: this.startDateControl.value,
       end: this.endDateControl.value
     });
-  }
+  } */
 
   getCurrentFilter(): DateFilter {
     const filterType = this.filterTypeControl.value || 'month';

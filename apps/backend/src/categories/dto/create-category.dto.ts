@@ -1,4 +1,5 @@
-import { IsString, IsOptional, IsNumber, IsNotEmpty } from 'class-validator';
+import { IsString, IsOptional, IsNotEmpty, IsEnum } from 'class-validator';
+import { TransactionType } from '@prisma/client';
 
 export class CreateCategoryDto {
   @IsString()
@@ -15,13 +16,12 @@ export class CreateCategoryDto {
 
   @IsOptional()
   @IsString()
-  icon?: string;
+  emoji?: string;
 
-  @IsOptional()
-  @IsNumber()
-  budgetLimit?: number;
+  @IsEnum(TransactionType)
+  transactionType!: TransactionType;
 
   @IsString()
   @IsNotEmpty()
-  budgetId!: string;
+  accountId!: string;
 }

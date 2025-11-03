@@ -4,6 +4,42 @@
   background: var(--mat-sys-surface-container-lowest);
 }
 
+// Empty State
+.empty-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.empty-card {
+  max-width: 500px;
+  width: 100%;
+}
+
+.empty-content {
+  text-align: center;
+  padding: 2rem;
+
+  .empty-icon {
+    font-size: 4rem;
+    width: 4rem;
+    height: 4rem;
+    color: var(--mat-sys-on-surface-variant);
+    margin-bottom: 1rem;
+  }
+
+  h3 {
+    margin: 0 0 1rem 0;
+    color: var(--mat-sys-on-surface);
+  }
+
+  p {
+    margin: 0 0 1.5rem 0;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
 // Header
 .budgets-header {
   margin-bottom: 2rem;
@@ -14,28 +50,20 @@
     align-items: center;
     margin-bottom: 1.5rem;
 
-    .page-title {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin: 0;
-      font-size: 2rem;
-      font-weight: 500;
-      color: var(--mat-sys-on-surface);
-
-      mat-icon {
-        font-size: 2rem;
-        width: 2rem;
-        height: 2rem;
-        color: var(--mat-sys-primary);
-      }
-    }
+    // page-title styling is provided globally
 
     .header-actions {
       display: flex;
       align-items: center;
       gap: 0.5rem;
     }
+  }
+
+  .budgets-subtitle {
+    margin: 0;
+    color: var(--mat-sys-on-surface-variant);
+    font-size: 1rem;
+    margin-bottom: 2rem;
   }
 
   .period-selection {
@@ -432,7 +460,6 @@
       gap: 1rem;
 
       .page-title {
-        font-size: 1.5rem;
         justify-content: center;
       }
 

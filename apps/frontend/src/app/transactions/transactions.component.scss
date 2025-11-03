@@ -12,47 +12,10 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 1.5rem;
 
     .page-title {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
       margin: 0;
-      font-size: 2rem;
-      font-weight: 500;
-      color: var(--mat-sys-on-surface);
-
-      mat-icon {
-        font-size: 2rem;
-        width: 2rem;
-        height: 2rem;
-        color: var(--mat-sys-primary);
-      }
-
-      .account-filter-badge {
-        display: inline-flex;
-        align-items: center;
-        margin-left: 1rem;
-        padding: 0.5rem 1rem;
-        background: var(--mat-sys-primary-container);
-        color: var(--mat-sys-on-primary-container);
-        border-radius: 2rem;
-        font-size: 0.875rem;
-        font-weight: 500;
-        animation: slideIn 0.3s ease-out;
-
-        .clear-filter-btn {
-          margin-left: 0.5rem;
-          width: 1.5rem;
-          height: 1.5rem;
-
-          mat-icon {
-            font-size: 1rem;
-            width: 1rem;
-            height: 1rem;
-          }
-        }
-      }
     }
 
     .header-actions {
@@ -60,6 +23,12 @@
       align-items: center;
       gap: 0.5rem;
     }
+  }
+
+  .transactions-subtitle {
+    margin: 0;
+    color: var(--mat-sys-on-surface-variant);
+    font-size: 1rem;
   }
 }
 
@@ -408,9 +377,7 @@
       align-items: stretch;
       gap: 1rem;
 
-      .page-title {
-        font-size: 1.5rem;
-      }
+      // page-title uses global font-size; keep layout tweaks locally if needed
 
       .header-actions {
         justify-content: center;
@@ -453,6 +420,118 @@
 
       &:last-child {
         padding-right: 0.5rem;
+      }
+    }
+  }
+}
+
+// Virtual Scrolling Styles
+.virtual-scroll-container {
+  margin-top: 1rem;
+
+  .virtual-scroll-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: var(--mat-sys-surface-variant);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    color: var(--mat-sys-on-surface-variant);
+    font-size: 0.875rem;
+  }
+
+  .virtual-viewport {
+    height: 600px;
+    border: 1px solid var(--mat-sys-outline-variant);
+    border-radius: 8px;
+    background: var(--mat-sys-surface);
+  }
+
+  .virtual-transaction-item {
+    display: flex;
+    padding: 1rem;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background: var(--mat-sys-surface-container-low);
+    }
+
+    &.transaction-INCOME {
+      border-left: 4px solid var(--mat-sys-success);
+    }
+
+    &.transaction-EXPENSE {
+      border-left: 4px solid var(--mat-sys-error);
+    }
+
+    .virtual-transaction-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+
+      .transaction-main {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+
+        .transaction-date {
+          min-width: 100px;
+          font-weight: 500;
+          color: var(--mat-sys-on-surface);
+        }
+
+        .transaction-category {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          flex: 1;
+
+          .category-emoji {
+            font-size: 1.25rem;
+          }
+
+          .category-name {
+            color: var(--mat-sys-on-surface-variant);
+          }
+        }
+
+        .transaction-amount {
+          display: flex;
+          align-items: center;
+          gap: 0.25rem;
+          font-weight: 600;
+          font-size: 1.1rem;
+
+          &.income {
+            color: var(--mat-sys-success);
+          }
+
+          &.expense {
+            color: var(--mat-sys-error);
+          }
+
+          .amount-icon {
+            font-size: 1.2rem;
+            width: 1.2rem;
+            height: 1.2rem;
+          }
+        }
+      }
+
+      .transaction-note {
+        color: var(--mat-sys-on-surface-variant);
+        font-size: 0.875rem;
+        padding-left: 100px;
+      }
+
+      .transaction-actions {
+        display: flex;
+        gap: 0.25rem;
+        padding-left: 100px;
+        margin-top: 0.25rem;
       }
     }
   }

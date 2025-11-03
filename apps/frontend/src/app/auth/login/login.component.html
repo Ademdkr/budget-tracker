@@ -6,15 +6,38 @@
     </mat-card-header>
 
     <mat-card-content>
+      <!-- Available Users Section -->
+      <div class="available-users" *ngIf="availableUsers.length > 0">
+        <h3>Verfügbare Testbenutzer:</h3>
+        <div class="user-chips">
+          <button
+            *ngFor="let user of availableUsers"
+            mat-stroked-button
+            class="user-chip"
+            (click)="selectUser(user)"
+            [disabled]="isLoading"
+          >
+            <mat-icon>person</mat-icon>
+            {{ user.name }} {{ user.surname }}
+            <span class="user-email">({{ user.email }})</span>
+          </button>
+        </div>
+        <mat-divider class="user-divider"></mat-divider>
+      </div>
+
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
         <!-- Email Field -->
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>E-Mail</mat-label>
-          <input matInput 
-                 type="email" 
-                 formControlName="email"
-                 placeholder="ihre@email.com"
-                 [class.mat-mdc-input-invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+          <input
+            matInput
+            type="email"
+            formControlName="email"
+            placeholder="ihre@email.com"
+            [class.mat-mdc-input-invalid]="
+              loginForm.get('email')?.invalid && loginForm.get('email')?.touched
+            "
+          />
           <mat-icon matPrefix>email</mat-icon>
           <mat-error *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.invalid">
             {{ getErrorMessage('email') }}
@@ -24,21 +47,29 @@
         <!-- Password Field -->
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Passwort</mat-label>
-          <input matInput 
-                 [type]="hidePassword ? 'password' : 'text'"
-                 formControlName="password"
-                 placeholder="Ihr Passwort"
-                 [class.mat-mdc-input-invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+          <input
+            matInput
+            [type]="hidePassword ? 'password' : 'text'"
+            formControlName="password"
+            placeholder="Ihr Passwort"
+            [class.mat-mdc-input-invalid]="
+              loginForm.get('password')?.invalid && loginForm.get('password')?.touched
+            "
+          />
           <mat-icon matPrefix>lock</mat-icon>
-          <button mat-icon-button 
-                  matSuffix 
-                  type="button"
-                  (click)="hidePassword = !hidePassword"
-                  [attr.aria-label]="'Passwort ' + (hidePassword ? 'anzeigen' : 'verbergen')"
-                  [attr.aria-pressed]="!hidePassword">
-            <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="hidePassword = !hidePassword"
+            [attr.aria-label]="'Passwort ' + (hidePassword ? 'anzeigen' : 'verbergen')"
+            [attr.aria-pressed]="!hidePassword"
+          >
+            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
           </button>
-          <mat-error *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.invalid">
+          <mat-error
+            *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.invalid"
+          >
             {{ getErrorMessage('password') }}
           </mat-error>
         </mat-form-field>
@@ -50,11 +81,13 @@
         </div>
 
         <!-- Submit Button -->
-        <button mat-raised-button 
-                color="primary" 
-                type="submit"
-                class="full-width login-button"
-                [disabled]="isLoading">
+        <button
+          mat-raised-button
+          color="primary"
+          type="submit"
+          class="full-width login-button"
+          [disabled]="isLoading"
+        >
           <mat-spinner *ngIf="isLoading" diameter="20" class="button-spinner"></mat-spinner>
           <span *ngIf="!isLoading">Anmelden</span>
         </button>

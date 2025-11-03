@@ -9,11 +9,10 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
-import { MatRadioModule } from '@angular/material/radio';
 import { MatCardModule } from '@angular/material/card';
 import { Transaction, TransactionsApiService } from '../transactions-api.service';
 import { Category } from '../../categories/categories-api.service';
-// import { Account } from '../../accounts/accounts-api.service';
+import { AccountSelectionService } from '../../shared/services/account-selection.service';
 
 export interface TransactionFormData {
   transaction?: Transaction;
@@ -36,16 +35,16 @@ export interface TransactionFormData {
     MatDatepickerModule,
     MatNativeDateModule,
     MatIconModule,
-    MatRadioModule,
-    MatCardModule
+    MatCardModule,
   ],
   templateUrl: './transaction-form.component.html',
-  styleUrl: './transaction-form.component.scss'
+  styleUrl: './transaction-form.component.scss',
 })
 export class TransactionFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private dialogRef = inject(MatDialogRef<TransactionFormComponent>);
   private transactionsApi = inject(TransactionsApiService);
+  private accountSelectionService = inject(AccountSelectionService);
   public data = inject(MAT_DIALOG_DATA) as TransactionFormData;
 
   transactionForm!: FormGroup;
@@ -66,15 +65,17 @@ export class TransactionFormComponent implements OnInit {
     this.mode = data.mode;
 
     this.transactionForm = this.fb.group({
-      type: [data.transaction?.type || 'EXPENSE', [Validators.required]],
-      date: [data.transaction?.date ? new Date(data.transaction.date) : new Date(), [Validators.required]],
+      date: [
+        data.transaction?.date ? new Date(data.transaction.date) : new Date(),
+        [Validators.required],
+      ],
       amount: [
         data.transaction ? Math.abs(data.transaction.amount) : null,
-        [Validators.required, Validators.min(0.01)]
+        [Validators.required, Validators.min(0.01)],
       ],
       category: [data.transaction?.categoryId || '', [Validators.required]],
       // account: [data.transaction?.account || '', [Validators.required]],
-      note: [data.transaction?.note || data.transaction?.description || '']
+      note: [data.transaction?.note || data.transaction?.description || ''],
     });
 
     this.setupFormSubscriptions();
@@ -100,8 +101,16 @@ export class TransactionFormComponent implements OnInit {
   }
 
   getCategoryEmoji(categoryId: string): string {
-    const category = this.categories.find(c => c.id === categoryId);
+    const category = this.categories.find((c) => c.id === categoryId);
     return category?.emoji || category?.icon || '';
+  }
+
+  getSelectedCategoryType(): 'INCOME' | 'EXPENSE' | null {
+    const selectedCategoryId = this.transactionForm.get('category')?.value;
+    if (!selectedCategoryId) return null;
+
+    const category = this.categories.find((c) => c.id === selectedCategoryId);
+    return category?.transactionType || null;
   }
 
   onSubmit() {
@@ -110,23 +119,22 @@ export class TransactionFormComponent implements OnInit {
 
       const formValue = this.transactionForm.value;
 
-      // Finde das Budget der ausgewählten Kategorie
-      const selectedCategory = this.categories.find(c => c.id === formValue.category);
-      // Verwende budget.id falls vorhanden, ansonsten budgetId als Fallback
-      const budgetId = selectedCategory?.budget?.id || selectedCategory?.budgetId || '';
+      // Finde die ausgewählte Kategorie und leite den Transaktionstyp ab
+      const selectedCategory = this.categories.find((c) => c.id === formValue.category);
+
+      // Hole die aktuelle Account-ID vom Service
+      const selectedAccount = this.accountSelectionService.getSelectedAccount();
+      const accountId = selectedAccount?.id || '';
+
+      // Leite Transaktionstyp von der Kategorie ab
+      const transactionType = selectedCategory?.transactionType || 'EXPENSE';
 
       console.log('Transaktion wird erstellt:', {
         kategorie: selectedCategory?.name,
-        budgetId: budgetId,
-        budgetName: selectedCategory?.budget?.name
+        transactionType: transactionType,
+        accountId: accountId,
+        accountName: selectedAccount?.name || 'Kein Konto ausgewählt',
       });
-
-      if (!budgetId) {
-        console.error('Kategorie ohne Budget:', selectedCategory);
-        alert('Fehler: Kein Budget für die ausgewählte Kategorie gefunden.');
-        this.isSubmitting = false;
-        return;
-      }
 
       if (this.mode === 'create') {
         // Erstelle neue Transaktion
@@ -141,10 +149,10 @@ export class TransactionFormComponent implements OnInit {
           title: formValue.note || 'Transaktion',
           description: formValue.note || '',
           amount: Math.abs(formValue.amount), // Immer positiv speichern
-          type: formValue.type,
+          type: transactionType, // Automatisch von Kategorie abgeleitet
           date: transactionDate,
           categoryId: formValue.category,
-          budgetId: budgetId
+          accountId: accountId,
         };
 
         this.transactionsApi.create(createDto).subscribe({
@@ -156,26 +164,33 @@ export class TransactionFormComponent implements OnInit {
             console.error('Fehler beim Erstellen:', error);
             this.isSubmitting = false;
             alert('Fehler beim Speichern der Transaktion');
-          }
+          },
         });
       } else {
         // Aktualisiere existierende Transaktion
         // Behalte die ursprüngliche Uhrzeit bei, falls nur das Datum geändert wurde
         const transactionDate = new Date(formValue.date);
-        const originalDate = this.data.transaction?.date ? new Date(this.data.transaction.date) : new Date();
+        const originalDate = this.data.transaction?.date
+          ? new Date(this.data.transaction.date)
+          : new Date();
 
         // Wenn keine Zeit im Formular gesetzt ist, übernehme die ursprüngliche Zeit
         if (transactionDate.getHours() === 0 && transactionDate.getMinutes() === 0) {
-          transactionDate.setHours(originalDate.getHours(), originalDate.getMinutes(), originalDate.getSeconds());
+          transactionDate.setHours(
+            originalDate.getHours(),
+            originalDate.getMinutes(),
+            originalDate.getSeconds(),
+          );
         }
 
         const updateDto = {
           title: formValue.note || 'Transaktion',
           description: formValue.note || '',
           amount: Math.abs(formValue.amount), // Immer positiv speichern
-          type: formValue.type,
+          type: transactionType, // Automatisch von Kategorie abgeleitet
           date: transactionDate,
-          categoryId: formValue.category
+          categoryId: formValue.category,
+          accountId: accountId,
         };
 
         this.transactionsApi.update(this.data.transaction!.id, updateDto).subscribe({
@@ -187,7 +202,7 @@ export class TransactionFormComponent implements OnInit {
             console.error('Fehler beim Aktualisieren:', error);
             this.isSubmitting = false;
             alert('Fehler beim Speichern der Transaktion');
-          }
+          },
         });
       }
     } else {

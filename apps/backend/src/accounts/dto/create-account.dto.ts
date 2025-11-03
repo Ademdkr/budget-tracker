@@ -4,7 +4,6 @@ import {
   IsNumber,
   IsOptional,
   IsBoolean,
-  Min,
 } from 'class-validator';
 import { AccountType } from '@prisma/client';
 
@@ -17,7 +16,6 @@ export class CreateAccountDto {
   type?: AccountType = AccountType.CHECKING;
 
   @IsNumber()
-  @Min(0)
   @IsOptional()
   balance?: number = 0;
 

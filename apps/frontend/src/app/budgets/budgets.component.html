@@ -5,18 +5,60 @@
       <h1 class="page-title">
         <mat-icon>pie_chart</mat-icon>
         Budgets
+        <span *ngIf="getSelectedAccountName()" class="account-filter-badge">
+          für {{ getSelectedAccountName() }}
+          <button
+            mat-icon-button
+            (click)="clearAccountFilter()"
+            matTooltip="Account-Filter entfernen"
+            class="clear-filter-btn"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        </span>
       </h1>
 
       <div class="header-actions">
-        <button mat-raised-button color="primary" (click)="createBudget()" class="create-button">
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="createBudget()"
+          class="create-button"
+          [disabled]="!hasAccountSelection()"
+          [matTooltip]="!hasAccountSelection() ? 'Wählen Sie zunächst ein Konto aus' : ''"
+        >
           <mat-icon>add</mat-icon>
           Budget erstellen
         </button>
       </div>
     </div>
+    <p class="budgets-subtitle">
+      Überblick über Ihre Budgets
+      <span *ngIf="hasAccountSelection()"> - Gefiltert nach ausgewähltem Konto</span>
+    </p>
+
+    <!-- No Account Selected State -->
+    <div *ngIf="!hasAccountSelection()" class="empty-container">
+      <mat-card class="empty-card">
+        <mat-card-content>
+          <div class="empty-content">
+            <mat-icon class="empty-icon">account_balance_wallet</mat-icon>
+            <h3>Kein Konto ausgewählt</h3>
+            <p>
+              Wählen Sie zunächst ein Konto aus, um Budgets für kontospezifische Kategorien zu
+              erstellen.
+            </p>
+            <button mat-raised-button color="primary" routerLink="/accounts">
+              <mat-icon>account_balance</mat-icon>
+              Zu den Konten
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
 
     <!-- Period Selection -->
-    <div class="period-selection">
+    <div class="period-selection" *ngIf="hasAccountSelection()">
       <mat-card class="period-card">
         <mat-card-content>
           <div class="period-controls">
@@ -43,9 +85,8 @@
         </mat-card-content>
       </mat-card>
     </div>
-
     <!-- Monthly Summary -->
-    <div class="monthly-summary" *ngIf="monthlyStats && !isLoading">
+    <div class="monthly-summary" *ngIf="monthlyStats && !isLoading && hasAccountSelection()">
       <mat-card class="summary-card">
         <mat-card-content>
           <div class="summary-content">
@@ -119,48 +160,53 @@
   </div>
 
   <!-- Loading State -->
-  <div class="loading-container" *ngIf="isLoading">
+  <div *ngIf="isLoading && hasAccountSelection()" class="loading-container">
     <mat-card class="loading-card">
-      <mat-card-content class="loading-content">
-        <mat-spinner diameter="50"></mat-spinner>
-        <h3>Budgets werden geladen...</h3>
-        <p>Bitte warten Sie einen Moment.</p>
+      <mat-card-content>
+        <div class="loading-content">
+          <mat-spinner diameter="50"></mat-spinner>
+          <p>Budgets werden geladen...</p>
+        </div>
       </mat-card-content>
     </mat-card>
   </div>
 
   <!-- Error State -->
-  <div class="error-container" *ngIf="hasError && !isLoading">
+  <div *ngIf="hasError && hasAccountSelection()" class="error-container">
     <mat-card class="error-card">
-      <mat-card-content class="error-content">
-        <mat-icon class="error-icon">error_outline</mat-icon>
-        <h3>Fehler beim Laden</h3>
-        <p>Die Budgets konnten nicht geladen werden. Bitte versuchen Sie es erneut.</p>
-        <button mat-raised-button color="primary" (click)="retry()">
-          <mat-icon>refresh</mat-icon>
-          Erneut versuchen
-        </button>
+      <mat-card-content>
+        <div class="error-content">
+          <mat-icon class="error-icon">error_outline</mat-icon>
+          <h3>Fehler beim Laden</h3>
+          <p>Die Budgets konnten nicht geladen werden.</p>
+          <button mat-raised-button color="primary" (click)="retry()">
+            <mat-icon>refresh</mat-icon>
+            Erneut versuchen
+          </button>
+        </div>
       </mat-card-content>
     </mat-card>
   </div>
 
   <!-- Empty State -->
-  <div class="empty-container" *ngIf="isEmpty && !isLoading && !hasError">
+  <div *ngIf="isEmpty && !isLoading && !hasError && hasAccountSelection()" class="empty-container">
     <mat-card class="empty-card">
-      <mat-card-content class="empty-content">
-        <mat-icon class="empty-icon">pie_chart_outlined</mat-icon>
-        <h3>Keine Budgets für {{ getSelectedMonthName() }} {{ selectedYear }}</h3>
-        <p>Erstellen Sie Ihr erstes Budget, um Ihre Ausgaben zu verfolgen.</p>
-        <button mat-raised-button color="primary" (click)="createBudget()">
-          <mat-icon>add</mat-icon>
-          Erstes Budget erstellen
-        </button>
+      <mat-card-content>
+        <div class="empty-content">
+          <mat-icon class="empty-icon">pie_chart_outlined</mat-icon>
+          <h3>Keine Budgets für {{ getSelectedMonthName() }} {{ selectedYear }}</h3>
+          <p>Erstellen Sie Ihr erstes Budget, um Ihre Ausgaben zu verfolgen.</p>
+          <button mat-raised-button color="primary" (click)="createBudget()">
+            <mat-icon>add</mat-icon>
+            Erstes Budget erstellen
+          </button>
+        </div>
       </mat-card-content>
     </mat-card>
   </div>
 
   <!-- Budgets Table -->
-  <div class="budgets-content" *ngIf="!isEmpty && !isLoading && !hasError">
+  <div class="budgets-content" *ngIf="!isEmpty && !isLoading && !hasError && hasAccountSelection()">
     <mat-card class="budgets-table-card">
       <mat-card-header>
         <mat-card-title>

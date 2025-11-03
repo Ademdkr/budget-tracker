@@ -1,10 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, forkJoin, map } from 'rxjs';
-import { ApiService } from '../shared/services/api.service';
+import { Observable, forkJoin, map, of } from 'rxjs';
 import { TransactionsApiService } from '../transactions/transactions-api.service';
-import { CategoriesApiService, Category } from '../categories/categories-api.service';
+import { CategoriesApiService } from '../categories/categories-api.service';
 import { BudgetsApiService } from '../budgets/budgets-api.service';
-// import { AccountsApiService } from '../accounts/accounts-api.service';
 
 export interface DashboardKPI {
   label: string;
@@ -39,180 +37,292 @@ export interface DashboardStatistics {
   providedIn: 'root'
 })
 export class DashboardApiService {
-  private api = inject(ApiService);
   private transactionsApi = inject(TransactionsApiService);
   private categoriesApi = inject(CategoriesApiService);
   private budgetsApi = inject(BudgetsApiService);
-  // private accountsApi = inject(AccountsApiService);
 
   /**
-   * Get dashboard KPIs
+   * Get all dashboard data with shared categories loading (optimized)
+   * Only shows data for the current month
    */
-  getKPIs(accountId?: string): Observable<DashboardKPI[]> {
-    // TODO: Replace with dedicated backend endpoint
+  getAllDashboardData(accountId?: string): Observable<{
+    kpis: DashboardKPI[];
+    statistics: DashboardStatistics;
+    budgetProgress: Array<{
+      budgetName: string;
+      spent: number;
+      limit: number;
+      percentage: number;
+      icon: string;
+    }>;
+    recentTransactions: Array<{
+      id: string;
+      date: Date;
+      category: string;
+      categoryEmoji: string;
+      amount: number;
+      note: string;
+      type: 'income' | 'expense';
+    }>;
+  }> {
+    // Wenn kein Account ausgewählt ist, gebe leere Daten zurück
+    if (!accountId) {
+      return of({
+        kpis: [],
+        statistics: {
+          totalIncome: 0,
+          totalExpenses: 0,
+          balance: 0,
+          savingsRate: 0,
+          transactionCount: 0,
+          categoryBreakdown: { labels: [], datasets: [] },
+          monthlyTrend: { labels: [], datasets: [] },
+        },
+        budgetProgress: [],
+        recentTransactions: [],
+      });
+    }
+
     const filters = accountId ? { accountId } : undefined;
-    return this.transactionsApi.getAll(filters).pipe(
-      map((transactions) => {
-        // Beträge sind in DB als positive Zahlen gespeichert
-        const income = transactions
-          .filter(t => t.type === 'INCOME')
-          .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-
-        const expenses = transactions
-          .filter(t => t.type === 'EXPENSE')
-          .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-
-        const balance = income - expenses;
-
-        const savingsRate = income > 0 ? ((income - expenses) / income) * 100 : 0;
-
-        return [
-          {
-            label: 'Gesamteinnahmen',
-            value: income,
-            change: 12.5,
-            icon: 'trending_up',
-            color: 'success'
-          },
-          {
-            label: 'Gesamtausgaben',
-            value: expenses,
-            change: -8.2,
-            icon: 'trending_down',
-            color: 'error'
-          },
-          {
-            label: 'Bilanz',
-            value: balance,
-            change: 5.3,
-            icon: 'account_balance',
-            color: 'primary'
-          },
-          {
-            label: 'Sparquote',
-            value: savingsRate,
-            change: 3.1,
-            icon: 'savings',
-            color: 'accent'
-          }
-        ];
-      })
-    );
-  }
-
-  /**
-   * Get comprehensive dashboard statistics
-   */
-  getStatistics(startDate?: string, endDate?: string, accountId?: string): Observable<DashboardStatistics> {
-    // TODO: Replace with dedicated backend endpoint
-    const filters: { startDate?: string; endDate?: string; accountId?: string } = {};
-    if (startDate) filters.startDate = startDate;
-    if (endDate) filters.endDate = endDate;
-    if (accountId) filters.accountId = accountId;
-
+    
     return forkJoin({
       transactions: this.transactionsApi.getAll(filters),
-      categories: this.categoriesApi.getAll()
+      categories: this.categoriesApi.getAll(accountId),
+      budgets: this.budgetsApi.getAll()
     }).pipe(
-      map(({ transactions, categories }) => {
-        // Beträge sind in DB als positive Zahlen gespeichert
-        const income = transactions
-          .filter(t => t.type === 'INCOME')
-          .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+      map(({ transactions, categories, budgets }) => {
+        // Filter transactions to current month only
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        const monthStart = new Date(currentYear, currentMonth, 1);
+        const monthEnd = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);
+        
+        const currentMonthTransactions = transactions.filter(t => {
+          const tDate = new Date(t.date);
+          return tDate >= monthStart && tDate <= monthEnd;
+        });
+        
+        // Replace transactions with current month transactions for all calculations
+        transactions = currentMonthTransactions;
+        // Build category lookup maps once
+        const catTypeById = new Map<string, 'INCOME' | 'EXPENSE'>();
+        const catMetaById = new Map<string, { name?: string; color?: string; emoji?: string; icon?: string }>();
+        categories.forEach(c => {
+          if (c.id) {
+            catTypeById.set(String(c.id), c.transactionType || 'EXPENSE');
+            catMetaById.set(String(c.id), { 
+              name: c.name, 
+              color: c.color, 
+              emoji: c.emoji, 
+              icon: c.icon 
+            });
+          }
+        });
 
-        const expenses = transactions
-          .filter(t => t.type === 'EXPENSE')
-          .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+        // Calculate KPIs
+        const totals = transactions.reduce(
+          (acc, t) => {
+            const cid = t.categoryId != null ? String(t.categoryId) : undefined;
+            const tType = cid ? catTypeById.get(cid) : undefined;
+            const amount = Math.abs(t.amount || 0);
+            if (tType === 'INCOME') acc.income += amount;
+            else if (tType === 'EXPENSE') acc.expenses += amount;
+            return acc;
+          },
+          { income: 0, expenses: 0 }
+        );
 
-        const balance = income - expenses;
-        const savingsRate = income > 0 ? ((income - expenses) / income) * 100 : 0;
+        const balance = totals.income - totals.expenses;
+        const savingsRate = totals.income > 0 ? ((totals.income - totals.expenses) / totals.income) * 100 : 0;
 
-        // Category breakdown
+        const kpis: DashboardKPI[] = [
+          { label: 'Gesamteinnahmen', value: totals.income, change: 12.5, icon: 'trending_up', color: 'success' },
+          { label: 'Gesamtausgaben', value: totals.expenses, change: -8.2, icon: 'trending_down', color: 'error' },
+          { label: 'Bilanz', value: balance, change: 5.3, icon: 'account_balance', color: 'primary' },
+          { label: 'Sparquote', value: savingsRate, change: 3.1, icon: 'savings', color: 'accent' }
+        ];
+
+        // Calculate statistics
+        let income = 0;
+        let expenses = 0;
         const categoryMap = new Map<string, number>();
-        transactions
-          .filter(t => t.categoryId !== undefined)
-          .filter(t => t.type === 'EXPENSE')
-          .forEach(t => {
-            const current = categoryMap.get(t.categoryId!) || 0;
-            categoryMap.set(t.categoryId!, current + Math.abs(t.amount));
-          });
+
+        transactions.forEach(t => {
+          const cid = t.categoryId != null ? String(t.categoryId) : undefined;
+          const tType = cid ? catTypeById.get(cid) : undefined;
+          const amount = Math.abs(t.amount || 0);
+          if (tType === 'INCOME') income += amount;
+          else if (tType === 'EXPENSE') {
+            expenses += amount;
+            if (cid) categoryMap.set(cid, (categoryMap.get(cid) || 0) + amount);
+          }
+        });
 
         const categoryBreakdown: ChartData = {
-          labels: Array.from(categoryMap.keys()).map(id => {
-            const cat = categories.find(c => c.id === id);
-            return cat?.name || 'Unknown';
-          }),
+          labels: Array.from(categoryMap.keys()).map(id => catMetaById.get(id)?.name || 'Unknown'),
           datasets: [{
             label: 'Ausgaben nach Kategorie',
             data: Array.from(categoryMap.values()),
-            backgroundColor: Array.from(categoryMap.keys()).map(id => {
-              const cat = categories.find(c => c.id === id);
-              return cat?.color || '#cccccc';
-            })
+            backgroundColor: Array.from(categoryMap.keys()).map(id => catMetaById.get(id)?.color || '#cccccc')
           }]
         };
 
-        // Monthly trend (simplified - needs proper month grouping)
         const monthlyTrend: ChartData = {
-          labels: ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun'],
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
           datasets: [
-            {
-              label: 'Einnahmen',
-              data: [0, 0, 0, 0, 0, income],
-              borderColor: '#4caf50',
-              backgroundColor: 'rgba(76, 175, 80, 0.1)'
-            },
-            {
-              label: 'Ausgaben',
-              data: [0, 0, 0, 0, 0, expenses],
-              borderColor: '#f44336',
-              backgroundColor: 'rgba(244, 67, 54, 0.1)'
-            }
+            { label: 'Einnahmen', data: [0, 0, 0, 0, 0, income], borderColor: '#4caf50', backgroundColor: 'rgba(76, 175, 80, 0.1)' },
+            { label: 'Ausgaben', data: [0, 0, 0, 0, 0, expenses], borderColor: '#f44336', backgroundColor: 'rgba(244, 67, 54, 0.1)' }
           ]
         };
 
-        return {
-          totalIncome: income,
-          totalExpenses: expenses,
-          balance,
-          savingsRate,
-          transactionCount: transactions.length,
-          categoryBreakdown,
+        const statistics: DashboardStatistics = {
+          totalIncome: income, 
+          totalExpenses: expenses, 
+          balance, 
+          savingsRate, 
+          transactionCount: transactions.length, 
+          categoryBreakdown, 
           monthlyTrend
+        };
+
+        // Calculate budget progress - using currentMonth/currentYear from above
+        const budgetMonth = currentMonth + 1; // Convert from 0-based to 1-based
+        const budgetYear = currentYear;
+        const periodStart = new Date(budgetYear, budgetMonth - 1, 1);
+        const periodEnd = new Date(budgetYear, budgetMonth, 0);
+        const allowedCategoryIds = new Set((categories ?? []).map(c => String(c.id)));
+
+        const budgetProgress = budgets
+          .filter(budget => budget.month === budgetMonth && budget.year === budgetYear)
+          .filter(budget => !accountId || allowedCategoryIds.has(String(budget.categoryId)))
+          .map(budget => {
+            const budgetStart = new Date(budget.year, budget.month - 1, 1);
+            const budgetEnd = new Date(budget.year, budget.month, 0);
+
+            const budgetCategoryId = budget.categoryId;
+            const categoryTransactionsInMonth = transactions.filter(t =>
+              String(t.categoryId) === String(budgetCategoryId) &&
+              new Date(t.date) >= budgetStart &&
+              new Date(t.date) <= budgetEnd
+            );
+
+            const budgetExpenses = categoryTransactionsInMonth
+              .filter(t => {
+                const cid = t.categoryId != null ? String(t.categoryId) : undefined;
+                const tType = cid ? catTypeById.get(cid) : undefined;
+                return tType === 'EXPENSE';
+              })
+              .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+            const hasIncomeTransactions = (() => {
+              const cid = budgetCategoryId != null ? String(budgetCategoryId) : undefined;
+              const tType = cid ? catTypeById.get(cid) : undefined;
+              return tType === 'INCOME';
+            })();
+
+            const totalExpensesInPeriod = transactions
+              .filter(t => {
+                const cid = t.categoryId != null ? String(t.categoryId) : undefined;
+                const tType = cid ? catTypeById.get(cid) : undefined;
+                return tType === 'EXPENSE' && new Date(t.date) >= periodStart && new Date(t.date) <= periodEnd;
+              })
+              .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+            const spent = hasIncomeTransactions ? totalExpensesInPeriod : budgetExpenses;
+            const limit = Number(budget.totalAmount) || 0;
+            const percentage = limit > 0 ? (spent / limit) * 100 : 0;
+
+            const matchingCategoryId = String(budget.categoryId || budget.category?.id);
+            const matchingMeta = catMetaById.get(matchingCategoryId) || {};
+            const icon = matchingMeta.icon || matchingMeta.emoji || '??';
+
+            return {
+              budgetName: matchingMeta.name || `Budget ${budget.id}`,
+              spent,
+              limit,
+              percentage: Math.min(Math.round(percentage * 10) / 10, 100),
+              icon
+            };
+          });
+
+        // Calculate recent transactions
+        const sortedTransactions = transactions
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+          .slice(0, 10);
+
+        const recentTransactions = sortedTransactions.map(transaction => {
+          const cid = transaction.categoryId != null ? String(transaction.categoryId) : undefined;
+          const meta = cid ? catMetaById.get(cid) : undefined;
+          const tType = cid ? catTypeById.get(cid) : undefined;
+          return {
+            id: transaction.id,
+            date: new Date(transaction.date),
+            category: meta?.name || 'Unbekannt',
+            categoryEmoji: meta?.icon || meta?.emoji || '??',
+            amount: transaction.amount,
+            note: transaction.note || '',
+            type: (tType === 'INCOME' ? 'income' : 'expense') as 'income' | 'expense'
+          };
+        });
+
+        return {
+          kpis,
+          statistics,
+          budgetProgress,
+          recentTransactions
         };
       })
     );
   }
 
   /**
-   * Get monthly comparison data
-   * TODO: Implement with backend endpoint, currently returns mock data
+   * Get dashboard KPIs (deprecated - use getAllDashboardData instead)
+   * @deprecated Use getAllDashboardData for better performance
+   */
+  getKPIs(accountId?: string): Observable<DashboardKPI[]> {
+    return this.getAllDashboardData(accountId).pipe(
+      map(data => data.kpis)
+    );
+  }
+
+  /**
+   * Get comprehensive dashboard statistics (deprecated - use getAllDashboardData instead)
+   * @deprecated Use getAllDashboardData for better performance
+   */
+  getStatistics(startDate?: string, endDate?: string, accountId?: string): Observable<DashboardStatistics> {
+    return this.getAllDashboardData(accountId).pipe(
+      map(data => data.statistics)
+    );
+  }
+
+  /**
+   * Get monthly comparison data (mock)
    */
   getMonthlyComparison(accountId?: string): Observable<ChartData> {
-    // TODO: Implement with backend endpoint
+    // Wenn kein Account ausgewählt ist, gebe leere Daten zurück
+    if (!accountId) {
+      return of({
+        labels: [],
+        datasets: []
+      });
+    }
+
     const filters = accountId ? { accountId } : undefined;
     return this.transactionsApi.getAll(filters).pipe(
-  map(() => ({
-  labels: ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun'],
-  datasets: [
-          {
-            label: 'Einnahmen',
-            data: [3200, 3500, 3100, 3800, 3600, 4000],
-            borderColor: '#4caf50'
-          },
-          {
-            label: 'Ausgaben',
-            data: [2100, 2300, 2500, 2200, 2400, 2600],
-            borderColor: '#f44336'
-          }
+      map(() => ({
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [
+          { label: 'Einnahmen', data: [3200, 3500, 3100, 3800, 3600, 4000], borderColor: '#4caf50' },
+          { label: 'Ausgaben', data: [2100, 2300, 2500, 2200, 2400, 2600], borderColor: '#f44336' }
         ]
       }))
     );
   }
 
   /**
-   * Get budget progress overview
-   * Shows spending progress for actual Budget entities created via /budgets
+   * Get budget progress overview (deprecated - use getAllDashboardData instead)
+   * @deprecated Use getAllDashboardData for better performance
    */
   getBudgetProgress(accountId?: string): Observable<Array<{
     budgetName: string;
@@ -221,74 +331,14 @@ export class DashboardApiService {
     percentage: number;
     icon: string;
   }>> {
-    const filters = accountId ? { accountId } : undefined;
-    return forkJoin({
-      budgets: this.budgetsApi.getAll(),
-      transactions: this.transactionsApi.getAll(filters),
-      categories: this.categoriesApi.getAll()
-    }).pipe(
-      map(({ budgets, transactions, categories }) => {
-        // Berechne Gesamtausgaben für Einnahmen-Budgets (analog zur Budget-Komponente)
-        const currentMonth = new Date().getMonth();
-        const currentYear = new Date().getFullYear();
-        const periodStart = new Date(currentYear, currentMonth, 1);
-        const periodEnd = new Date(currentYear, currentMonth + 1, 0);
-
-        const totalExpensesInPeriod = transactions
-          .filter(t =>
-            t.type === 'EXPENSE' &&
-            new Date(t.date) >= periodStart &&
-            new Date(t.date) <= periodEnd
-          )
-          .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-
-        return budgets.map(budget => {
-          const budgetStart = new Date(budget.startDate);
-          const budgetEnd = budget.endDate ? new Date(budget.endDate) : new Date(budgetStart.getFullYear(), budgetStart.getMonth() + 1, 0);
-
-          // Prüfe, ob dieses Budget INCOME-Transaktionen hat
-          const hasIncomeTransactions = transactions.some(t =>
-            t.budgetId === budget.id &&
-            t.type === 'INCOME' &&
-            new Date(t.date) >= budgetStart &&
-            new Date(t.date) <= budgetEnd
-          );
-
-          // Calculate budget-specific expenses
-          const budgetExpenses = transactions
-            .filter(t =>
-              t.budgetId === budget.id &&
-              t.type === 'EXPENSE' &&
-              new Date(t.date) >= budgetStart &&
-              new Date(t.date) <= budgetEnd
-            )
-            .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-
-          // Für Einnahmen-Budgets: Gesamtausgaben aller Budgets
-          // Für Ausgaben-Budgets: Nur die Ausgaben dieses Budgets
-          const spent = hasIncomeTransactions ? totalExpensesInPeriod : budgetExpenses;
-
-          const limit = budget.totalAmount || 0;
-          const percentage = limit > 0 ? (spent / limit) * 100 : 0;
-
-          // Intelligente Icon-Zuordnung basierend auf Budget-Namen
-          const matchingCategory = this.findCategoryByBudgetName(budget.name, categories);
-          const icon = matchingCategory?.icon || matchingCategory?.emoji || '💰';
-
-          return {
-            budgetName: budget.name,
-            spent,
-            limit,
-            percentage: Math.min(Math.round(percentage * 10) / 10, 100),
-            icon
-          };
-        });
-      })
+    return this.getAllDashboardData(accountId).pipe(
+      map(data => data.budgetProgress)
     );
   }
 
   /**
-   * Get recent transactions for dashboard
+   * Get recent transactions for dashboard (deprecated - use getAllDashboardData instead)
+   * @deprecated Use getAllDashboardData for better performance
    */
   getRecentTransactions(limit: number = 10, accountId?: string): Observable<Array<{
     id: string;
@@ -299,66 +349,8 @@ export class DashboardApiService {
     note: string;
     type: 'income' | 'expense';
   }>> {
-    const filters = accountId ? { accountId } : undefined;
-    return forkJoin({
-      transactions: this.transactionsApi.getAll(filters),
-      categories: this.categoriesApi.getAll()
-    }).pipe(
-      map(({ transactions, categories }) => {
-        // Sort by date descending and take limit
-        const sortedTransactions = transactions
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-          .slice(0, limit);
-
-        // Map with category information
-        return sortedTransactions.map(transaction => {
-          const category = categories.find(c => c.id === transaction.categoryId);
-          return {
-            id: transaction.id,
-            date: new Date(transaction.date),
-            category: category?.name || 'Unbekannt',
-            categoryEmoji: category?.icon || category?.emoji || '📝',
-            amount: transaction.amount,
-            note: transaction.description || transaction.note || '',
-            type: transaction.type.toLowerCase() as 'income' | 'expense'
-          };
-        });
-      })
+    return this.getAllDashboardData(accountId).pipe(
+      map(data => data.recentTransactions.slice(0, limit))
     );
-  }
-
-  private findCategoryByBudgetName(budgetName: string, categories: Category[]): Category | undefined {
-    // Erste Strategie: Exakte Übereinstimmung mit Kategorie-Namen
-    let match = categories.find(cat =>
-      cat.name.toLowerCase() === budgetName.toLowerCase()
-    );
-
-    if (match) return match;
-
-    // Zweite Strategie: Budget-Name enthält Kategorie-Namen
-    match = categories.find(cat =>
-      budgetName.toLowerCase().includes(cat.name.toLowerCase())
-    );
-
-    if (match) return match;
-
-    // Dritte Strategie: Kategorie-Name ist in Budget-Name enthalten
-    match = categories.find(cat =>
-      cat.name.toLowerCase().includes(budgetName.toLowerCase())
-    );
-
-    if (match) return match;
-
-    // Vierte Strategie: Budget enthält "Budget für [Kategorie]" Pattern
-    const budgetForMatch = budgetName.match(/budget für (.+?) - /i);
-    if (budgetForMatch) {
-      const categoryNameFromBudget = budgetForMatch[1].trim();
-      match = categories.find(cat =>
-        cat.name.toLowerCase() === categoryNameFromBudget.toLowerCase()
-      );
-      if (match) return match;
-    }
-
-    return undefined;
   }
 }

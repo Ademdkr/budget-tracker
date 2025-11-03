@@ -33,9 +33,9 @@ export class CreateTransactionDto {
 
   @IsString()
   @IsNotEmpty()
-  budgetId!: string;
+  categoryId!: string;
 
   @IsString()
   @IsNotEmpty()
-  categoryId!: string;
+  accountId!: string;
 }

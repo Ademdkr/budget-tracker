@@ -118,6 +118,8 @@ export class AccountsApiService {
    * Delete account
    */
   delete(id: string): Observable<void> {
+    console.log('🔥 AccountsApiService.delete called with ID:', id);
+    console.log('🔥 DELETE URL:', `accounts/${id}`);
     return this.api.delete<void>(`accounts/${id}`);
   }
 
@@ -177,5 +179,21 @@ export class AccountsApiService {
    */
   getAssignedCategories(accountId: string): Observable<AccountCategory[]> {
     return this.api.get<AccountCategory[]>(`accounts/${accountId}/categories`);
+  }
+
+  /**
+   * Set account as active (deactivates all other accounts)
+   */
+  setActiveAccount(accountId: string): Observable<Account> {
+    return this.update(accountId, { isActive: true });
+  }
+
+  /**
+   * Get the currently active account
+   */
+  getActiveAccount(): Observable<Account | null> {
+    return this.getAll().pipe(
+      map(accounts => accounts.find(account => account.isActive) || null)
+    );
   }
 }

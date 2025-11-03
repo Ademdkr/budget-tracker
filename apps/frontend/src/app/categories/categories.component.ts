@@ -1,10 +1,16 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { CategoriesApiService, CreateCategoryDto, UpdateCategoryDto } from './categories-api.service';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import {
+  CategoriesApiService,
+  CreateCategoryDto,
+  UpdateCategoryDto,
+} from './categories-api.service';
 import { BudgetsApiService } from '../budgets/budgets-api.service';
 import { AccountSelectionService } from '../shared/services/account-selection.service';
 import { AccountsApiService } from '../accounts/accounts-api.service';
+import { BaseComponent } from '../shared/components/base.component';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -48,12 +54,13 @@ export interface CategoryWithStats {
     MatProgressSpinnerModule,
     MatDialogModule,
     MatGridListModule,
-    MatBadgeModule
+    MatBadgeModule,
   ],
   templateUrl: './categories.component.html',
-  styleUrl: './categories.component.scss'
+  styleUrl: './categories.component.scss',
 })
-export class CategoriesComponent implements OnInit {
+export class CategoriesComponent extends BaseComponent implements OnInit, OnDestroy {
+  protected componentKey = 'categories';
   private dialog = inject(MatDialog);
 
   // Data properties
@@ -62,8 +69,6 @@ export class CategoriesComponent implements OnInit {
   expenseCategories: CategoryWithStats[] = [];
 
   // UI states
-  isLoading = true;
-  hasError = false;
   isEmpty = false;
 
   // View settings
@@ -77,25 +82,29 @@ export class CategoriesComponent implements OnInit {
   private accountsApi = inject(AccountsApiService);
 
   private initialLoadCompleted = false;
+  private accountSubscription?: Subscription;
 
   ngOnInit() {
+    // BaseComponent initialisieren
+    this.initializeLoadingState();
+    
     // Zuerst den AccountSelectionService initialisieren
     this.accountSelection.initialize();
 
+    // Initial load
+    this.loadCategories();
+
     // Subscribe to account selection changes
-    this.accountSelection.selectedAccount$.subscribe(() => {
-      // Nur neu laden wenn bereits initial geladen wurde
-      if (this.initialLoadCompleted) {
+    this.accountSubscription = this.accountSelection.selectedAccount$.subscribe((account) => {
+      if (this.initialLoadCompleted && account) {
         this.loadCategories();
       }
     });
-
-    this.loadCategories();
   }
 
   private loadCategories() {
-    this.isLoading = true;
-    this.hasError = false;
+    this.setLoading();
+    
 
     const selectedAccountId = this.accountSelection.getSelectedAccountId();
     console.log('🔍 Loading categories with accountId:', selectedAccountId);
@@ -107,24 +116,31 @@ export class CategoriesComponent implements OnInit {
       this.categories = [];
       this.filterCategories();
       this.checkEmptyState();
-      this.isLoading = false;
+      this.setSuccess(this.isEmpty);
       this.initialLoadCompleted = true;
       return;
     }
 
-    this.categoriesApi.getAll(selectedAccountId).toPromise()
-      .then(categories => {
+    this.categoriesApi
+      .getAll(selectedAccountId)
+      .toPromise()
+      .then((categories) => {
         console.log('📂 Categories API response:', categories);
         console.log('📊 Total categories loaded:', (categories ?? []).length);
-        console.log('🎯 Category names:', (categories ?? []).map(c => c.name));
-        this.categories = (categories ?? []).map(cat => {
-          const emoji = (cat.emoji && cat.emoji.trim() !== '')
-            ? cat.emoji
-            : (cat.icon && String(cat.icon).trim() !== '' ? String(cat.icon) : '📦');
+        console.log(
+          '🎯 Category names:',
+          (categories ?? []).map((c) => c.name),
+        );
+        this.categories = (categories ?? []).map((cat) => {
+          const emoji =
+            cat.emoji && cat.emoji.trim() !== ''
+              ? cat.emoji
+              : cat.icon && String(cat.icon).trim() !== ''
+                ? String(cat.icon)
+                : '📦';
 
-          // Backend liefert kein "type"-Feld – sinnvolle Defaults setzen
-          // Heuristik: Kategorie "Gehalt" als income, sonst expense
-          const type = cat.type ?? (cat.name?.toLowerCase().includes('gehalt') ? 'income' : 'expense');
+          // Backend liefert "transactionType" (INCOME/EXPENSE), Frontend erwartet "type" (income/expense)
+          const type = cat.transactionType ? cat.transactionType.toLowerCase() : 'expense'; // fallback
 
           return {
             ...cat,
@@ -133,7 +149,7 @@ export class CategoriesComponent implements OnInit {
             transactionCount: 0,
             totalAmount: 0,
             createdAt: cat.createdAt ? new Date(cat.createdAt) : new Date(),
-            updatedAt: cat.updatedAt ? new Date(cat.updatedAt) : new Date()
+            updatedAt: cat.updatedAt ? new Date(cat.updatedAt) : new Date(),
           } as CategoryWithStats;
         });
         return this.loadAndApplyTransactionStats();
@@ -141,27 +157,56 @@ export class CategoriesComponent implements OnInit {
       .then(() => {
         this.filterCategories();
         this.checkEmptyState();
-        this.isLoading = false;
+        this.setSuccess(this.isEmpty);
         this.initialLoadCompleted = true;
       })
       .catch(() => {
-        this.hasError = true;
-        this.isLoading = false;
+        this.setError('Fehler beim Laden der Kategorien');
         this.initialLoadCompleted = true;
       });
   }
 
   private async loadAndApplyTransactionStats(): Promise<void> {
     try {
-      const transactions = await this.transactionsApi.getAll().toPromise();
-      type CatStats = { incomeCount: number; incomeTotal: number; expenseCount: number; expenseTotal: number };
+      // Get selected account ID to filter transactions
+      const selectedAccountId = this.accountSelection.getSelectedAccountId();
+      
+      // Wenn kein Account ausgewählt ist, keine Stats laden
+      if (!selectedAccountId) {
+        console.log('⚠️ No account selected, skipping transaction stats');
+        return;
+      }
+
+      const transactions = await this.transactionsApi.getAll({ accountId: selectedAccountId }).toPromise();
+      type CatStats = {
+        incomeCount: number;
+        incomeTotal: number;
+        expenseCount: number;
+        expenseTotal: number;
+      };
       const byCategory = new Map<string, CatStats>();
 
+      // Derive transaction type from category if missing on transaction (new schema)
+      const typeByCatId = new Map<string, 'INCOME' | 'EXPENSE'>();
+      this.categories.forEach((c) => {
+        const cid = String(c.id);
+        const t = c.type === 'income' ? 'INCOME' : 'EXPENSE';
+        typeByCatId.set(cid, t);
+      });
+
       (transactions ?? []).forEach((t: Transaction) => {
-        const cid = t.categoryId;
-        if (!cid) return; // skip transactions without category
-        const prev: CatStats = byCategory.get(cid) || { incomeCount: 0, incomeTotal: 0, expenseCount: 0, expenseTotal: 0 };
-        if (t.type === 'INCOME') {
+        const cidRaw = (t as Transaction).categoryId;
+        if (cidRaw === undefined || cidRaw === null) return; // skip transactions without category
+        const cid = String(cidRaw);
+        const prev: CatStats = byCategory.get(cid) || {
+          incomeCount: 0,
+          incomeTotal: 0,
+          expenseCount: 0,
+          expenseTotal: 0,
+        };
+        const derivedType: 'INCOME' | 'EXPENSE' =
+          typeByCatId.get(cid) || (t.type as 'INCOME' | 'EXPENSE' | undefined) || 'EXPENSE';
+        if (derivedType === 'INCOME') {
           prev.incomeCount += 1;
           prev.incomeTotal += Math.abs(t.amount);
         } else {
@@ -171,8 +216,13 @@ export class CategoriesComponent implements OnInit {
         byCategory.set(cid, prev);
       });
 
-      this.categories = this.categories.map(c => {
-        const stats: CatStats = byCategory.get(c.id) || { incomeCount: 0, incomeTotal: 0, expenseCount: 0, expenseTotal: 0 };
+      this.categories = this.categories.map((c) => {
+        const stats: CatStats = byCategory.get(String(c.id)) || {
+          incomeCount: 0,
+          incomeTotal: 0,
+          expenseCount: 0,
+          expenseTotal: 0,
+        };
         // Bestimme Typ automatisch anhand vorhandener Transaktionen
         let typeAuto: 'income' | 'expense' | 'both' | undefined = c.type;
         if (stats.incomeCount > 0 && stats.expenseCount === 0) typeAuto = 'income';
@@ -193,23 +243,13 @@ export class CategoriesComponent implements OnInit {
     }
   }
 
-
   private filterCategories() {
-    switch (this.selectedFilter) {
-      case 'income':
-        this.incomeCategories = this.categories.filter(c => c.type === 'income');
-        this.expenseCategories = [];
-        break;
-      case 'expense':
-        this.incomeCategories = [];
-        this.expenseCategories = this.categories.filter(c => c.type === 'expense');
-        break;
-      case 'all':
-      default:
-        this.incomeCategories = this.categories.filter(c => c.type === 'income');
-        this.expenseCategories = this.categories.filter(c => c.type === 'expense');
-        break;
-    }
+    // Arrays immer mit allen Kategorien befüllen für korrekte Anzeige der Anzahl
+    this.incomeCategories = this.categories.filter((c) => c.type === 'income');
+    this.expenseCategories = this.categories.filter((c) => c.type === 'expense');
+
+    // selectedFilter wird im Template für die Anzeige verwendet
+    // Die Arrays bleiben immer gefüllt für die korrekte Anzeige der Anzahl in den Tabs
   }
 
   private checkEmptyState() {
@@ -239,87 +279,75 @@ export class CategoriesComponent implements OnInit {
         maxWidth: '90vw',
         data: {
           mode: 'create',
-          existingNames: this.categories.map(c => c.name.toLowerCase())
+          existingNames: this.categories.map((c) => c.name.toLowerCase()),
         },
-        disableClose: true
+        disableClose: true,
       });
 
-      dialogRef.afterClosed().subscribe(result => {
+      dialogRef.afterClosed().subscribe((result) => {
         if (!result) return;
 
-        this.isLoading = true;
-        this.resolveCurrentBudgetId()
-          .then((budgetId) => {
-            if (!budgetId) {
-              this.isLoading = false;
-              alert('Kein aktives Budget gefunden. Bitte erstellen Sie zunächst ein Budget.');
-              return;
-            }
+        this.setLoading();
+        const selectedAccountId = this.accountSelection.getSelectedAccountId();
 
-            const dto: CreateCategoryDto = {
-              name: String(result.name).trim(),
-              description: result.description || undefined,
-              color: result.color || undefined,
-              icon: result.emoji || '📦',
-              budgetId,
+        if (!selectedAccountId) {
+          this.setSuccess(this.isEmpty);
+          alert('Kein Konto ausgewählt. Bitte wählen Sie zunächst ein Konto aus.');
+          return;
+        }
+
+        // Konvertiere Frontend-Type zu Backend-Enum
+        const transactionType = result.type === 'income' ? 'INCOME' : 'EXPENSE';
+
+        const dto: CreateCategoryDto = {
+          name: String(result.name).trim(),
+          description: result.description || undefined,
+          color: result.color || undefined,
+          emoji: result.emoji || '📦',
+          transactionType,
+          accountId: selectedAccountId,
+        };
+
+        this.categoriesApi.create(dto).subscribe({
+          next: (created) => {
+            // Map Backend -> UI
+            const emoji = created.emoji || created.icon || '📦';
+            const type = (result.type ??
+              (created.name?.toLowerCase().includes('gehalt') ? 'income' : 'expense')) as
+              | 'income'
+              | 'expense'
+              | 'both';
+            const createdAt = created.createdAt ? new Date(created.createdAt) : new Date();
+            const updatedAt = created.updatedAt ? new Date(created.updatedAt) : new Date();
+
+            const newCategory: CategoryWithStats = {
+              id: created.id,
+              name: created.name,
+              emoji,
+              icon: created.icon,
+              color: created.color,
+              type,
+              transactionCount: 0,
+              totalAmount: 0,
+              description: created.description,
+              createdAt,
+              updatedAt,
             };
 
-            this.categoriesApi.create(dto).subscribe({
-              next: (created) => {
-                // Map Backend -> UI
-                const emoji = (created.icon || '📦');
-                const type = (result.type ?? (created.name?.toLowerCase().includes('gehalt') ? 'income' : 'expense')) as 'income' | 'expense' | 'both';
-                const createdAt = created.createdAt ? new Date(created.createdAt) : new Date();
-                const updatedAt = created.updatedAt ? new Date(created.updatedAt) : new Date();
-
-                const newCategory: CategoryWithStats = {
-                  id: created.id,
-                  name: created.name,
-                  emoji,
-                  icon: created.icon,
-                  color: created.color,
-                  type,
-                  transactionCount: 0,
-                  totalAmount: 0,
-                  description: created.description,
-                  budgetLimit: created.budgetLimit,
-                  createdAt,
-                  updatedAt,
-                };
-
-                this.categories.unshift(newCategory);
-                this.filterCategories();
-                this.checkEmptyState();
-
-                // Automatisch dem ausgewählten Konto zuordnen
-                const selectedAccountId = this.accountSelection.getSelectedAccountId();
-                if (selectedAccountId) {
-                  this.accountsApi.assignCategory(selectedAccountId, created.id).subscribe({
-                    next: () => {
-                      console.log('✅ Kategorie automatisch dem Konto zugeordnet');
-                    },
-                    error: (error) => {
-                      console.log('⚠️ Automatische Kontozuordnung fehlgeschlagen:', error);
-                    }
-                  });
-                }
-
-                this.isLoading = false;
-                console.log('Kategorie erstellt:', newCategory);
-              },
-              error: (error) => {
-                console.error('Fehler beim Erstellen der Kategorie:', error);
-                this.isLoading = false;
-                const message = (error && error.message) ? error.message : 'Kategorie konnte nicht erstellt werden.';
-                alert(message);
-              }
-            });
-          })
-          .catch((e) => {
-            console.error('Fehler beim Ermitteln des Budgets:', e);
-            this.isLoading = false;
-            alert('Budget konnte nicht ermittelt werden.');
-          });
+            this.categories.unshift(newCategory);
+            this.filterCategories();
+            this.checkEmptyState();
+            this.setSuccess(this.isEmpty);
+            console.log('Kategorie erstellt:', newCategory);
+          },
+          error: (error) => {
+            console.error('Fehler beim Erstellen der Kategorie:', error);
+            this.setSuccess(this.isEmpty);
+            const message =
+              error && error.message ? error.message : 'Kategorie konnte nicht erstellt werden.';
+            alert(message);
+          },
+        });
       });
     });
   }
@@ -333,29 +361,35 @@ export class CategoriesComponent implements OnInit {
           mode: 'edit',
           category: category,
           existingNames: this.categories
-            .filter(c => c.id !== category.id)
-            .map(c => c.name.toLowerCase())
+            .filter((c) => c.id !== category.id)
+            .map((c) => c.name.toLowerCase()),
         },
-        disableClose: true
+        disableClose: true,
       });
 
-      dialogRef.afterClosed().subscribe(result => {
+      dialogRef.afterClosed().subscribe((result) => {
         if (!result) return;
-        this.isLoading = true;
+        this.setLoading();
 
         const dto: UpdateCategoryDto = {
           name: String(result.name).trim(),
           description: result.description || undefined,
           color: result.color || undefined,
-          icon: result.emoji || category.emoji || '📦',
+          emoji: result.emoji || category.emoji || '📦',
+          transactionType: result.type === 'income' ? 'INCOME' : 'EXPENSE',
         };
 
         this.categoriesApi.update(category.id, dto).subscribe({
           next: (updated) => {
-            const index = this.categories.findIndex(c => c.id === category.id);
+            const index = this.categories.findIndex((c) => c.id === category.id);
             if (index !== -1) {
-              const emoji = (updated.icon || '📦');
-              const type = (result.type ?? category.type ?? (updated.name?.toLowerCase().includes('gehalt') ? 'income' : 'expense')) as 'income' | 'expense' | 'both';
+              const emoji = updated.emoji || updated.icon || '📦';
+              const type = (result.type ??
+                category.type ??
+                (updated.name?.toLowerCase().includes('gehalt') ? 'income' : 'expense')) as
+                | 'income'
+                | 'expense'
+                | 'both';
               const updatedAt = updated.updatedAt ? new Date(updated.updatedAt) : new Date();
               this.categories[index] = {
                 ...this.categories[index],
@@ -365,20 +399,19 @@ export class CategoriesComponent implements OnInit {
                 color: updated.color,
                 type,
                 description: updated.description,
-                budgetLimit: updated.budgetLimit,
                 updatedAt,
               };
             }
             this.filterCategories();
             this.checkEmptyState();
-            this.isLoading = false;
+            this.setSuccess(this.isEmpty);
             console.log('Kategorie aktualisiert:', updated);
           },
           error: (error) => {
             console.error('Fehler beim Aktualisieren der Kategorie:', error);
-            this.isLoading = false;
+            this.setSuccess(this.isEmpty);
             alert('Kategorie konnte nicht aktualisiert werden.');
-          }
+          },
         });
       });
     });
@@ -395,32 +428,29 @@ export class CategoriesComponent implements OnInit {
     const confirmed = window.confirm(confirmMessage);
 
     if (confirmed) {
-      this.isLoading = true;
+      this.setLoading();
       this.categoriesApi.delete(category.id).subscribe({
         next: () => {
-          const index = this.categories.findIndex(c => c.id === category.id);
+          const index = this.categories.findIndex((c) => c.id === category.id);
           if (index !== -1) {
             this.categories.splice(index, 1);
           }
           this.filterCategories();
           this.checkEmptyState();
-          this.isLoading = false;
+          this.setSuccess(this.isEmpty);
           console.log('Kategorie erfolgreich gelöscht:', category.name);
         },
         error: (error) => {
           console.error('Fehler beim Löschen der Kategorie:', error);
-          this.isLoading = false;
+          this.setSuccess(this.isEmpty);
           alert('Kategorie konnte nicht gelöscht werden. Bitte versuchen Sie es erneut.');
-        }
+        },
       });
     }
   }
 
   formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('de-DE', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(Math.abs(amount));
+    return this.formatUtils.formatCurrency(Math.abs(amount));
   }
 
   getAmountClass(amount: number): string {
@@ -429,19 +459,27 @@ export class CategoriesComponent implements OnInit {
 
   getCategoryTypeLabel(type?: string): string {
     switch (type) {
-      case 'income': return 'Einnahme';
-      case 'expense': return 'Ausgabe';
-      case 'both': return 'Beide';
-      default: return type || 'Unbekannt';
+      case 'income':
+        return 'Einnahme';
+      case 'expense':
+        return 'Ausgabe';
+      case 'both':
+        return 'Beide';
+      default:
+        return type || 'Unbekannt';
     }
   }
 
   getCategoryTypeColor(type?: string): string {
     switch (type) {
-      case 'income': return 'success';
-      case 'expense': return 'error';
-      case 'both': return 'primary';
-      default: return 'default';
+      case 'income':
+        return 'success';
+      case 'expense':
+        return 'error';
+      case 'both':
+        return 'primary';
+      default:
+        return 'default';
     }
   }
 
@@ -460,16 +498,18 @@ export class CategoriesComponent implements OnInit {
   }
 
   clearAccountFilter(): void {
-    this.accountSelection.clearSelection();
+    this.accountSelection.clearSelection().catch(err => {
+      console.error('Error clearing account filter:', err);
+    });
   }
 
-  private async resolveCurrentBudgetId(): Promise<string | null> {
-    try {
-      const budgets = await this.budgetsApi.getAll().toPromise();
-      const first = (budgets ?? [])[0];
-      return first?.id ?? null;
-    } catch {
-      return null;
+  // TrackBy functions for performance optimization - using inherited methods
+  trackByCategory = this.trackByUtils.trackByCategoryId.bind(this.trackByUtils);
+
+  ngOnDestroy() {
+    // Cleanup subscriptions to prevent memory leaks and duplicate API calls during navigation
+    if (this.accountSubscription) {
+      this.accountSubscription.unsubscribe();
     }
   }
 }

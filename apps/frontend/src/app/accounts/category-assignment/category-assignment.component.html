@@ -1,0 +1,95 @@
+<div class="category-assignment-dialog">
+  <div mat-dialog-title class="dialog-header">
+    <div class="account-info">
+      <mat-icon [style.color]="data.account.color || '#666'">
+        {{ data.account.icon || 'account_balance_wallet' }}
+      </mat-icon>
+      <div>
+        <h2>Kategorien verwalten</h2>
+        <p>{{ data.account.name }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div mat-dialog-content class="dialog-content">
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Lade Kategorien...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="hasError && !isLoading" class="error-container">
+      <mat-icon>error</mat-icon>
+      <p>Fehler beim Laden der Kategorien</p>
+      <button mat-button (click)="loadData()">Erneut versuchen</button>
+    </div>
+
+    <!-- Content -->
+    <div *ngIf="!isLoading && !hasError" class="categories-content">
+      <!-- Assigned Categories -->
+      <div class="section" *ngIf="assignedCategories.length > 0">
+        <h3>Zugewiesene Kategorien</h3>
+        <div class="categories-grid">
+          <mat-card *ngFor="let assignment of assignedCategories" class="category-card assigned">
+            <mat-card-content>
+              <div class="category-info">
+                <span class="category-emoji">{{ assignment.category.icon || '📦' }}</span>
+                <div class="category-details">
+                  <span class="category-name">{{ assignment.category.name }}</span>
+                  <span class="category-meta" *ngIf="assignment.category._count">
+                    {{ assignment.category._count.transactions }} Transaktionen
+                  </span>
+                </div>
+              </div>
+              <button
+                mat-icon-button
+                color="warn"
+                (click)="removeCategory(assignment.categoryId)"
+                matTooltip="Kategorie entfernen"
+              >
+                <mat-icon>remove</mat-icon>
+              </button>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+
+      <!-- Available Categories -->
+      <div class="section">
+        <h3>Verfügbare Kategorien</h3>
+        <div *ngIf="availableCategories.length === 0" class="empty-state">
+          <mat-icon>category</mat-icon>
+          <p>Alle Kategorien sind bereits zugewiesen</p>
+        </div>
+        <div class="categories-grid" *ngIf="availableCategories.length > 0">
+          <mat-card *ngFor="let category of availableCategories" class="category-card available">
+            <mat-card-content>
+              <div class="category-info">
+                <span class="category-emoji">{{ category.icon || category.emoji || '📦' }}</span>
+                <div class="category-details">
+                  <span class="category-name">{{ category.name }}</span>
+                  <span class="category-meta" *ngIf="category._count">
+                    {{ category._count.transactions }} Transaktionen
+                  </span>
+                </div>
+              </div>
+              <button
+                mat-icon-button
+                color="primary"
+                (click)="assignCategory(category.id)"
+                matTooltip="Kategorie zuweisen"
+              >
+                <mat-icon>add</mat-icon>
+              </button>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div mat-dialog-actions class="dialog-actions">
+    <button mat-button mat-dialog-close>Schließen</button>
+  </div>
+</div>

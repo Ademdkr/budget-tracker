@@ -21,13 +21,21 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   // Get access token
   const token = authService.getAccessToken();
 
-  // Clone request and add authorization header
+  // Clone request and add authorization header + user ID
   let authReq = req;
   if (token) {
+    const user = authService.getStoredUser();
+    const headers: { [key: string]: string } = {
+      Authorization: `Bearer ${token}`
+    };
+
+    // Add user ID to headers if available
+    if (user?.id) {
+      headers['X-User-Id'] = user.id;
+    }
+
     authReq = req.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`
-      }
+      setHeaders: headers
     });
   }
 
@@ -44,10 +52,18 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             switchMap(() => {
               // Retry the original request with new token
               const newToken = authService.getAccessToken();
+              const user = authService.getStoredUser();
+              const retryHeaders: { [key: string]: string } = {
+                Authorization: `Bearer ${newToken}`
+              };
+
+              // Add user ID to retry headers if available
+              if (user?.id) {
+                retryHeaders['X-User-Id'] = user.id;
+              }
+
               const retryReq = req.clone({
-                setHeaders: {
-                  Authorization: `Bearer ${newToken}`
-                }
+                setHeaders: retryHeaders
               });
               return next(retryReq);
             }),

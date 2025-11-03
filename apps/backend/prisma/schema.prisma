@@ -1,126 +1,129 @@
 generator client {
   provider   = "prisma-client-js"
-  engineType = "library"   // Pflicht für Workers/Edge
+  engineType = "library" // Pflicht für Workers/Edge
 }
 
 datasource db {
-  provider   = "postgresql"
-  url        = env("DATABASE_URL")
-  directUrl  = env("DIRECT_DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
 }
 
-// Budget Model - Haupteintrag für Budgets
-model Budget {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  totalAmount Float    @default(0)
-  spent       Float    @default(0)
-  currency    String   @default("EUR")
-  startDate   DateTime @default(now())
-  endDate     DateTime?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+// User Model
+model User {
+  id        BigInt   @id @default(autoincrement())
+  name      String   @db.VarChar(255)
+  surname   String   @db.VarChar(255)
+  email     String   @unique(map: "user_email_unique") @db.VarChar(255)
+  password  String   @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+
   // Relationen
-  categories  Category[]
-  transactions Transaction[]
-  
-  @@map("budgets")
+  accounts Account[]
+
+  @@map("User")
 }
 
-// Kategorie Model für Budget-Kategorisierung
-model Category {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  color       String?  // Hex color code für UI
-  icon        String?  // Icon name oder emoji
-  budgetLimit Float?   // Limit für diese Kategorie
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Relationen
-  budgetId     String
-  budget       Budget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
-  transactions Transaction[]
-  accounts     CategoryAccount[] // Many-to-Many zu Accounts
-  
-  @@map("categories")
-}
-
-// Transaction Model für Ein- und Ausgaben
-model Transaction {
-  id          String      @id @default(cuid())
-  title       String
-  description String?
-  amount      Float
-  type        TransactionType
-  date        DateTime    @default(now())
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  
-  // Relationen
-  budgetId    String
-  budget      Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
-  categoryId  String?
-  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  accountId   String?  // Optional, da bestehende Transaktionen keinen Account haben
-  account     Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
-  
-  @@map("transactions")
-}
-
-// Account Model für verschiedene Konten (Girokonto, Sparkonto, etc.)
+// Account Model
 model Account {
-  id            String      @id @default(cuid())
-  name          String
-  type          AccountType @default(CHECKING)
-  balance       Float       @default(0)
-  currency      String      @default("EUR")
-  icon          String?     // Icon name für UI
-  color         String?     // Hex color code für UI
-  note          String?     // Optionale Notiz
-  isActive      Boolean     @default(true)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  
+  id             BigInt      @id @default(autoincrement())
+  userId         BigInt      @map("user_id")
+  name           String      @db.VarChar(255)
+  type           AccountType
+  initialBalance Decimal     @map("initial_balance") @db.Decimal(8, 2)
+  note           String?     @db.Text
+  isActive       Boolean     @default(true) @map("is_active")
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt      DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+
   // Relationen
-  transactions  Transaction[]
-  categories    CategoryAccount[] // Many-to-Many zu Categories
-  
-  @@map("accounts")
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade, map: "account_user_id_foreign")
+  categories   Category[]
+  transactions Transaction[]
+
+  @@index([userId], map: "idx_account_user_id")
+  @@index([type], map: "idx_account_type")
+  @@index([isActive], map: "idx_account_is_active")
+  @@map("Account")
 }
 
-// Junction Table für Many-to-Many Beziehung zwischen Categories und Accounts
-model CategoryAccount {
-  id         String   @id @default(cuid())
-  categoryId String
-  accountId  String
-  createdAt  DateTime @default(now())
-  
+// Category Model
+model Category {
+  id              BigInt          @id @default(autoincrement())
+  accountId       BigInt          @map("account_id")
+  name            String          @db.VarChar(255)
+  description     String?         @db.Text
+  transactionType TransactionType @map("transaction_type")
+  emoji           String          @db.VarChar(10)
+  color           String          @db.VarChar(7) // Must be valid hex color (validated in application)
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt       DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+
   // Relationen
-  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  account    Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  
-  // Unique constraint um Duplikate zu vermeiden
-  @@unique([categoryId, accountId])
-  @@map("category_accounts")
+  account      Account       @relation(fields: [accountId], references: [id], onDelete: Cascade, map: "category_account_id_foreign")
+  budgets      Budget[]
+  transactions Transaction[]
+
+  @@unique([accountId, name], map: "category_account_id_name_unique")
+  @@index([accountId], map: "idx_category_account_id")
+  @@index([transactionType], map: "idx_category_transaction_type")
+  @@map("Category")
+}
+
+// Budget Model
+model Budget {
+  id          BigInt   @id @default(autoincrement())
+  categoryId  BigInt   @map("category_id")
+  year        Int // z.B. 2025
+  month       Int // z.B. 10 (Oktober), 1-12
+  totalAmount Decimal  @map("total_amount") @db.Decimal(8, 2) // Must be > 0 (validated in application)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+
+  // Relationen
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade, map: "budget_category_id_foreign")
+
+  @@unique([categoryId, year, month], map: "budget_category_year_month_unique")
+  @@index([categoryId], map: "idx_budget_category_id")
+  @@index([year, month], map: "idx_budget_year_month")
+  @@index([year], map: "idx_budget_year")
+  @@map("Budget")
+}
+
+// Transaction Model
+model Transaction {
+  id         BigInt   @id @default(autoincrement())
+  categoryId BigInt   @map("category_id")
+  accountId  BigInt   @map("account_id")
+  date       DateTime @default(now()) @db.Date
+  amount     Decimal  @db.Decimal(8, 2) // Must be > 0 (validated in application)
+  note       String?  @db.Text
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+
+  // Relationen
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade, map: "transaction_category_id_foreign")
+  account  Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, map: "transaction_account_id_foreign")
+
+  @@index([categoryId], map: "idx_transaction_category_id")
+  @@index([accountId], map: "idx_transaction_account_id")
+  @@index([date], map: "idx_transaction_date")
+  @@index([amount], map: "idx_transaction_amount")
+  @@map("Transaction")
 }
 
 // Enum für Account-Typen
 enum AccountType {
-  CHECKING      // Girokonto
-  SAVINGS       // Sparkonto
-  CREDIT_CARD   // Kreditkarte
-  INVESTMENT    // Investmentkonto
-  CASH          // Bargeld
-  OTHER         // Sonstiges
+  CHECKING
+  SAVINGS
+  CREDIT_CARD
+  INVESTMENT
+  CASH
+  OTHER
 }
 
 // Enum für Transaction-Typen
 enum TransactionType {
-  INCOME    // Einnahmen
-  EXPENSE   // Ausgaben
+  INCOME
+  EXPENSE
 }

@@ -1,33 +1,20 @@
-import {
-  IsString,
-  MinLength,
-  IsOptional,
-  IsNumber,
-  IsDateString,
-} from 'class-validator';
+import { IsString, IsNumber, IsInt, Min, Max } from 'class-validator';
 
 export class CreateBudgetDto {
   @IsString()
-  @MinLength(2)
-  name!: string;
+  categoryId!: string; // Wird zu BigInt konvertiert
 
-  @IsOptional()
-  @IsString()
-  description?: string;
+  @IsInt()
+  @Min(2020)
+  @Max(2050)
+  year!: number;
 
-  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  month!: number; // 1-12
+
   @IsNumber()
-  totalAmount?: number;
-
-  @IsOptional()
-  @IsString()
-  currency?: string;
-
-  @IsOptional()
-  @IsDateString()
-  startDate?: string;
-
-  @IsOptional()
-  @IsDateString()
-  endDate?: string;
+  @Min(0.01)
+  totalAmount!: number;
 }

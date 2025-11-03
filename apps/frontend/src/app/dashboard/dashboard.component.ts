@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
@@ -7,6 +7,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
 
@@ -16,6 +17,8 @@ import { ChartConfiguration } from 'chart.js';
 
 import { DashboardApiService, DashboardKPI, ChartData } from './dashboard-api.service';
 import { AccountSelectionService } from '../shared/services/account-selection.service';
+import { BaseComponent } from '../shared/components/base.component';
+import { Subscription } from 'rxjs';
 
 // Interfaces
 export interface KPICard {
@@ -66,24 +69,28 @@ export interface MonthlyData {
     MatCardModule,
     MatIconModule,
     MatProgressBarModule,
+    MatProgressSpinnerModule,
     MatTableModule,
     MatChipsModule,
-    BaseChartDirective
+    BaseChartDirective,
   ],
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.scss'
+  styleUrl: './dashboard.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent extends BaseComponent implements OnInit, OnDestroy {
+  protected componentKey = 'dashboard';
   private dashboardApi = inject(DashboardApiService);
   private accountSelection = inject(AccountSelectionService);
+  private cdr = inject(ChangeDetectorRef);
 
   // States
-  isLoading = false;
-  hasError = false;
   isEmpty = false;
 
   // Data properties
-  kpiCards: Array<DashboardKPI & { title: string; trend: { value: number; direction: 'up' | 'down' } }> = [];
+  kpiCards: Array<
+    DashboardKPI & { title: string; trend: { value: number; direction: 'up' | 'down' } }
+  > = [];
   budgetProgress: Array<{
     budgetName: string;
     spent: number;
@@ -115,8 +122,8 @@ export class DashboardComponent implements OnInit {
     plugins: {
       legend: {
         position: 'bottom',
-      }
-    }
+      },
+    },
   };
 
   lineChartOptions: ChartConfiguration<'line'>['options'] = {
@@ -124,13 +131,13 @@ export class DashboardComponent implements OnInit {
     plugins: {
       legend: {
         position: 'top',
-      }
+      },
     },
     scales: {
       y: {
-        beginAtZero: true
-      }
-    }
+        beginAtZero: true,
+      },
+    },
   };
 
   // Chart types - Fixed types for ng2-charts
@@ -141,13 +148,17 @@ export class DashboardComponent implements OnInit {
   transactionColumns: string[] = ['date', 'category', 'amount', 'note'];
 
   private initialLoadCompleted = false;
+  private accountSubscription?: Subscription;
 
   ngOnInit() {
+    // BaseComponent initialisieren
+    this.initializeLoadingState();
+    
     // Zuerst den AccountSelectionService initialisieren
     this.accountSelection.initialize();
 
     // Subscribe to account selection changes
-    this.accountSelection.selectedAccount$.subscribe(() => {
+    this.accountSubscription = this.accountSelection.selectedAccount$.subscribe(() => {
       // Nur neu laden wenn die initiale Ladung abgeschlossen ist
       if (this.initialLoadCompleted) {
         this.loadDashboardData();
@@ -158,51 +169,53 @@ export class DashboardComponent implements OnInit {
   }
 
   loadDashboardData() {
-    this.isLoading = true;
-    this.hasError = false;
+    this.setLoading();
 
     const selectedAccountId = this.accountSelection.getSelectedAccountId();
 
-    Promise.all([
-      this.dashboardApi.getKPIs(selectedAccountId || undefined).toPromise(),
-      this.dashboardApi.getBudgetProgress(selectedAccountId || undefined).toPromise(),
-      this.dashboardApi.getStatistics(undefined, undefined, selectedAccountId || undefined).toPromise(),
-      this.dashboardApi.getRecentTransactions(10, selectedAccountId || undefined).toPromise()
-    ]).then(([kpis, budgetProgress, stats, transactions]) => {
-      // Map KPIs to include title and trend fields
-      this.kpiCards = (kpis ?? []).map(kpi => ({
-        ...kpi,
-        title: kpi.label,
-        trend: {
-          value: kpi.change,
-          direction: kpi.change >= 0 ? 'up' as const : 'down' as const
-        }
-      }));
+    // Use the optimized getAllDashboardData method instead of multiple API calls
+    this.dashboardApi.getAllDashboardData(selectedAccountId || undefined)
+      .toPromise()
+      .then((dashboardData) => {
+        if (!dashboardData) return;
 
-      // Map budget progress to include missing fields
-      this.budgetProgress = (budgetProgress ?? []).map(budget => ({
-        ...budget,
-        category: budget.budgetName,
-        emoji: budget.icon || '💰',
-        budgeted: budget.limit,
-        remaining: budget.limit - budget.spent
-      }));
+        // Map KPIs to include title and trend fields
+        this.kpiCards = dashboardData.kpis.map((kpi) => ({
+          ...kpi,
+          title: kpi.label,
+          trend: {
+            value: kpi.change,
+            direction: kpi.change >= 0 ? ('up' as const) : ('down' as const),
+          },
+        }));
 
-      // Set recent transactions
-      this.recentTransactions = transactions ?? [];
+        // Map budget progress to include missing fields
+        this.budgetProgress = dashboardData.budgetProgress.map((budget) => ({
+          ...budget,
+          category: budget.budgetName,
+          emoji: budget.icon || '💰',
+          budgeted: budget.limit,
+          remaining: budget.limit - budget.spent,
+        }));
 
-      this.pieChartData = stats?.categoryBreakdown ?? { labels: [], datasets: [] };
-      this.lineChartData = stats?.monthlyTrend ?? { labels: [], datasets: [] };
-      this.checkEmptyState();
-      this.isLoading = false;
-      this.initialLoadCompleted = true;
-    }).catch(() => {
-      this.hasError = true;
-      this.isLoading = false;
-      this.initialLoadCompleted = true;
-    });
+        // Set recent transactions
+        this.recentTransactions = dashboardData.recentTransactions;
+
+        // Set chart data
+        this.pieChartData = dashboardData.statistics.categoryBreakdown;
+        this.lineChartData = dashboardData.statistics.monthlyTrend;
+        
+        this.checkEmptyState();
+        this.setSuccess(this.isEmpty);
+        this.initialLoadCompleted = true;
+        this.cdr.markForCheck();
+      })
+      .catch(() => {
+        this.setError('Fehler beim Laden der Dashboard-Daten');
+        this.initialLoadCompleted = true;
+        this.cdr.markForCheck();
+      });
   }
-
 
   private checkEmptyState() {
     this.isEmpty = this.recentTransactions.length === 0 && this.budgetProgress.length === 0;
@@ -212,11 +225,15 @@ export class DashboardComponent implements OnInit {
     this.loadDashboardData();
   }
 
+  // TrackBy functions for performance optimization - using inherited methods
+  trackByKPI = this.trackByUtils.trackByKPITitle.bind(this.trackByUtils);
+  trackByBudget(index: number, budget: { budgetName: string; spent: number; limit: number; percentage: number; category: string; emoji: string; budgeted: number; remaining: number; }): string {
+    return budget.budgetName || index.toString();
+  }
+  trackByTransaction = this.trackByUtils.trackByTransactionId.bind(this.trackByUtils);
+
   formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('de-DE', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(Math.abs(amount)); // Immer positiv anzeigen
+    return this.formatUtils.formatCurrency(Math.abs(amount)); // Immer positiv anzeigen
   }
 
   formatPercentage(percentage: number): string {
@@ -240,6 +257,15 @@ export class DashboardComponent implements OnInit {
   }
 
   clearAccountFilter(): void {
-    this.accountSelection.clearSelection();
+    this.accountSelection.clearSelection().catch(err => {
+      console.error('Error clearing account filter:', err);
+    });
+  }
+
+  ngOnDestroy() {
+    // Cleanup subscriptions to prevent memory leaks and duplicate API calls during navigation
+    if (this.accountSubscription) {
+      this.accountSubscription.unsubscribe();
+    }
   }
 }

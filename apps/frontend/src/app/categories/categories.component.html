@@ -4,15 +4,16 @@
     <div class="header-content">
       <h1 class="page-title">
         <mat-icon>category</mat-icon>
-        <span *ngIf="hasAccountSelection(); else noAccountTitle">
-          Kategorien für {{ getSelectedAccountName() }}
+        Kategorien
+        <span *ngIf="getSelectedAccountName()" class="account-filter-badge">
+          für {{ getSelectedAccountName() }}
           <button
             mat-icon-button
             (click)="clearAccountFilter()"
-            matTooltip="Konto-Auswahl ändern"
+            matTooltip="Account-Filter entfernen"
             class="clear-filter-btn"
           >
-            <mat-icon>swap_horiz</mat-icon>
+            <mat-icon>close</mat-icon>
           </button>
         </span>
         <ng-template #noAccountTitle> Kategorien </ng-template>
@@ -31,11 +32,9 @@
         </button>
       </div>
     </div>
-    <p *ngIf="hasAccountSelection()" class="filter-subtitle">
-      Zeigt nur Kategorien mit Transaktionen oder expliziten Zuordnungen für dieses Konto
-    </p>
-    <p *ngIf="!hasAccountSelection()" class="filter-subtitle">
-      Wählen Sie ein Konto aus, um kontospezifische Kategorien anzuzeigen
+    <p class="categories-subtitle">
+      Überblick über Ihre Kategorien
+      <span *ngIf="hasAccountSelection()"> - Gefiltert nach ausgewähltem Konto</span>
     </p>
   </div>
 
@@ -128,7 +127,12 @@
     </div>
 
     <!-- Income Categories Section -->
-    <div *ngIf="incomeCategories.length > 0" class="category-section">
+    <div
+      *ngIf="
+        incomeCategories.length > 0 && (selectedFilter === 'all' || selectedFilter === 'income')
+      "
+      class="category-section"
+    >
       <h2 class="section-title">
         <mat-icon class="section-icon income">trending_up</mat-icon>
         Einnahme-Kategorien
@@ -229,7 +233,12 @@
     </div>
 
     <!-- Expense Categories Section -->
-    <div *ngIf="expenseCategories.length > 0" class="category-section">
+    <div
+      *ngIf="
+        expenseCategories.length > 0 && (selectedFilter === 'all' || selectedFilter === 'expense')
+      "
+      class="category-section"
+    >
       <h2 class="section-title">
         <mat-icon class="section-icon expense">trending_down</mat-icon>
         Ausgaben-Kategorien

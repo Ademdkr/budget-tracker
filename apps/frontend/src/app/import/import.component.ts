@@ -1,4 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { BaseComponent } from '../shared/components/base.component';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -101,7 +102,8 @@ export interface Category {
   templateUrl: './import.component.html',
   styleUrl: './import.component.scss'
 })
-export class ImportComponent implements OnInit {
+export class ImportComponent extends BaseComponent implements OnInit {
+  protected componentKey = 'import';
   private fb = inject(FormBuilder);
   private snackBar = inject(MatSnackBar);
 
@@ -381,10 +383,12 @@ export class ImportComponent implements OnInit {
 
   // Helper Methods
   formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('de-DE', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
+    return this.formatUtils.formatCurrency(amount);
+  }
+
+  retry(): void {
+    // Reload import data if needed
+    console.log('Retry import operation');
   }
 
   formatFileSize(bytes: number): string {
