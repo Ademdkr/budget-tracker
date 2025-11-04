@@ -9,8 +9,14 @@ on:
   push:
     branches: [main]
 
-  # Manual deployment trigger
+  # Manual deployment trigger with optional database reset
   workflow_dispatch:
+    inputs:
+      reset_database:
+        description: 'Reset database before deploying migrations (⚠️ DESTRUCTIVE)'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   deploy-database:
@@ -38,12 +44,24 @@ jobs:
         working-directory: apps/backend
         run: pnpm prisma:generate
 
+      - name: Reset Database (Manual Trigger Only)
+        if: github.event.inputs.reset_database == 'true'
+        working-directory: apps/backend
+        run: |
+          echo "⚠️ RESETTING DATABASE - This will delete all data!"
+          pnpm prisma migrate reset --force --skip-seed
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL }}
+
       - name: Check Migration Status
         id: migration-check
         working-directory: apps/backend
         run: |
           echo "Checking migration status..."
-          pnpm prisma migrate status || echo "migration_failed=true" >> $GITHUB_OUTPUT
+          if ! pnpm prisma migrate status; then
+            echo "migration_failed=true" >> $GITHUB_OUTPUT
+          fi
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL }}
@@ -53,8 +71,9 @@ jobs:
         if: steps.migration-check.outputs.migration_failed == 'true'
         working-directory: apps/backend
         run: |
-          echo "Resolving failed migration..."
-          pnpm prisma migrate resolve --rolled-back "20251029180720_init_new_schema" || true
+          echo "Attempting to resolve failed migrations..."
+          # Mark the failed migration as applied since schema objects exist
+          pnpm prisma migrate resolve --applied "20251029180720_init_new_schema" || true
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL }}
