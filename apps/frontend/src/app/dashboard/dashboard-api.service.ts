@@ -34,7 +34,7 @@ export interface DashboardStatistics {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class DashboardApiService {
   private transactionsApi = inject(TransactionsApiService);
@@ -84,11 +84,11 @@ export class DashboardApiService {
     }
 
     const filters = accountId ? { accountId } : undefined;
-    
+
     return forkJoin({
       transactions: this.transactionsApi.getAll(filters),
       categories: this.categoriesApi.getAll(accountId),
-      budgets: this.budgetsApi.getAll()
+      budgets: this.budgetsApi.getAll(),
     }).pipe(
       map(({ transactions, categories, budgets }) => {
         // Filter transactions to current month only
@@ -97,25 +97,28 @@ export class DashboardApiService {
         const currentYear = now.getFullYear();
         const monthStart = new Date(currentYear, currentMonth, 1);
         const monthEnd = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);
-        
-        const currentMonthTransactions = transactions.filter(t => {
+
+        const currentMonthTransactions = transactions.filter((t) => {
           const tDate = new Date(t.date);
           return tDate >= monthStart && tDate <= monthEnd;
         });
-        
+
         // Replace transactions with current month transactions for all calculations
         transactions = currentMonthTransactions;
         // Build category lookup maps once
         const catTypeById = new Map<string, 'INCOME' | 'EXPENSE'>();
-        const catMetaById = new Map<string, { name?: string; color?: string; emoji?: string; icon?: string }>();
-        categories.forEach(c => {
+        const catMetaById = new Map<
+          string,
+          { name?: string; color?: string; emoji?: string; icon?: string }
+        >();
+        categories.forEach((c) => {
           if (c.id) {
             catTypeById.set(String(c.id), c.transactionType || 'EXPENSE');
-            catMetaById.set(String(c.id), { 
-              name: c.name, 
-              color: c.color, 
-              emoji: c.emoji, 
-              icon: c.icon 
+            catMetaById.set(String(c.id), {
+              name: c.name,
+              color: c.color,
+              emoji: c.emoji,
+              icon: c.icon,
             });
           }
         });
@@ -130,17 +133,36 @@ export class DashboardApiService {
             else if (tType === 'EXPENSE') acc.expenses += amount;
             return acc;
           },
-          { income: 0, expenses: 0 }
+          { income: 0, expenses: 0 },
         );
 
         const balance = totals.income - totals.expenses;
-        const savingsRate = totals.income > 0 ? ((totals.income - totals.expenses) / totals.income) * 100 : 0;
+        const savingsRate =
+          totals.income > 0 ? ((totals.income - totals.expenses) / totals.income) * 100 : 0;
 
         const kpis: DashboardKPI[] = [
-          { label: 'Gesamteinnahmen', value: totals.income, change: 12.5, icon: 'trending_up', color: 'success' },
-          { label: 'Gesamtausgaben', value: totals.expenses, change: -8.2, icon: 'trending_down', color: 'error' },
-          { label: 'Bilanz', value: balance, change: 5.3, icon: 'account_balance', color: 'primary' },
-          { label: 'Sparquote', value: savingsRate, change: 3.1, icon: 'savings', color: 'accent' }
+          {
+            label: 'Gesamteinnahmen',
+            value: totals.income,
+            change: 12.5,
+            icon: 'trending_up',
+            color: 'success',
+          },
+          {
+            label: 'Gesamtausgaben',
+            value: totals.expenses,
+            change: -8.2,
+            icon: 'trending_down',
+            color: 'error',
+          },
+          {
+            label: 'Bilanz',
+            value: balance,
+            change: 5.3,
+            icon: 'account_balance',
+            color: 'primary',
+          },
+          { label: 'Sparquote', value: savingsRate, change: 3.1, icon: 'savings', color: 'accent' },
         ];
 
         // Calculate statistics
@@ -148,7 +170,7 @@ export class DashboardApiService {
         let expenses = 0;
         const categoryMap = new Map<string, number>();
 
-        transactions.forEach(t => {
+        transactions.forEach((t) => {
           const cid = t.categoryId != null ? String(t.categoryId) : undefined;
           const tType = cid ? catTypeById.get(cid) : undefined;
           const amount = Math.abs(t.amount || 0);
@@ -160,12 +182,18 @@ export class DashboardApiService {
         });
 
         const categoryBreakdown: ChartData = {
-          labels: Array.from(categoryMap.keys()).map(id => catMetaById.get(id)?.name || 'Unknown'),
-          datasets: [{
-            label: 'Ausgaben nach Kategorie',
-            data: Array.from(categoryMap.values()),
-            backgroundColor: Array.from(categoryMap.keys()).map(id => catMetaById.get(id)?.color || '#cccccc')
-          }]
+          labels: Array.from(categoryMap.keys()).map(
+            (id) => catMetaById.get(id)?.name || 'Unknown',
+          ),
+          datasets: [
+            {
+              label: 'Ausgaben nach Kategorie',
+              data: Array.from(categoryMap.values()),
+              backgroundColor: Array.from(categoryMap.keys()).map(
+                (id) => catMetaById.get(id)?.color || '#cccccc',
+              ),
+            },
+          ],
         };
 
         // Category spending breakdown as bar chart for current month
@@ -176,24 +204,26 @@ export class DashboardApiService {
         const monthlyTrend: ChartData = {
           labels: categorySpendingData.map(([id]) => catMetaById.get(id)?.name || 'Unbekannt'),
           datasets: [
-            { 
-              label: 'Ausgaben', 
-              data: categorySpendingData.map(([, amount]) => amount), 
-              borderColor: '#f44336', 
-              backgroundColor: categorySpendingData.map(([id]) => catMetaById.get(id)?.color || '#f44336'),
-              borderWidth: 1
-            }
-          ]
+            {
+              label: 'Ausgaben',
+              data: categorySpendingData.map(([, amount]) => amount),
+              borderColor: '#f44336',
+              backgroundColor: categorySpendingData.map(
+                ([id]) => catMetaById.get(id)?.color || '#f44336',
+              ),
+              borderWidth: 1,
+            },
+          ],
         };
 
         const statistics: DashboardStatistics = {
-          totalIncome: income, 
-          totalExpenses: expenses, 
-          balance, 
-          savingsRate, 
-          transactionCount: transactions.length, 
-          categoryBreakdown, 
-          monthlyTrend
+          totalIncome: income,
+          totalExpenses: expenses,
+          balance,
+          savingsRate,
+          transactionCount: transactions.length,
+          categoryBreakdown,
+          monthlyTrend,
         };
 
         // Calculate budget progress - using currentMonth/currentYear from above
@@ -201,24 +231,25 @@ export class DashboardApiService {
         const budgetYear = currentYear;
         const periodStart = new Date(budgetYear, budgetMonth - 1, 1);
         const periodEnd = new Date(budgetYear, budgetMonth, 0);
-        const allowedCategoryIds = new Set((categories ?? []).map(c => String(c.id)));
+        const allowedCategoryIds = new Set((categories ?? []).map((c) => String(c.id)));
 
         const budgetProgress = budgets
-          .filter(budget => budget.month === budgetMonth && budget.year === budgetYear)
-          .filter(budget => !accountId || allowedCategoryIds.has(String(budget.categoryId)))
-          .map(budget => {
+          .filter((budget) => budget.month === budgetMonth && budget.year === budgetYear)
+          .filter((budget) => !accountId || allowedCategoryIds.has(String(budget.categoryId)))
+          .map((budget) => {
             const budgetStart = new Date(budget.year, budget.month - 1, 1);
             const budgetEnd = new Date(budget.year, budget.month, 0);
 
             const budgetCategoryId = budget.categoryId;
-            const categoryTransactionsInMonth = transactions.filter(t =>
-              String(t.categoryId) === String(budgetCategoryId) &&
-              new Date(t.date) >= budgetStart &&
-              new Date(t.date) <= budgetEnd
+            const categoryTransactionsInMonth = transactions.filter(
+              (t) =>
+                String(t.categoryId) === String(budgetCategoryId) &&
+                new Date(t.date) >= budgetStart &&
+                new Date(t.date) <= budgetEnd,
             );
 
             const budgetExpenses = categoryTransactionsInMonth
-              .filter(t => {
+              .filter((t) => {
                 const cid = t.categoryId != null ? String(t.categoryId) : undefined;
                 const tType = cid ? catTypeById.get(cid) : undefined;
                 return tType === 'EXPENSE';
@@ -232,10 +263,14 @@ export class DashboardApiService {
             })();
 
             const totalExpensesInPeriod = transactions
-              .filter(t => {
+              .filter((t) => {
                 const cid = t.categoryId != null ? String(t.categoryId) : undefined;
                 const tType = cid ? catTypeById.get(cid) : undefined;
-                return tType === 'EXPENSE' && new Date(t.date) >= periodStart && new Date(t.date) <= periodEnd;
+                return (
+                  tType === 'EXPENSE' &&
+                  new Date(t.date) >= periodStart &&
+                  new Date(t.date) <= periodEnd
+                );
               })
               .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
@@ -252,7 +287,7 @@ export class DashboardApiService {
               spent,
               limit,
               percentage: Math.min(Math.round(percentage * 10) / 10, 100),
-              icon
+              icon,
             };
           });
 
@@ -261,7 +296,7 @@ export class DashboardApiService {
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
           .slice(0, 10);
 
-        const recentTransactions = sortedTransactions.map(transaction => {
+        const recentTransactions = sortedTransactions.map((transaction) => {
           const cid = transaction.categoryId != null ? String(transaction.categoryId) : undefined;
           const meta = cid ? catMetaById.get(cid) : undefined;
           const tType = cid ? catTypeById.get(cid) : undefined;
@@ -272,7 +307,7 @@ export class DashboardApiService {
             categoryEmoji: meta?.icon || meta?.emoji || '??',
             amount: transaction.amount,
             note: transaction.note || '',
-            type: (tType === 'INCOME' ? 'income' : 'expense') as 'income' | 'expense'
+            type: (tType === 'INCOME' ? 'income' : 'expense') as 'income' | 'expense',
           };
         });
 
@@ -280,9 +315,9 @@ export class DashboardApiService {
           kpis,
           statistics,
           budgetProgress,
-          recentTransactions
+          recentTransactions,
         };
-      })
+      }),
     );
   }
 
@@ -291,19 +326,19 @@ export class DashboardApiService {
    * @deprecated Use getAllDashboardData for better performance
    */
   getKPIs(accountId?: string): Observable<DashboardKPI[]> {
-    return this.getAllDashboardData(accountId).pipe(
-      map(data => data.kpis)
-    );
+    return this.getAllDashboardData(accountId).pipe(map((data) => data.kpis));
   }
 
   /**
    * Get comprehensive dashboard statistics (deprecated - use getAllDashboardData instead)
    * @deprecated Use getAllDashboardData for better performance
    */
-  getStatistics(startDate?: string, endDate?: string, accountId?: string): Observable<DashboardStatistics> {
-    return this.getAllDashboardData(accountId).pipe(
-      map(data => data.statistics)
-    );
+  getStatistics(
+    startDate?: string,
+    endDate?: string,
+    accountId?: string,
+  ): Observable<DashboardStatistics> {
+    return this.getAllDashboardData(accountId).pipe(map((data) => data.statistics));
   }
 
   /**
@@ -314,7 +349,7 @@ export class DashboardApiService {
     if (!accountId) {
       return of({
         labels: [],
-        datasets: []
+        datasets: [],
       });
     }
 
@@ -323,10 +358,14 @@ export class DashboardApiService {
       map(() => ({
         labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
         datasets: [
-          { label: 'Einnahmen', data: [3200, 3500, 3100, 3800, 3600, 4000], borderColor: '#4caf50' },
-          { label: 'Ausgaben', data: [2100, 2300, 2500, 2200, 2400, 2600], borderColor: '#f44336' }
-        ]
-      }))
+          {
+            label: 'Einnahmen',
+            data: [3200, 3500, 3100, 3800, 3600, 4000],
+            borderColor: '#4caf50',
+          },
+          { label: 'Ausgaben', data: [2100, 2300, 2500, 2200, 2400, 2600], borderColor: '#f44336' },
+        ],
+      })),
     );
   }
 
@@ -334,33 +373,38 @@ export class DashboardApiService {
    * Get budget progress overview (deprecated - use getAllDashboardData instead)
    * @deprecated Use getAllDashboardData for better performance
    */
-  getBudgetProgress(accountId?: string): Observable<Array<{
-    budgetName: string;
-    spent: number;
-    limit: number;
-    percentage: number;
-    icon: string;
-  }>> {
-    return this.getAllDashboardData(accountId).pipe(
-      map(data => data.budgetProgress)
-    );
+  getBudgetProgress(accountId?: string): Observable<
+    Array<{
+      budgetName: string;
+      spent: number;
+      limit: number;
+      percentage: number;
+      icon: string;
+    }>
+  > {
+    return this.getAllDashboardData(accountId).pipe(map((data) => data.budgetProgress));
   }
 
   /**
    * Get recent transactions for dashboard (deprecated - use getAllDashboardData instead)
    * @deprecated Use getAllDashboardData for better performance
    */
-  getRecentTransactions(limit: number = 10, accountId?: string): Observable<Array<{
-    id: string;
-    date: Date;
-    category: string;
-    categoryEmoji: string;
-    amount: number;
-    note: string;
-    type: 'income' | 'expense';
-  }>> {
+  getRecentTransactions(
+    limit: number = 10,
+    accountId?: string,
+  ): Observable<
+    Array<{
+      id: string;
+      date: Date;
+      category: string;
+      categoryEmoji: string;
+      amount: number;
+      note: string;
+      type: 'income' | 'expense';
+    }>
+  > {
     return this.getAllDashboardData(accountId).pipe(
-      map(data => data.recentTransactions.slice(0, limit))
+      map((data) => data.recentTransactions.slice(0, limit)),
     );
   }
 }

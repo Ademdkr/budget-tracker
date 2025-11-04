@@ -84,6 +84,12 @@
 
 // Filter Card
 .filter-card {
+  margin-bottom: 2rem;
+
+  .mat-mdc-card-header {
+    margin-bottom: 1.5rem;
+  }
+
   .filter-form {
     .filter-row {
       display: grid;
