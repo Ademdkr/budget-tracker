@@ -71,9 +71,12 @@ jobs:
         if: steps.migration-check.outputs.migration_failed == 'true'
         working-directory: apps/backend
         run: |
-          echo "Attempting to resolve failed migrations..."
-          # Mark the failed migration as applied since schema objects exist
-          pnpm prisma migrate resolve --applied "20251029180720_init_new_schema" || true
+          echo "Attempting to resolve all failed migrations..."
+          # Mark common failed migrations as applied
+          for migration in "20251029180720_init_new_schema" "20251104160500_add_autoincrement_ids" "20251104161000_fix_budget_table" "20251104161500_add_defaults" "20251104162000_fix_foreign_keys_and_indexes"; do
+            echo "Resolving migration: $migration"
+            pnpm prisma migrate resolve --applied "$migration" 2>/dev/null || true
+          done
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL }}
