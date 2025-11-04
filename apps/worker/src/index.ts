@@ -511,10 +511,12 @@ export default {
     // ====================================================================
     app.get('/api/categories', async (c) => {
       try {
+        const userId = getUserIdFromHeaders(c);
         const categories = await sql`
           SELECT c.*, a.name as account_name 
           FROM "Category" c
           LEFT JOIN "Account" a ON c.account_id = a.id
+          WHERE a.user_id = ${userId}
           ORDER BY c.created_at DESC
         `;
         return c.json(categories);
@@ -528,6 +530,13 @@ export default {
     app.post('/api/categories/auto-assign/:accountId', async (c) => {
       try {
         const { accountId } = c.req.param();
+        const userId = getUserIdFromHeaders(c);
+        
+        // Verify account belongs to user
+        const account = await sql`SELECT * FROM "Account" WHERE id = ${accountId} AND user_id = ${userId} LIMIT 1`;
+        if (account.length === 0) {
+          return c.json({ error: 'Account not found or access denied' }, 404);
+        }
         
         // Find all categories that have transactions for this account
         const categories = await sql`
@@ -549,7 +558,13 @@ export default {
     app.get('/api/categories/:id', async (c) => {
       try {
         const { id } = c.req.param();
-        const rows = await sql`SELECT * FROM "Category" WHERE id = ${id} LIMIT 1`;
+        const userId = getUserIdFromHeaders(c);
+        const rows = await sql`
+          SELECT c.* FROM "Category" c
+          JOIN "Account" a ON c.account_id = a.id
+          WHERE c.id = ${id} AND a.user_id = ${userId}
+          LIMIT 1
+        `;
         if (rows.length === 0) {
           return c.json({ error: 'Category not found' }, 404);
         }
@@ -562,6 +577,7 @@ export default {
 
     app.post('/api/categories', async (c) => {
       try {
+        const userId = getUserIdFromHeaders(c);
         const body = await c.req.json<{ 
           account_id: number;
           name: string;
@@ -570,6 +586,12 @@ export default {
           emoji: string;
           color: string;
         }>();
+        
+        // Verify account belongs to user
+        const account = await sql`SELECT * FROM "Account" WHERE id = ${body.account_id} AND user_id = ${userId} LIMIT 1`;
+        if (account.length === 0) {
+          return c.json({ error: 'Account not found or access denied' }, 404);
+        }
         
         const created = await sql`
           INSERT INTO "Category" (
@@ -597,12 +619,23 @@ export default {
     app.patch('/api/categories/:id', async (c) => {
       try {
         const { id } = c.req.param();
+        const userId = getUserIdFromHeaders(c);
         const body = await c.req.json<{ 
           name?: string; 
           description?: string; 
           emoji?: string; 
           color?: string;
         }>();
+        
+        // Verify category belongs to user's account
+        const check = await sql`
+          SELECT c.id FROM "Category" c
+          JOIN "Account" a ON c.account_id = a.id
+          WHERE c.id = ${id} AND a.user_id = ${userId}
+        `;
+        if (check.length === 0) {
+          return c.json({ error: 'Category not found or access denied' }, 404);
+        }
         
         const updated = await sql`
           UPDATE "Category" 
@@ -630,6 +663,18 @@ export default {
     app.delete('/api/categories/:id', async (c) => {
       try {
         const { id } = c.req.param();
+        const userId = getUserIdFromHeaders(c);
+        
+        // Verify category belongs to user's account
+        const check = await sql`
+          SELECT c.id FROM "Category" c
+          JOIN "Account" a ON c.account_id = a.id
+          WHERE c.id = ${id} AND a.user_id = ${userId}
+        `;
+        if (check.length === 0) {
+          return c.json({ error: 'Category not found or access denied' }, 404);
+        }
+        
         await sql`DELETE FROM "Category" WHERE id = ${id}`;
         return c.json({ ok: true });
       } catch (error) {
