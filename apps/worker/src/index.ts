@@ -682,17 +682,87 @@ export default {
     // ====================================================================
     // CATEGORIES ENDPOINTS
     // ====================================================================
+    
+    // Helper function to serialize category data
+    function serializeCategory(category: any) {
+      return {
+        id: category.id.toString(),
+        name: category.name,
+        accountId: category.account_id?.toString(),
+        description: category.description,
+        transactionType: category.transaction_type,
+        emoji: category.emoji,
+        color: category.color,
+        createdAt: category.created_at,
+        updatedAt: category.updated_at,
+        _count: category.transaction_count ? { transactions: Number(category.transaction_count) } : undefined,
+        account: category.account_name ? {
+          name: category.account_name,
+        } : undefined,
+      };
+    }
+    
     app.get('/api/categories', async (c) => {
       try {
         const userId = getUserIdFromHeaders(c);
+        const accountId = c.req.query('accountId');
+        console.log('🔍 GET /api/categories called for user:', userId, 'accountId:', accountId);
+        
+        if (accountId) {
+          // Filter by specific account - includes direct categories and categories used in transactions
+          const account = await sql`SELECT * FROM "Account" WHERE id = ${accountId} AND user_id = ${userId} LIMIT 1`;
+          if (account.length === 0) {
+            return c.json({ error: 'Account not found or access denied' }, 404);
+          }
+          
+          // Get direct categories
+          const directCategories = await sql`
+            SELECT c.*, a.name as account_name, COUNT(t.id) as transaction_count
+            FROM "Category" c
+            LEFT JOIN "Account" a ON c.account_id = a.id
+            LEFT JOIN "Transaction" t ON t.category_id = c.id
+            WHERE c.account_id = ${accountId}
+            GROUP BY c.id, a.name
+            ORDER BY c.created_at DESC
+          `;
+          
+          // Get categories used in transactions of this account
+          const transactionCategories = await sql`
+            SELECT DISTINCT c.*, a.name as account_name, COUNT(t.id) as transaction_count
+            FROM "Category" c
+            LEFT JOIN "Account" a ON c.account_id = a.id
+            JOIN "Transaction" t ON t.category_id = c.id
+            WHERE t.account_id = ${accountId}
+            GROUP BY c.id, a.name
+            ORDER BY c.created_at DESC
+          `;
+          
+          // Merge and deduplicate by category id
+          const categoryMap = new Map();
+          [...directCategories, ...transactionCategories].forEach(cat => {
+            if (!categoryMap.has(cat.id.toString())) {
+              categoryMap.set(cat.id.toString(), cat);
+            }
+          });
+          
+          const categories = Array.from(categoryMap.values());
+          console.log('📊 Found categories for account:', categories.length);
+          return c.json(categories.map(serializeCategory));
+        }
+        
+        // Get all categories for user
         const categories = await sql`
-          SELECT c.*, a.name as account_name 
+          SELECT c.*, a.name as account_name, COUNT(t.id) as transaction_count
           FROM "Category" c
           LEFT JOIN "Account" a ON c.account_id = a.id
+          LEFT JOIN "Transaction" t ON t.category_id = c.id
           WHERE a.user_id = ${userId}
+          GROUP BY c.id, a.name
           ORDER BY c.created_at DESC
         `;
-        return c.json(categories);
+        
+        console.log('📊 Found total categories:', categories.length);
+        return c.json(categories.map(serializeCategory));
       } catch (error) {
         console.error('Database error:', error);
         return c.json({ error: 'Failed to fetch categories', details: String(error) }, 500);
@@ -704,6 +774,7 @@ export default {
       try {
         const { accountId } = c.req.param();
         const userId = getUserIdFromHeaders(c);
+        console.log('🔄 POST /api/categories/auto-assign called - Account:', accountId);
 
         // Verify account belongs to user
         const account =
@@ -714,15 +785,17 @@ export default {
 
         // Find all categories that have transactions for this account
         const categories = await sql`
-          SELECT DISTINCT c.*, COUNT(t.id) as transaction_count
+          SELECT DISTINCT c.*, a.name as account_name, COUNT(t.id) as transaction_count
           FROM "Category" c
+          LEFT JOIN "Account" a ON c.account_id = a.id
           JOIN "Transaction" t ON t.category_id = c.id
           WHERE t.account_id = ${accountId}
-          GROUP BY c.id
+          GROUP BY c.id, a.name
           ORDER BY transaction_count DESC
         `;
 
-        return c.json(categories);
+        console.log('📊 Found categories with transactions:', categories.length);
+        return c.json(categories.map(serializeCategory));
       } catch (error) {
         console.error('Database error:', error);
         return c.json({ error: 'Failed to auto-assign categories', details: String(error) }, 500);
@@ -734,7 +807,8 @@ export default {
         const { id } = c.req.param();
         const userId = getUserIdFromHeaders(c);
         const rows = await sql`
-          SELECT c.* FROM "Category" c
+          SELECT c.*, a.name as account_name
+          FROM "Category" c
           JOIN "Account" a ON c.account_id = a.id
           WHERE c.id = ${id} AND a.user_id = ${userId}
           LIMIT 1
@@ -742,7 +816,7 @@ export default {
         if (rows.length === 0) {
           return c.json({ error: 'Category not found' }, 404);
         }
-        return c.json(rows[0]);
+        return c.json(serializeCategory(rows[0]));
       } catch (error) {
         console.error('Database error:', error);
         return c.json({ error: 'Failed to fetch category', details: String(error) }, 500);
@@ -752,18 +826,22 @@ export default {
     app.post('/api/categories', async (c) => {
       try {
         const userId = getUserIdFromHeaders(c);
+        console.log('🔄 POST /api/categories called for user:', userId);
+        
         const body = await c.req.json<{
-          account_id: number;
+          accountId: string;
           name: string;
           description?: string;
-          transaction_type: string;
+          transactionType: string;
           emoji: string;
           color: string;
         }>();
+        
+        console.log('📤 Create category body:', body);
 
         // Verify account belongs to user
         const account =
-          await sql`SELECT * FROM "Account" WHERE id = ${body.account_id} AND user_id = ${userId} LIMIT 1`;
+          await sql`SELECT * FROM "Account" WHERE id = ${body.accountId} AND user_id = ${userId} LIMIT 1`;
         if (account.length === 0) {
           return c.json({ error: 'Account not found or access denied' }, 404);
         }
@@ -773,10 +851,10 @@ export default {
             account_id, name, description, transaction_type, emoji, color, created_at, updated_at
           ) 
           VALUES (
-            ${body.account_id},
+            ${body.accountId},
             ${body.name},
             ${body.description || null},
-            ${body.transaction_type},
+            ${body.transactionType},
             ${body.emoji},
             ${body.color},
             NOW(),
@@ -784,7 +862,9 @@ export default {
           ) 
           RETURNING *
         `;
-        return c.json(created[0], 201);
+        
+        console.log('✅ Category created:', created[0].id);
+        return c.json(serializeCategory(created[0]), 201);
       } catch (error) {
         console.error('Database error:', error);
         return c.json({ error: 'Failed to create category', details: String(error) }, 500);
@@ -795,12 +875,16 @@ export default {
       try {
         const { id } = c.req.param();
         const userId = getUserIdFromHeaders(c);
+        console.log('🔄 PATCH /api/categories/:id called - ID:', id, 'User:', userId);
+        
         const body = await c.req.json<{
           name?: string;
           description?: string;
           emoji?: string;
           color?: string;
         }>();
+        
+        console.log('📤 Update category body:', body);
 
         // Verify category belongs to user's account
         const check = await sql`
@@ -828,7 +912,8 @@ export default {
           return c.json({ error: 'Category not found' }, 404);
         }
 
-        return c.json(updated[0]);
+        console.log('✅ Category updated');
+        return c.json(serializeCategory(updated[0]));
       } catch (error) {
         console.error('Database error:', error);
         return c.json({ error: 'Failed to update category', details: String(error) }, 500);
@@ -839,6 +924,7 @@ export default {
       try {
         const { id } = c.req.param();
         const userId = getUserIdFromHeaders(c);
+        console.log('🗑️ DELETE /api/categories/:id called - ID:', id);
 
         // Verify category belongs to user's account
         const check = await sql`
@@ -851,6 +937,7 @@ export default {
         }
 
         await sql`DELETE FROM "Category" WHERE id = ${id}`;
+        console.log('✅ Category deleted');
         return c.json({ ok: true });
       } catch (error) {
         console.error('Database error:', error);
@@ -934,10 +1021,11 @@ export default {
       try {
         const { id } = c.req.param();
         const userId = getUserIdFromHeaders(c);
+        console.log('🔍 GET /api/categories/:id/accounts - Category:', id);
 
         // Get category with its account (verify user ownership)
         const rows = await sql`
-          SELECT c.*, a.name as account_name, a.type as account_type
+          SELECT c.*, a.name as account_name, a.type as account_type, a.id as account_id
           FROM "Category" c
           JOIN "Account" a ON c.account_id = a.id
           WHERE c.id = ${id} AND a.user_id = ${userId}
@@ -947,7 +1035,15 @@ export default {
           return c.json({ error: 'Category not found' }, 404);
         }
 
-        return c.json([{ category: rows[0], account: rows[0] }]);
+        const category = rows[0];
+        return c.json([{ 
+          category: serializeCategory(category), 
+          account: {
+            id: category.account_id.toString(),
+            name: category.account_name,
+            type: category.account_type,
+          }
+        }]);
       } catch (error) {
         console.error('Database error:', error);
         return c.json({ error: 'Failed to fetch category accounts', details: String(error) }, 500);
