@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface UserInfo {
   id: string;
@@ -15,7 +16,7 @@ export interface UserInfo {
 })
 export class UserService {
   private http = inject(HttpClient);
-  private readonly baseUrl = 'http://localhost:3001/api/auth';
+  private readonly baseUrl = `${environment.apiBaseUrl}/auth`;
 
   getUsers(): Observable<UserInfo[]> {
     return this.http.get<UserInfo[]>(`${this.baseUrl}/users`);

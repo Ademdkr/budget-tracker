@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, tap, catchError, throwError } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface LoginRequest {
   email: string;
@@ -54,7 +55,7 @@ export class AuthService {
   }
 
   login(credentials: LoginRequest): Observable<AuthResponse> {
-    const apiUrl = 'http://localhost:3001/api/auth/login';
+    const apiUrl = `${environment.apiBaseUrl}/auth/login`;
 
     return this.http.post<AuthResponse>(apiUrl, credentials).pipe(
       tap(response => this.handleAuthSuccess(response)),
@@ -67,8 +68,7 @@ export class AuthService {
   }
 
   register(userData: RegisterRequest): Observable<AuthResponse> {
-    // TODO: Replace with actual API endpoint
-    const apiUrl = '/api/auth/register';
+    const apiUrl = `${environment.apiBaseUrl}/auth/register`;
 
     return this.http.post<AuthResponse>(apiUrl, userData).pipe(
       tap(response => this.handleAuthSuccess(response)),
