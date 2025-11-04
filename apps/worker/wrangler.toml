@@ -6,6 +6,10 @@ compatibility_flags = ["nodejs_compat"]
 [vars]
 ENVIRONMENT = "production"
 
+# Database connection wird über wrangler secret gesetzt:
+# wrangler secret put DATABASE_URL
+# Oder über GitHub Secrets in der CD-Pipeline
+
 # Optional: Hyperdrive für DB-Proxy nutzen (Cloudflare)
 # Siehe: https://developers.cloudflare.com/hyperdrive/
 # [hyperdrive]

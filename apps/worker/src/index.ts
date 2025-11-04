@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { cors } from 'hono/cors';
 import { neon } from '@neondatabase/serverless';
 
 type Env = { 
@@ -10,6 +11,16 @@ export default {
   fetch: async (req: Request, env: Env, ctx: ExecutionContext) => {
     const app = new Hono<{ Bindings: Env }>();
     const sql = neon(env.DATABASE_URL);
+
+    // CORS für Cloudflare Pages Frontend
+    app.use('/*', cors({
+      origin: ['https://budget-tracker-frontend.pages.dev', 'https://7c847dee.budget-tracker-frontend.pages.dev', 'http://localhost:4201'],
+      allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowHeaders: ['Content-Type', 'Authorization'],
+      exposeHeaders: ['Content-Length'],
+      maxAge: 600,
+      credentials: true,
+    }));
 
     app.get('/', (c) => c.text('Budget Tracker API - Running!'));
     app.get('/api/health', (c) => c.json({ 

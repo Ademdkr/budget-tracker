@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiBaseUrl: '/api', // im Prod-Hosting dann reverse-proxien (z. B. Nginx/Vercel/Netlify)
+  apiBaseUrl: 'https://budget-tracker-worker.adem-dokur.workers.dev/api',
 };

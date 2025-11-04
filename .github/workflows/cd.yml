@@ -151,6 +151,10 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: 'apps/worker'
           command: deploy --env=""
+          secrets: |
+            DATABASE_URL
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
   # Optional: Backend Deployment
   # Hinweis: NestJS läuft nicht nativ auf Cloudflare Workers.

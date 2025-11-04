@@ -22,7 +22,10 @@
     "prisma:seed": "ts-node --transpile-only prisma/seed.ts",
     "db:push": "prisma db push",
     "db:seed": "ts-node --transpile-only prisma/seed.ts",
-    "db:reset": "prisma migrate reset --force && ts-node --transpile-only prisma/seed.ts"
+    "db:reset": "prisma migrate reset --force && ts-node --transpile-only prisma/seed.ts",
+    "env:local": "node -e \"require('fs').copyFileSync('.env.local', '.env'); console.log('✅ Switched to LOCAL database')\"",
+    "env:neon": "node -e \"require('fs').copyFileSync('.env.neon', '.env'); console.log('✅ Switched to NEON database')\"",
+    "env:status": "node -e \"const fs=require('fs'); const env=fs.readFileSync('.env','utf8'); const isNeon=env.includes('neon.tech'); console.log(isNeon?'📡 Currently using: NEON (Production)':'💻 Currently using: LOCAL (Development)')\""
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
