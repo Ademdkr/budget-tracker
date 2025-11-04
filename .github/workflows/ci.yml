@@ -24,11 +24,15 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
 
-      - name: Install dependencies (ignore postinstall scripts)
-        run: pnpm install --ignore-scripts
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          HUSKY: 0
+          SKIP_POSTINSTALL: true
 
       - name: Generate Prisma client (backend)
-        run: pnpm --filter @budget-tracker/backend prisma:generate
+        working-directory: apps/backend
+        run: pnpm prisma:generate
 
       - name: Lint
         run: pnpm -r lint
@@ -55,8 +59,11 @@ jobs:
           node-version: 22
           cache: 'pnpm'
 
-      - name: Install dependencies (ignore postinstall scripts)
-        run: pnpm install --ignore-scripts
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          HUSKY: 0
+          SKIP_POSTINSTALL: true
 
       - name: Install Chromium for Headless Tests
         run: |
@@ -65,3 +72,32 @@ jobs:
 
       - name: Run frontend tests
         run: pnpm --filter @budget-tracker/frontend test
+
+  docker-build:
+    name: Docker Build Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/backend/Dockerfile
+          push: false
+          tags: budget-tracker-backend:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/frontend/Dockerfile
+          push: false
+          tags: budget-tracker-frontend:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

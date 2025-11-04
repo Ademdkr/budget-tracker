@@ -1,422 +1,868 @@
-# Budget Tracker (Angular + NestJS)# Budget Tracker (Angular + NestJS)
+# Budget Tracker# Budget Tracker (Angular + NestJS)# Budget Tracker (Angular + NestJS)
 
-[![CI](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml)[![CI](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml)
+[![CI](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml)[![CI](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml)[![CI](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-[![Built with PNPM](https://img.shields.io/badge/built%20with-pnpm-orange)](https://pnpm.io)[![Built with PNPM](https://img.shields.io/badge/built%20with-pnpm-orange)](https://pnpm.io)
+[![Built with PNPM](https://img.shields.io/badge/built%20with-pnpm-orange)](https://pnpm.io)[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Eine umfassende **Budget-Tracking-Anwendung** mit Angular 18 (Frontend), NestJS 10 (Backend), Cloudflare Workers und PostgreSQL. Eine umfassende **Budget-Tracking-Anwendung** mit Angular 18 (Frontend), NestJS 10 (Backend), Cloudflare Workers und PostgreSQL.
+> Eine moderne Full-Stack Finanzmanagement-Anwendung zur Verwaltung persönlicher Finanzen mit Multi-Account-Support, intelligenten Kategorien und CSV-Import.[![Built with PNPM](https://img.shields.io/badge/built%20with-pnpm-orange)](https://pnpm.io)[![Built with PNPM](https://img.shields.io/badge/built%20with-pnpm-orange)](https://pnpm.io)
 
-Verwalten Sie Ihre Einnahmen und Ausgaben, kategorisieren Sie Transaktionen und behalten Sie den Überblick über Ihre Finanzen.Verwalten Sie Ihre Einnahmen und Ausgaben, kategorisieren Sie Transaktionen und behalten Sie den Überblick über Ihre Finanzen.
+**Live Demo**: _(Coming Soon)_ | **[Dokumentation](./docs/)** | **[Changelog](./CHANGELOG.md)**Eine umfassende **Budget-Tracking-Anwendung** mit Angular 18 (Frontend), NestJS 10 (Backend), Cloudflare Workers und PostgreSQL. Eine umfassende **Budget-Tracking-Anwendung** mit Angular 18 (Frontend), NestJS 10 (Backend), Cloudflare Workers und PostgreSQL.
 
-## 💰 Features## 💰 Features
+---Verwalten Sie Ihre Einnahmen und Ausgaben, kategorisieren Sie Transaktionen und behalten Sie den Überblick über Ihre Finanzen.Verwalten Sie Ihre Einnahmen und Ausgaben, kategorisieren Sie Transaktionen und behalten Sie den Überblick über Ihre Finanzen.
 
-- **💸 Transaktions-Management**: Erstellen, bearbeiten und kategorisieren Sie Ihre Einnahmen und Ausgaben- **💸 Transaktions-Management**: Erstellen, bearbeiten und kategorisieren Sie Ihre Einnahmen und Ausgaben
+## 📋 Über das Projekt## 💰 Features## 💰 Features
 
-- **📊 Dashboard**: Übersichtliche Darstellung Ihrer Finanzen mit Charts und Statistiken- **📊 Dashboard**: Übersichtliche Darstellung Ihrer Finanzen mit Charts und Statistiken
+Budget Tracker ist eine professionelle Finanzmanagement-Lösung, die Ihnen hilft:- **💸 Transaktions-Management**: Erstellen, bearbeiten und kategorisieren Sie Ihre Einnahmen und Ausgaben- **💸 Transaktions-Management**: Erstellen, bearbeiten und kategorisieren Sie Ihre Einnahmen und Ausgaben
 
-- **🏷️ Kategorien**: Individuelle Kategorisierung für bessere Übersicht- **🏷️ Kategorien**: Individuelle Kategorisierung für bessere Übersicht
+- 💰 Einnahmen und Ausgaben über mehrere Konten zu verwalten
+
+- 📊 Finanzielle Übersicht durch interaktive Dashboards zu erhalten- **📊 Dashboard**: Übersichtliche Darstellung Ihrer Finanzen mit Charts und Statistiken- **📊 Dashboard**: Übersichtliche Darstellung Ihrer Finanzen mit Charts und Statistiken
+
+- 🎯 Budgets zu planen und Ausgaben zu kontrollieren
+
+- 📁 Transaktionen per CSV-Import effizient zu erfassen- **🏷️ Kategorien**: Individuelle Kategorisierung für bessere Übersicht- **🏷️ Kategorien**: Individuelle Kategorisierung für bessere Übersicht
+
+- 🏷️ Ausgaben intelligent zu kategorisieren
 
 - **🏦 Konten**: Verwalten Sie mehrere Bankkonten und Zahlungsmethoden- **🏦 Konten**: Verwalten Sie mehrere Bankkonten und Zahlungsmethoden
 
+**Gebaut als Full-Stack Portfolio-Projekt mit modernen Technologien und Best Practices.**
+
 - **💼 Budget-Planung**: Setzen Sie Budgets und verfolgen Sie Ihre Ausgaben- **💼 Budget-Planung**: Setzen Sie Budgets und verfolgen Sie Ihre Ausgaben
+
+---
 
 - **📁 Daten-Import**: Importieren Sie Transaktionen aus CSV-Dateien- **📁 Daten-Import**: Importieren Sie Transaktionen aus CSV-Dateien
 
+## ✨ Hauptfunktionen
+
 ## 🏗️ Architektur---
 
-- 🧩 **Monorepo-Struktur** mit pnpm Workspaces## 🏗️ Architektur
-  - `apps/frontend` - Angular 18 Frontend mit Material Design
+### 🏦 Multi-Account-Management
 
+- Verwalten Sie verschiedene Konten (Girokonto, Sparkonto, Kreditkarte, etc.)- 🧩 **Monorepo-Struktur** mit pnpm Workspaces## 🏗️ Architektur
+
+- Account-spezifische Kategorien und Transaktionen - `apps/frontend` - Angular 18 Frontend mit Material Design
+
+- Kontoübergreifende Übersicht und Filterung
   - `apps/backend` - NestJS 10 REST API mit Prisma ORM- 🧩 **Monorepo-Struktur** mit pnpm Workspaces
 
-  - `apps/worker` - Cloudflare Worker für Edge-Funktionen - `apps/frontend` - Angular 18 Frontend mit Material Design
+### 💸 Intelligentes Transaktions-Management
 
-  - `apps/backend` - NestJS 10 REST API mit Prisma ORM
+- Schnelles Erfassen von Einnahmen und Ausgaben - `apps/worker` - Cloudflare Worker für Edge-Funktionen - `apps/frontend` - Angular 18 Frontend mit Material Design
+
+- Kategorisierung mit benutzerdefinierten Kategorien
+
+- Such- und Filterfunktionen - `apps/backend` - NestJS 10 REST API mit Prisma ORM
+
+- Bulk-Import via CSV mit automatischer Kategorie-Zuordnung
 
 ### 🎯 Frontend (Angular 18) - `apps/worker` - Cloudflare Worker für Edge-Funktionen
 
-- 🔄 **Hot Reload** für Frontend & Backend gleichzeitig
+### 📊 Dashboard & Visualisierung
 
-- ⚡ **Standalone Components** - Moderne Angular-Architektur- � **Proxy-Konfiguration** - `/api` Requests werden automatisch ans Backend weitergeleitet
+- Monatliche Übersicht mit KPIs (Einnahmen, Ausgaben, Bilanz, Sparquote)- 🔄 **Hot Reload** für Frontend & Backend gleichzeitig
+
+- Interaktive Charts (Ausgaben nach Kategorie, Top-Ausgaben)
+
+- Budget-Fortschritt mit visueller Darstellung- ⚡ **Standalone Components** - Moderne Angular-Architektur- � **Proxy-Konfiguration** - `/api` Requests werden automatisch ans Backend weitergeleitet
+
+- Aktuelle Transaktionsübersicht
 
 - 🎨 **Angular Material** - Konsistentes Design System
 
-- 📱 **Responsive Design** - Funktioniert auf allen Geräten### 🛠️ Developer Experience
+### 🎯 Budget-Planung
 
-- 📈 **Chart.js Integration** - Interaktive Finanz-Charts
+- Monatliche Budgets pro Kategorie- 📱 **Responsive Design** - Funktioniert auf allen Geräten### 🛠️ Developer Experience
+
+- Echtzeit-Tracking des Verbrauchs
+
+- Visuelle Warnung bei Budgetüberschreitung- 📈 **Chart.js Integration** - Interaktive Finanz-Charts
+
+- Historische Budget-Analyse
 
 - 🔐 **Authentication** - Sichere Benutzeranmeldung- ⚙️ **Automatisches Setup-Script** - Ersetzt alle Platzhalter mit einem Befehl
 
-- 🌐 **PWA Ready** - Progressive Web App Funktionalität- 📝 **TypeScript überall** - Type-Safety im gesamten Stack
+### 📁 CSV-Import
 
-- 🎨 **ESLint & Prettier** vorkonfiguriert
+- Import von Banktransaktionen aus CSV-Dateien- 🌐 **PWA Ready** - Progressive Web App Funktionalität- 📝 **TypeScript überall** - Type-Safety im gesamten Stack
 
-### 🚀 Backend (NestJS 10)- 🪝 **Git Hooks** mit Husky & lint-staged
+- Flexible Spaltenzuordnung (Datum, Betrag, Notiz)
 
-- � **Conventional Commits** mit Commitlint
+- Unterstützung verschiedener Datums- und Zahlenformate- 🎨 **ESLint & Prettier** vorkonfiguriert
 
-- 🏛️ **REST API** - Vollständige CRUD-Operationen- 🧪 **Testing** - Jest (Backend) + Karma/Jasmine (Frontend)
+- Automatische Kategorisierung (Unbekannte Einnahmen/Ausgaben)
 
-- 🗄️ **Prisma ORM** - Type-safe Datenbankzugriff
+- Detaillierte Fehlerberichterstattung### 🚀 Backend (NestJS 10)- 🪝 **Git Hooks** mit Husky & lint-staged
 
-- 🔒 **Validation** - Request/Response Validierung### 🚀 CI/CD & Deployment
+### 🔐 Sicherheit- � **Conventional Commits** mit Commitlint
 
-- 🐳 **Docker Support** - Containerisierte Entwicklung
+- JWT-basierte Authentifizierung
 
-- 📊 **PostgreSQL** - Robuste relationale Datenbank- ✅ **GitHub Actions CI** - Automatisches Linting, Testing & Building
+- Sichere Password-Speicherung mit bcrypt- 🏛️ **REST API** - Vollständige CRUD-Operationen- 🧪 **Testing** - Jest (Backend) + Karma/Jasmine (Frontend)
 
-- 🔍 **API Documentation** - Swagger/OpenAPI Integration- 🌐 **Multi-Platform Deployment**:
-  - **Frontend** → Cloudflare Pages (automatisch)
+- User-spezifische Datenisolierung
 
-## 🚀 Quick Start - **Worker** → Cloudflare Workers (automatisch)
+- CORS-Schutz- 🗄️ **Prisma ORM** - Type-safe Datenbankzugriff
+
+---- 🔒 **Validation** - Request/Response Validierung### 🚀 CI/CD & Deployment
+
+## 🛠️ Tech Stack- 🐳 **Docker Support** - Containerisierte Entwicklung
+
+### Frontend- 📊 **PostgreSQL** - Robuste relationale Datenbank- ✅ **GitHub Actions CI** - Automatisches Linting, Testing & Building
+
+- **Framework**: Angular 18 (Standalone Components)
+
+- **UI**: Angular Material Design- 🔍 **API Documentation** - Swagger/OpenAPI Integration- 🌐 **Multi-Platform Deployment**:
+
+- **Charts**: Chart.js mit ng2-charts - **Frontend** → Cloudflare Pages (automatisch)
+
+- **State Management**: RxJS & Service-basiert
+
+- **Forms**: Reactive Forms mit Validation## 🚀 Quick Start - **Worker** → Cloudflare Workers (automatisch)
+
+- **Styling**: SCSS mit Material Theme
 
 - **Backend** → Railway / Render / Fly.io (konfigurierbar)
 
-### Voraussetzungen - **Datenbank** → Neon PostgreSQL (serverless)
+### Backend
 
-- � **Secrets Management** über GitHub Secrets
+- **Framework**: NestJS 10### Voraussetzungen - **Datenbank** → Neon PostgreSQL (serverless)
 
-- **Node.js** >= 18
+- **ORM**: Prisma 6
+
+- **Datenbank**: PostgreSQL- � **Secrets Management** über GitHub Secrets
+
+- **Auth**: Passport.js mit JWT
+
+- **Validation**: class-validator- **Node.js** >= 18
+
+- **API Docs**: Swagger/OpenAPI
 
 - **pnpm** >= 8 (empfohlen) oder npm### 🗄️ Datenbank & API
 
-- **Docker** & **Docker Compose** (für lokale Datenbank)
+### DevOps & Tooling
 
-- 📊 **Prisma ORM** mit Type-Safety
+- **Package Manager**: pnpm Workspaces (Monorepo)- **Docker** & **Docker Compose** (für lokale Datenbank)
 
-### Installation- 🐘 **PostgreSQL** (Docker Compose für lokale Entwicklung)
+- **Containerization**: Docker & Docker Compose
+
+- **CI/CD**: GitHub Actions- 📊 **Prisma ORM** mit Type-Safety
+
+- **Code Quality**: ESLint, Prettier
+
+- **Git Hooks**: Husky, Commitlint### Installation- 🐘 **PostgreSQL** (Docker Compose für lokale Entwicklung)
+
+- **Testing**: Jest (Backend), Karma/Jasmine (Frontend)
 
 - 🌊 **Neon Serverless** Adapter für Cloudflare Workers
 
+---
+
 ```bash- 📘 **Swagger/OpenAPI** Dokumentation unter `/api/docs`
+
+## 🏗️ Architektur
 
 # Repository klonen- 💚 **Health Checks** mit Datenbank-Status
 
-git clone https://github.com/Ademdkr/budget-tracker.git
+`````plaintext
 
-cd budget-tracker---
+budget-tracker/git clone https://github.com/Ademdkr/budget-tracker.git
 
-# Dependencies installieren## 📦 Tech-Stack
+├── apps/
 
-pnpm install
-
-| Bereich | Technologie |
-
-# Datenbank starten (PostgreSQL mit Docker)| ------------ | -------------------------------------- |
-
-pnpm run db:up| **Frontend** | Angular 18, TypeScript 5, SCSS |
-
-| **Backend** | NestJS 10, Prisma 6, PostgreSQL |
-
-# Entwicklungsserver starten (Frontend + Backend)| **Worker** | Cloudflare Workers, Hono, Neon Adapter |
-
-pnpm run dev| **DevOps** | Docker Compose, GitHub Actions |
-
-````| **Tooling**  | pnpm, ESLint, Prettier, Husky          |
-
-| **Testing**  | Jest, Karma, Jasmine                   |
-
-### Verfügbare Scripts
-
----
-
-```bash
-
-# Entwicklung## 🚀 Schnellstart
-
-pnpm run dev          # Frontend (4201) + Backend (3001)
-
-pnpm run dev:web      # Nur Frontend### Als Template verwenden
-
-pnpm run dev:api      # Nur Backend
-
-1. **Klicke auf "Use this template"** → "Create a new repository"
-
-# Build2. **Clone dein neues Repository**
-
-pnpm run build        # Alles bauen
-
-pnpm run build:web    # Frontend bauen   ```bash
-
-pnpm run build:api    # Backend bauen   git clone https://github.com/dein-username/dein-projekt.git
-
-   cd dein-projekt
-
-# Datenbank   ```
-
-pnpm run db:up        # PostgreSQL starten
-
-pnpm run db:down      # PostgreSQL stoppen3. **Führe das Setup-Script aus**
-
-pnpm run db:studio    # Prisma Studio öffnen
-
-   ```bash
-
-# Tests & Qualität   pnpm install
-
-pnpm run test         # Alle Tests   pnpm setup -- --name="Mein Projekt" --slug="mein-projekt" --user="dein-username"
-
-pnpm run lint         # Code-Qualität prüfen   ```
-
-pnpm run format       # Code formatieren
-
-```4. **Starte die Datenbank**
-
-
-
-## 🌐 URLs   ```bash
-
-   pnpm db:up
-
-Nach dem Start sind folgende Services verfügbar:   ```
-
-
-
-- **Frontend**: http://localhost:4201
-
-5. **Backend Setup**
-
-- **Backend API**: http://localhost:3001/api
-
-- **API Dokumentation**: http://localhost:3001/api/docs   ```bash
-
-- **Prisma Studio**: http://localhost:5555   cd apps/backend
-
-   cp .env.example .env
-
-## 📁 Projektstruktur   # Bearbeite .env falls nötig
-
-   pnpm prisma:migrate
-
-```   pnpm prisma:generate
-
-budget-tracker/   pnpm prisma:seed
-
-├── apps/   cd ../..
-
-│   ├── frontend/          # Angular 18 Frontend   ```
+│   ├── frontend/           # Angular 18 SPAcd budget-tracker---
 
 │   │   ├── src/app/
 
-│   │   │   ├── auth/          # Authentifizierung6. **Entwicklung starten**
+│   │   │   ├── auth/       # Authentifizierung# Dependencies installieren## 📦 Tech-Stack
 
-│   │   │   ├── dashboard/     # Dashboard-Komponente
+│   │   │   ├── dashboard/  # Dashboard mit Charts
 
-│   │   │   ├── transactions/  # Transaktions-Management   ```bash
+│   │   │   ├── transactions/ # Transaktionsverwaltungpnpm install
 
-│   │   │   ├── categories/    # Kategorie-Management   pnpm dev
+│   │   │   ├── categories/ # Kategorien-Management
 
-│   │   │   ├── budgets/       # Budget-Planung   ```
+│   │   │   ├── budgets/    # Budget-Planung| Bereich | Technologie |
 
-│   │   │   ├── accounts/      # Konto-Management
+│   │   │   ├── accounts/   # Konto-Management
 
-│   │   │   └── import/        # Daten-Import
+│   │   │   ├── import/     # CSV-Import# Datenbank starten (PostgreSQL mit Docker)| ------------ | -------------------------------------- |
 
-│   │   └── ...
+│   │   │   └── shared/     # Wiederverwendbare Komponenten
 
-│   ├── backend/           # NestJS 10 Backend
+│   │   └── proxy.conf.jsonpnpm run db:up| **Frontend** | Angular 18, TypeScript 5, SCSS |
 
-│   │   ├── src/
+│   │
 
-│   │   │   ├── transactions/  # Transaktions-API
+│   └── backend/            # NestJS REST API| **Backend** | NestJS 10, Prisma 6, PostgreSQL |
 
-│   │   │   ├── categories/    # Kategorien-API
+│       ├── src/
 
-│   │   │   ├── budgets/       # Budget-API### Detaillierte Anleitung
+│       │   ├── auth/       # JWT Authentication# Entwicklungsserver starten (Frontend + Backend)| **Worker** | Cloudflare Workers, Hono, Neon Adapter |
 
-│   │   │   └── accounts/      # Konten-API
+│       │   ├── users/      # User Management
 
-│   │   └── prisma/            # Datenbankschema & Migrationen📖 Für eine ausführliche Anleitung siehe:
+│       │   ├── accounts/   # Account CRUDpnpm run dev| **DevOps** | Docker Compose, GitHub Actions |
 
-│   └── worker/            # Cloudflare Worker
+│       │   ├── transactions/ # Transaction CRUD & Import
 
-├── docs/                  # Dokumentation- **[TEMPLATE_USAGE.md](./TEMPLATE_USAGE.md)** - Komplette Template-Verwendung
+│       │   ├── categories/ # Category CRUD````| **Tooling**  | pnpm, ESLint, Prettier, Husky          |
 
-├── tools/                 # Build-Tools & Scripts- **[docs/SETUP.md](./docs/SETUP.md)** - Lokales Setup & Troubleshooting
+│       │   ├── budgets/    # Budget CRUD & Tracking
 
-└── package.json          # Monorepo-Konfiguration- **[CONTRIBUTING.md](./CONTRIBUTING.md)** - Contribution Guidelines
+│       │   └── prisma/     # Prisma Service| **Testing**  | Jest, Karma, Jasmine                   |
 
-````
+│       └── prisma/
+
+│           ├── schema.prisma  # Datenbankschema### Verfügbare Scripts
+
+│           ├── migrations/    # DB Migrationen
+
+│           └── seed.ts        # Seed-Daten---
+
+│
+
+├── docs/                   # Dokumentation```bash
+
+├── .github/workflows/      # CI/CD Pipelines
+
+└── docker-compose.yml      # PostgreSQL Container# Entwicklung## 🚀 Schnellstart
+
+`````
+
+pnpm run dev # Frontend (4201) + Backend (3001)
+
+### Datenbank-Schema
+
+pnpm run dev:web # Nur Frontend### Als Template verwenden
+
+**Hauptentitäten:**
+
+- `User` - Benutzer mit Authentifizierungpnpm run dev:api # Nur Backend
+
+- `Account` - Bankkonten (1:n zu User)
+
+- `Category` - Kategorien (1:n zu Account, spezifisch für Einnahmen/Ausgaben)1. **Klicke auf "Use this template"** → "Create a new repository"
+
+- `Transaction` - Transaktionen (n:1 zu Account, n:1 zu Category)
+
+- `Budget` - Budgets (n:1 zu Category, monatlich)# Build2. **Clone dein neues Repository**
+
+**Beziehungen:**pnpm run build # Alles bauen
+
+- User hat mehrere Accounts
+
+- Account hat mehrere Categories und Transactionspnpm run build:web # Frontend bauen ```bash
+
+- Category gehört zu einem Account und hat einen Type (INCOME/EXPENSE)
+
+- Transaction gehört zu einem Account und einer Categorypnpm run build:api # Backend bauen git clone https://github.com/dein-username/dein-projekt.git
+
+- Budget gehört zu einer Category und trackt monatliche Ausgaben
+
+  cd dein-projekt
 
 ---
 
-## 🧪 Testing
+# Datenbank ```
 
-## 📜 Verfügbare Scripts
+## 🚀 Quick Start
 
-````bash
-
-# Alle Tests ausführen### Root Scripts
-
-pnpm run test
-
-```bash
-
-# Frontend Tests# Entwicklung
-
-pnpm --filter @budget-tracker/frontend testpnpm dev          # Frontend + Backend gleichzeitig
-
-pnpm dev:web      # Nur Frontend
-
-# Backend Tests  pnpm dev:api      # Nur Backend
-
-pnpm --filter @budget-tracker/backend test
-
-# Build
-
-# E2E Testspnpm build        # Alle Apps bauen
-
-pnpm --filter @budget-tracker/backend test:e2epnpm build:web    # Nur Frontend
-
-```pnpm build:api    # Nur Backend
-
-
-
-## 🚀 Deployment# Testing & Qualität
-
-pnpm test         # Alle Tests
-
-### Frontend (Vercel/Netlify)pnpm lint         # Alle Apps linten
-
-pnpm format       # Code formatieren
-
-```bash
-
-# Production Build# Datenbank (Docker)
-
-pnpm run build:webpnpm db:up        # PostgreSQL starten
-
-pnpm db:down      # PostgreSQL stoppen
-
-# Build-Ordner: apps/frontend/dist/apps/frontendpnpm db:logs      # Logs anzeigen
-
-```pnpm db:studio    # Prisma Studio öffnen
-
-
-
-### Backend (Railway/Render)# Prisma
-
-pnpm gen:prisma   # Prisma Clients generieren
-
-```bash
-
-# Production Build# Setup
-
-pnpm run build:apipnpm setup        # Template konfigurieren
-
-````
-
-# Environment Variablen setzen:
-
-# - DATABASE_URL---
-
-# - PORT_API (optional, default: 3001)
-
-# - CORS_ORIGIN## 🚢 Deployment
-
-````
+pnpm run db:up # PostgreSQL starten
 
 ### Voraussetzungen
 
-### Datenbank
+- **Node.js** >= 18pnpm run db:down # PostgreSQL stoppen3. **Führe das Setup-Script aus**
 
-1. **GitHub Secrets konfigurieren** (Settings → Secrets and variables → Actions):
+- **pnpm** >= 8 (empfohlen) oder npm
 
-Das Projekt unterstützt verschiedene PostgreSQL-Anbieter:
+- **Docker** & **Docker Compose** (für PostgreSQL)pnpm run db:studio # Prisma Studio öffnen
 
-- **Neon** (empfohlen für Hobby-Projekte)   ```
+### Installation ```bash
 
-- **Supabase**    CLOUDFLARE_API_TOKEN    # Für Frontend & Worker Deployment
+````bash# Tests & Qualität   pnpm install
 
-- **Railway**   CLOUDFLARE_ACCOUNT_ID   # Cloudflare Account ID
+# Repository klonen
 
-- **Render**   DATABASE_URL            # PostgreSQL Connection (Neon empfohlen)
+git clone https://github.com/Ademdkr/budget-tracker.gitpnpm run test         # Alle Tests   pnpm setup -- --name="Mein Projekt" --slug="mein-projekt" --user="dein-username"
 
-   DIRECT_DATABASE_URL     # Für Prisma Migrationen
+cd budget-tracker
 
-## 🤝 Contributing   ```
+pnpm run lint         # Code-Qualität prüfen   ```
 
+# Dependencies installieren
 
-
-1. Fork das Repository2. **Deployment-Plattformen**:
-
-2. Erstelle einen Feature-Branch (`git checkout -b feature/amazing-feature`)   - ✅ **Cloudflare Pages** (Frontend) - Automatisch
-
-3. Committe deine Änderungen (`git commit -m 'Add amazing feature'`)   - ✅ **Cloudflare Workers** (Worker) - Automatisch
-
-4. Push zum Branch (`git push origin feature/amazing-feature`)   - ✅ **Neon** (Datenbank) - Kostenloser Serverless PostgreSQL
-
-5. Öffne eine Pull Request   - 🔧 **Railway / Render / Fly.io** (Backend) - Konfiguration siehe [TEMPLATE_USAGE.md](./TEMPLATE_USAGE.md)
+pnpm installpnpm run format       # Code formatieren
 
 
 
-## 📜 License### Automatisches Deployment
+# Datenbank starten (PostgreSQL in Docker)```4. **Starte die Datenbank**
+
+pnpm db:up
 
 
 
-Dieses Projekt ist unter der [MIT License](LICENSE) lizenziert.Push zu `main` triggert automatisch:
+# Backend konfigurieren
+
+cd apps/backend## 🌐 URLs   ```bash
+
+cp .env.example .env
+
+# Bearbeite .env falls nötig (Standard-Werte funktionieren für lokale Entwicklung)   pnpm db:up
 
 
 
-## 🙋‍♂️ Support```bash
+# Datenbank migrieren und mit Test-Daten füllenNach dem Start sind folgende Services verfügbar:   ```
 
-git push origin main
+pnpm prisma:migrate
 
-- 🐛 [Issue Tracker](https://github.com/Ademdkr/budget-tracker/issues)```
+pnpm prisma:generate
 
-- 💬 [Discussions](https://github.com/Ademdkr/budget-tracker/discussions)
+pnpm prisma:seed
 
-Oder manuell über GitHub Actions → Deploy → Run workflow
+cd ../..- **Frontend**: http://localhost:4201
 
----
 
-### Backend Deployment Optionen
 
-**Entwickelt mit ❤️ von [Adem Dokur](https://github.com/Ademdkr)**
-Da NestJS nicht nativ auf Cloudflare Workers läuft, empfehlen wir:
+# Entwicklungsserver starten (Frontend + Backend)5. **Backend Setup**
 
-**Empfohlen:**
+pnpm dev
 
-- **[Railway](https://railway.app)** - Einfachste Option, generous free tier
-- **[Render](https://render.com)** - Free tier verfügbar
-- **[Fly.io](https://fly.io)** - Gute Performance, günstig
+```- **Backend API**: http://localhost:3001/api
 
-Siehe [TEMPLATE_USAGE.md](./TEMPLATE_USAGE.md#backend-auf-railway-deployen) für Details.
 
----
 
-## 📁 Projekt-Struktur
+### URLs nach dem Start- **API Dokumentation**: http://localhost:3001/api/docs   ```bash
+
+
+
+- **Frontend**: http://localhost:4201- **Prisma Studio**: http://localhost:5555   cd apps/backend
+
+- **Backend API**: http://localhost:3001/api
+
+- **API Dokumentation**: http://localhost:3001/api/docs   cp .env.example .env
+
+- **Prisma Studio**: http://localhost:5555 (mit `pnpm db:studio`)
+
+## 📁 Projektstruktur   # Bearbeite .env falls nötig
+
+### Test-Login
+
+   pnpm prisma:migrate
+
+Nach dem Seeding sind folgende Test-User verfügbar:
+
+```   pnpm prisma:generate
 
 ````
 
-fullstack-template/
-├── apps/
-│ ├── frontend/ # Angular 18 App
-│ │ ├── src/
-│ │ │ ├── app/ # Components, Services, Routes
-│ │ │ └── environments/
-│ │ ├── proxy.conf.json
-│ │ └── package.json
-│ ├── backend/ # NestJS API
-│ │ ├── src/
-│ │ │ ├── budgets/ # Beispiel-Modul
-│ │ │ ├── health/ # Health Check
-│ │ │ ├── prisma/ # Prisma Service
-│ │ │ └── main.ts
-│ │ ├── prisma/
-│ │ │ ├── schema.prisma
-│ │ │ ├── migrations/
-│ │ │ └── seed.ts
-│ │ └── package.json
+Email: alice.wonder@example.combudget-tracker/ pnpm prisma:seed
+
+Password: password123
+
+├── apps/ cd ../..
+
+Email: bob.builder@example.com
+
+Password: password123│ ├── frontend/ # Angular 18 Frontend ```
+
+Email: charlie.brown@example.com│ │ ├── src/app/
+
+Password: password123
+
+````│ │   │   ├── auth/          # Authentifizierung6. **Entwicklung starten**
+
+
+
+---│   │   │   ├── dashboard/     # Dashboard-Komponente
+
+
+
+## 📦 Verfügbare Scripts│   │   │   ├── transactions/  # Transaktions-Management   ```bash
+
+
+
+### Development│   │   │   ├── categories/    # Kategorie-Management   pnpm dev
+
+
+
+```bash│   │   │   ├── budgets/       # Budget-Planung   ```
+
+pnpm dev          # Frontend (4201) + Backend (3001) parallel
+
+pnpm dev:web      # Nur Frontend│   │   │   ├── accounts/      # Konto-Management
+
+pnpm dev:api      # Nur Backend
+
+```│   │   │   └── import/        # Daten-Import
+
+
+
+### Build│   │   └── ...
+
+
+
+```bash│   ├── backend/           # NestJS 10 Backend
+
+pnpm build        # Alle Apps bauen
+
+pnpm build:web    # Nur Frontend│   │   ├── src/
+
+pnpm build:api    # Nur Backend
+
+```│   │   │   ├── transactions/  # Transaktions-API
+
+
+
+### Datenbank│   │   │   ├── categories/    # Kategorien-API
+
+
+
+```bash│   │   │   ├── budgets/       # Budget-API### Detaillierte Anleitung
+
+pnpm db:up        # PostgreSQL starten
+
+pnpm db:down      # PostgreSQL stoppen│   │   │   └── accounts/      # Konten-API
+
+pnpm db:studio    # Prisma Studio öffnen
+
+pnpm gen:prisma   # Prisma Clients generieren│   │   └── prisma/            # Datenbankschema & Migrationen📖 Für eine ausführliche Anleitung siehe:
+
+```
+
+### 🐳 Docker (Production-like)
+
+Das gesamte Projekt kann mit Docker Compose gestartet werden - ohne IDE oder lokale Node.js-Installation:
+
+```bash
+# Komplettes Setup mit einem Befehl starten
+docker compose up -d --build
+
+# Services sind verfügbar unter:
+# - Frontend: http://localhost:4201
+# - Backend API: http://localhost:3001/api
+# - API Docs: http://localhost:3001/api/docs
+# - PostgreSQL: localhost:5434
+
+# Status anzeigen
+docker compose ps
+
+# Logs anzeigen
+docker compose logs -f             # Alle Services
+docker compose logs -f backend     # Nur Backend
+docker compose logs -f frontend    # Nur Frontend
+
+# Services neustarten
+docker compose restart backend
+docker compose restart frontend
+
+# Alles stoppen und entfernen
+docker compose down
+
+# Mit Rebuild (nach Code-Änderungen)
+docker compose up -d --build
+
+# Volumes auch löschen (⚠️ Datenbank wird gelöscht!)
+docker compose down -v
+```
+
+#### Test-Benutzer
+
+Die Datenbank wird beim ersten Start automatisch mit Testdaten gefüllt:
+
+| Email | Passwort | Konten |
+|-------|----------|--------|
+| `example@example.com` | `password` | Bausparkonto, Deutsche Bank |
+| `example2@example.com` | `password` | Klarna, Aktienkonto |
+| `example3@example.com` | `password` | Bargeld-Bunker, Sonstiges |
+
+Jeder Benutzer hat vordefinierte Kategorien, Budgets und Transaktionen zum Testen.
+
+**✨ Features:**
+- ✅ Multi-stage Dockerfiles für optimierte Images
+- ✅ Nginx als Production-Server für Angular
+- ✅ Automatische Prisma Migrationen und Seeding beim Start
+- ✅ Health Checks für alle Services
+- ✅ Isoliertes Netzwerk zwischen Services
+- ✅ Persistente Datenbank mit Docker Volumes
+- ✅ Keine lokale Node.js-Installation notwendig
+`
+
 │ └── worker/ # Cloudflare Worker
-│ ├── src/
-│ │ └── index.ts # Hono API
+
+### Testing & Qualität
+
+├── docs/ # Dokumentation- **[TEMPLATE_USAGE.md](./TEMPLATE_USAGE.md)** - Komplette Template-Verwendung
+
+```bash
+
+pnpm test         # Alle Tests├── tools/                 # Build-Tools & Scripts- **[docs/SETUP.md](./docs/SETUP.md)** - Lokales Setup & Troubleshooting
+
+pnpm lint         # Alle Apps linten
+
+pnpm format       # Code formatieren└── package.json          # Monorepo-Konfiguration- **[CONTRIBUTING.md](./CONTRIBUTING.md)** - Contribution Guidelines
+
+```
+
+````
+
+---
+
+---
+
+## 🔧 Konfiguration
+
+## 🧪 Testing
+
+### Environment-Variablen
+
+## 📜 Verfügbare Scripts
+
+**Backend (`apps/backend/.env`):**
+
+```````bash
+
+```bash
+
+# Database# Alle Tests ausführen### Root Scripts
+
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/budget_tracker
+
+DIRECT_DATABASE_URL=postgresql://postgres:postgres@localhost:5433/budget_trackerpnpm run test
+
+
+
+# API```bash
+
+PORT_API=3001
+
+CORS_ORIGIN=http://localhost:4201# Frontend Tests# Entwicklung
+
+
+
+# JWT (für Production ändern!)pnpm --filter @budget-tracker/frontend testpnpm dev          # Frontend + Backend gleichzeitig
+
+JWT_SECRET=your-super-secret-jwt-key
+
+JWT_EXPIRES_IN=15mpnpm dev:web      # Nur Frontend
+
+JWT_REFRESH_SECRET=your-super-secret-refresh-key
+
+JWT_REFRESH_EXPIRES_IN=7d# Backend Tests  pnpm dev:api      # Nur Backend
+
+```
+
+pnpm --filter @budget-tracker/backend test
+
+**Frontend** nutzt Proxy-Konfiguration - keine Environment-Variablen nötig für lokale Entwicklung.
+
+# Build
+
+---
+
+# E2E Testspnpm build        # Alle Apps bauen
+
+## 🎯 Technische Highlights
+
+pnpm --filter @budget-tracker/backend test:e2epnpm build:web    # Nur Frontend
+
+### CSV-Import mit intelligenter Verarbeitung
+
+```pnpm build:api    # Nur Backend
+
+Der Import verarbeitet verschiedene Datums- und Zahlenformate:
+
+
+
+```typescript
+
+// Deutsche: 20.11.2024, Englische: 11/20/2024, ISO: 2024-11-20## 🚀 Deployment# Testing & Qualität
+
+parseDate(dateString: string): Date {
+
+  // Verwendet Date.UTC() für konsistente Timezone-Behandlungpnpm test         # Alle Tests
+
+  return new Date(Date.UTC(year, month, day, 12, 0, 0));
+
+}### Frontend (Vercel/Netlify)pnpm lint         # Alle Apps linten
+
+
+
+// Deutsche: 1.234,56 | Englische: 1,234.56 | Simple: 1234.56pnpm format       # Code formatieren
+
+parseAmount(amountString: string): number
+
+``````bash
+
+
+
+Automatische Kategorie-Erstellung mit Race-Condition-Prevention:# Production Build# Datenbank (Docker)
+
+- "Unbekannte Einnahmen" (grün) für positive Beträge
+
+- "Unbekannte Ausgaben" (rot) für negative Beträgepnpm run build:webpnpm db:up        # PostgreSQL starten
+
+
+
+### Dashboard-Optimierungpnpm db:down      # PostgreSQL stoppen
+
+
+
+Das Dashboard zeigt aktuelle Finanzübersicht mit:# Build-Ordner: apps/frontend/dist/apps/frontendpnpm db:logs      # Logs anzeigen
+
+- KPI-Karten (Einnahmen, Ausgaben, Bilanz, Sparquote)
+
+- Bar-Chart für Top-10 Ausgabenkategorien (aktueller Monat)```pnpm db:studio    # Prisma Studio öffnen
+
+- Aktuelle Transaktionen mit Kategorie-Badges
+
+
+
+### Type-Safe Datenbank-Zugriff
+
+### Backend (Railway/Render)# Prisma
+
+Prisma ORM mit BigInt IDs und vollständiger TypeScript-Integration:
+
+pnpm gen:prisma   # Prisma Clients generieren
+
+```prisma
+
+model Transaction {```bash
+
+  id          BigInt   @id @default(autoincrement())
+
+  date        DateTime# Production Build# Setup
+
+  amount      Decimal  @db.Decimal(10, 2)
+
+  account     Account  @relation(...)pnpm run build:apipnpm setup        # Template konfigurieren
+
+  category    Category @relation(...)
+
+}````
+
+```
+
+# Environment Variablen setzen:
+
+---
+
+# - DATABASE_URL---
+
+## 🧪 Testing
+
+# - PORT_API (optional, default: 3001)
+
+```bash
+
+# Alle Tests# - CORS_ORIGIN## 🚢 Deployment
+
+pnpm test
+
+```````
+
+# Backend Tests
+
+pnpm --filter @budget-tracker/backend test### Voraussetzungen
+
+# Frontend Tests### Datenbank
+
+pnpm --filter @budget-tracker/frontend test
+
+1. **GitHub Secrets konfigurieren** (Settings → Secrets and variables → Actions):
+
+# E2E Tests
+
+pnpm --filter @budget-tracker/backend test:e2eDas Projekt unterstützt verschiedene PostgreSQL-Anbieter:
+
+````
+
+- **Neon** (empfohlen für Hobby-Projekte)   ```
+
+---
+
+- **Supabase**    CLOUDFLARE_API_TOKEN    # Für Frontend & Worker Deployment
+
+## 📚 Dokumentation
+
+- **Railway**   CLOUDFLARE_ACCOUNT_ID   # Cloudflare Account ID
+
+- **[SETUP.md](./docs/SETUP.md)** - Detaillierte Setup-Anleitung
+
+- **[DEPLOYMENT.md](./docs/DEPLOYMENT.md)** - Deployment-Guide- **Render**   DATABASE_URL            # PostgreSQL Connection (Neon empfohlen)
+
+- **[API Docs](http://localhost:3001/api/docs)** - Swagger/OpenAPI (nach Start)
+
+   DIRECT_DATABASE_URL     # Für Prisma Migrationen
+
+---
+
+## 🤝 Contributing   ```
+
+## 🎯 Projektziele & Learnings
+
+
+
+Dieses Projekt wurde entwickelt, um folgende Technologien und Konzepte zu demonstrieren:
+
+1. Fork das Repository2. **Deployment-Plattformen**:
+
+**Frontend:**
+
+- ✅ Moderne Angular-Architektur (Standalone Components, Signals)2. Erstelle einen Feature-Branch (`git checkout -b feature/amazing-feature`)   - ✅ **Cloudflare Pages** (Frontend) - Automatisch
+
+- ✅ State Management mit Services & RxJS
+
+- ✅ Material Design System Integration3. Committe deine Änderungen (`git commit -m 'Add amazing feature'`)   - ✅ **Cloudflare Workers** (Worker) - Automatisch
+
+- ✅ Form Validation & Error Handling
+
+- ✅ Chart-Integration mit Chart.js4. Push zum Branch (`git push origin feature/amazing-feature`)   - ✅ **Neon** (Datenbank) - Kostenloser Serverless PostgreSQL
+
+- ✅ Responsive Design
+
+5. Öffne eine Pull Request   - 🔧 **Railway / Render / Fly.io** (Backend) - Konfiguration siehe [TEMPLATE_USAGE.md](./TEMPLATE_USAGE.md)
+
+**Backend:**
+
+- ✅ REST API Design mit NestJS
+
+- ✅ Prisma ORM mit TypeScript
+
+- ✅ JWT-basierte Authentifizierung## 📜 License### Automatisches Deployment
+
+- ✅ Request/Response Validation
+
+- ✅ Error Handling & Logging
+
+- ✅ Database Migrations & Seeding
+
+Dieses Projekt ist unter der [MIT License](LICENSE) lizenziert.Push zu `main` triggert automatisch:
+
+**DevOps:**
+
+- ✅ Monorepo-Setup mit pnpm Workspaces
+
+- ✅ Docker für lokale Entwicklung
+
+- ✅ CI/CD mit GitHub Actions## 🙋‍♂️ Support```bash
+
+- ✅ Code Quality Tools (ESLint, Prettier, Husky)
+
+- ✅ Conventional Commitsgit push origin main
+
+
+
+---- 🐛 [Issue Tracker](https://github.com/Ademdkr/budget-tracker/issues)```
+
+
+
+## 🔮 Roadmap- 💬 [Discussions](https://github.com/Ademdkr/budget-tracker/discussions)
+
+
+
+- [ ] Export-Funktionalität (CSV, PDF Reports)Oder manuell über GitHub Actions → Deploy → Run workflow
+
+- [ ] Recurring Transactions (Wiederkehrende Transaktionen)
+
+- [ ] Mobile App (Flutter/React Native)---
+
+- [ ] Email-Benachrichtigungen bei Budget-Überschreitung
+
+- [ ] Multi-Currency Support### Backend Deployment Optionen
+
+- [ ] Shared Budgets (Mehrere User)
+
+- [ ] Finanzielle Insights & Forecasting**Entwickelt mit ❤️ von [Adem Dokur](https://github.com/Ademdkr)**
+
+Da NestJS nicht nativ auf Cloudflare Workers läuft, empfehlen wir:
+
+---
+
+**Empfohlen:**
+
+## 🤝 Contributing
+
+- **[Railway](https://railway.app)** - Einfachste Option, generous free tier
+
+Beiträge sind willkommen! Bitte lies [CONTRIBUTING.md](./CONTRIBUTING.md) für Details.- **[Render](https://render.com)** - Free tier verfügbar
+
+- **[Fly.io](https://fly.io)** - Gute Performance, günstig
+
+1. Fork das Projekt
+
+2. Erstelle einen Feature-Branch (`git checkout -b feature/amazing-feature`)Siehe [TEMPLATE_USAGE.md](./TEMPLATE_USAGE.md#backend-auf-railway-deployen) für Details.
+
+3. Committe mit Conventional Commits (`git commit -m 'feat: add amazing feature'`)
+
+4. Push zum Branch (`git push origin feature/amazing-feature`)---
+
+5. Öffne einen Pull Request
+
+## 📁 Projekt-Struktur
+
+---
+
+````
+
+## 📄 License
+
+fullstack-template/
+
+Dieses Projekt ist unter der [MIT License](./LICENSE) lizenziert.├── apps/
+
+│ ├── frontend/ # Angular 18 App
+
+---│ │ ├── src/
+
+│ │ │ ├── app/ # Components, Services, Routes
+
+## 👤 Autor│ │ │ └── environments/
+
+│ │ ├── proxy.conf.json
+
+**Adem Dokur**│ │ └── package.json
+
+│ ├── backend/ # NestJS API
+
+- GitHub: [@Ademdkr](https://github.com/Ademdkr)│ │ ├── src/
+
+- Portfolio: *(Coming Soon)*│ │ │ ├── budgets/ # Beispiel-Modul
+
+- LinkedIn: *(Coming Soon)*│ │ │ ├── health/ # Health Check
+
+│ │ │ ├── prisma/ # Prisma Service
+
+---│ │ │ └── main.ts
+
+│ │ ├── prisma/
+
+## 🙏 Danksagungen│ │ │ ├── schema.prisma
+
+│ │ │ ├── migrations/
+
+- [NestJS](https://nestjs.com/) - Progressive Node.js Framework│ │ │ └── seed.ts
+
+- [Angular](https://angular.io/) - Platform for building web applications│ │ └── package.json
+
+- [Prisma](https://www.prisma.io/) - Next-generation ORM│ └── worker/ # Cloudflare Worker
+
+- [Chart.js](https://www.chartjs.org/) - Simple yet flexible JavaScript charting│ ├── src/
+
+- [Angular Material](https://material.angular.io/) - Material Design components│ │ └── index.ts # Hono API
+
 │ └── wrangler.toml
-├── .github/
+
+---├── .github/
+
 │ └── workflows/
-│ ├── ci.yml # CI Pipeline
+
+**Entwickelt mit ❤️ als Full-Stack Portfolio-Projekt**│ ├── ci.yml # CI Pipeline
+
 │ └── deploy.yml # Deployment
 ├── tools/
 │ └── setup.mjs # Setup-Script

@@ -1,9 +1,15 @@
-import { config } from 'dotenv';
-import path from 'path';
-
-config({ path: path.resolve(__dirname, '../.env') });
-
 import { PrismaClient } from '@prisma/client';
+
+// Only load dotenv if not in Docker/production
+if (process.env.NODE_ENV !== 'production') {
+  // Dynamic import for conditional dotenv loading
+  // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+  const { config } = require('dotenv');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+  const path = require('path');
+  config({ path: path.resolve(__dirname, '../.env') });
+}
+
 const prisma = new PrismaClient();
 
 async function main() {

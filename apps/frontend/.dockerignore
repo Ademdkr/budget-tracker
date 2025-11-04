@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+.angular/
+
+# Tests
+coverage/
+karma.conf.js
+*.spec.ts
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Development
+proxy.conf.json
+src/test.ts
+
+# Documentation
+*.md
+
+# Misc
+*.log
+.eslintrc*
+.prettierrc*
+tsconfig.spec.json

@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+
+# Tests
+coverage/
+test/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Prisma
+prisma/migrations/.gitkeep
+
+# Documentation
+*.md
+
+# Misc
+*.log
+.eslintrc*
+.prettierrc*
+tsconfig.test.json
