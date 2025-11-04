@@ -145,16 +145,20 @@ jobs:
       - name: Test Worker Build
         run: pnpm --filter @budget-tracker/worker build
 
+      - name: Set DATABASE_URL Secret
+        run: |
+          echo "${{ secrets.DATABASE_URL }}" | pnpm wrangler secret put DATABASE_URL --env=""
+        working-directory: apps/worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: 'apps/worker'
           command: deploy --env=""
-          secrets: |
-            DATABASE_URL
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
   # Optional: Backend Deployment
   # Hinweis: NestJS läuft nicht nativ auf Cloudflare Workers.
