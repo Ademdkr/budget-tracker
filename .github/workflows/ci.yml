@@ -1,10 +1,12 @@
 name: CI Pipeline
 
 on:
-  push:
-    branches: [main, develop]
+  # Nur bei Pull Requests automatisch ausführen
   pull_request:
     branches: [main, develop]
+  
+  # Manueller Trigger
+  workflow_dispatch:
 
 jobs:
   build:
