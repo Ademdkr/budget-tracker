@@ -46,12 +46,29 @@
                   "maximumError": "12kB"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.development.ts",
+                  "with": "src/environments/environment.ts"
+                }
+              ]
             },
             "development": {
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "worker": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.development.ts",
+                  "with": "src/environments/environment.worker.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "development"
@@ -68,6 +85,9 @@
             },
             "development": {
               "buildTarget": "frontend:build:development"
+            },
+            "worker": {
+              "buildTarget": "frontend:build:worker"
             }
           },
           "defaultConfiguration": "development"

@@ -1,4 +1,5 @@
 export const environment = {
   production: false,
-  apiBaseUrl: 'https://budget-tracker-worker.adem-dokur.workers.dev/api',
+  // Lokales NestJS Backend für Entwicklung
+  apiBaseUrl: 'http://localhost:3001/api',
 };
