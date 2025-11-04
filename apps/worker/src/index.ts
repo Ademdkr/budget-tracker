@@ -173,7 +173,14 @@ export default {
     // ====================================================================
     app.get('/api/budgets', async (c) => {
       try {
-        const rows = await sql`SELECT * FROM "Budget" ORDER BY created_at DESC`;
+        const userId = getUserIdFromHeaders(c);
+        const rows = await sql`
+          SELECT b.* FROM "Budget" b
+          JOIN "Category" c ON b.category_id = c.id
+          JOIN "Account" a ON c.account_id = a.id
+          WHERE a.user_id = ${userId}
+          ORDER BY b.created_at DESC
+        `;
         return c.json(rows);
       } catch (error) {
         console.error('Database error:', error);
@@ -183,6 +190,7 @@ export default {
 
     app.get('/api/budgets/with-stats', async (c) => {
       try {
+        const userId = getUserIdFromHeaders(c);
         const budgets = await sql`
           SELECT 
             b.*,
@@ -192,9 +200,11 @@ export default {
             COALESCE(SUM(t.amount), 0) as spent
           FROM "Budget" b
           LEFT JOIN "Category" c ON b.category_id = c.id
+          LEFT JOIN "Account" a ON c.account_id = a.id
           LEFT JOIN "Transaction" t ON t.category_id = c.id 
             AND EXTRACT(MONTH FROM t.date) = b.month 
             AND EXTRACT(YEAR FROM t.date) = b.year
+          WHERE a.user_id = ${userId}
           GROUP BY b.id, c.name, c.emoji, c.color
           ORDER BY b.created_at DESC
         `;
@@ -208,7 +218,14 @@ export default {
     app.get('/api/budgets/:id', async (c) => {
       try {
         const { id } = c.req.param();
-        const rows = await sql`SELECT * FROM "Budget" WHERE id = ${id} LIMIT 1`;
+        const userId = getUserIdFromHeaders(c);
+        const rows = await sql`
+          SELECT b.* FROM "Budget" b
+          JOIN "Category" c ON b.category_id = c.id
+          JOIN "Account" a ON c.account_id = a.id
+          WHERE b.id = ${id} AND a.user_id = ${userId}
+          LIMIT 1
+        `;
         if (rows.length === 0) {
           return c.json({ error: 'Budget not found' }, 404);
         }
@@ -221,7 +238,20 @@ export default {
 
     app.post('/api/budgets', async (c) => {
       try {
+        const userId = getUserIdFromHeaders(c);
         const body = await c.req.json<{ category_id: number; total_amount: number; month: number; year: number }>();
+        
+        // Verify category belongs to user
+        const category = await sql`
+          SELECT c.* FROM "Category" c
+          JOIN "Account" a ON c.account_id = a.id
+          WHERE c.id = ${body.category_id} AND a.user_id = ${userId}
+          LIMIT 1
+        `;
+        if (category.length === 0) {
+          return c.json({ error: 'Category not found or access denied' }, 404);
+        }
+        
         const created = await sql`
           INSERT INTO "Budget" (category_id, total_amount, month, year, created_at, updated_at) 
           VALUES (${body.category_id}, ${body.total_amount}, ${body.month}, ${body.year}, NOW(), NOW()) 
@@ -237,7 +267,19 @@ export default {
     app.patch('/api/budgets/:id', async (c) => {
       try {
         const { id } = c.req.param();
+        const userId = getUserIdFromHeaders(c);
         const body = await c.req.json<{ total_amount?: number; month?: number; year?: number }>();
+        
+        // Verify budget belongs to user
+        const check = await sql`
+          SELECT b.id FROM "Budget" b
+          JOIN "Category" c ON b.category_id = c.id
+          JOIN "Account" a ON c.account_id = a.id
+          WHERE b.id = ${id} AND a.user_id = ${userId}
+        `;
+        if (check.length === 0) {
+          return c.json({ error: 'Budget not found or access denied' }, 404);
+        }
         
         const updates: string[] = [];
         
@@ -279,6 +321,19 @@ export default {
     app.delete('/api/budgets/:id', async (c) => {
       try {
         const { id } = c.req.param();
+        const userId = getUserIdFromHeaders(c);
+        
+        // Verify budget belongs to user
+        const check = await sql`
+          SELECT b.id FROM "Budget" b
+          JOIN "Category" c ON b.category_id = c.id
+          JOIN "Account" a ON c.account_id = a.id
+          WHERE b.id = ${id} AND a.user_id = ${userId}
+        `;
+        if (check.length === 0) {
+          return c.json({ error: 'Budget not found or access denied' }, 404);
+        }
+        
         await sql`DELETE FROM "Budget" WHERE id = ${id}`;
         return c.json({ ok: true });
       } catch (error) {
@@ -687,6 +742,24 @@ export default {
     app.post('/api/categories/:id/accounts/:accountId', async (c) => {
       try {
         const { id, accountId } = c.req.param();
+        const userId = getUserIdFromHeaders(c);
+        
+        // Verify both category and account belong to user
+        const categoryCheck = await sql`
+          SELECT c.id FROM "Category" c
+          JOIN "Account" a ON c.account_id = a.id
+          WHERE c.id = ${id} AND a.user_id = ${userId}
+        `;
+        if (categoryCheck.length === 0) {
+          return c.json({ error: 'Category not found or access denied' }, 404);
+        }
+        
+        const accountCheck = await sql`
+          SELECT * FROM "Account" WHERE id = ${accountId} AND user_id = ${userId}
+        `;
+        if (accountCheck.length === 0) {
+          return c.json({ error: 'Account not found or access denied' }, 404);
+        }
         
         // Update category's accountId
         const updated = await sql`
@@ -710,6 +783,17 @@ export default {
     app.delete('/api/categories/:id/accounts/:accountId', async (c) => {
       try {
         const { id } = c.req.param();
+        const userId = getUserIdFromHeaders(c);
+        
+        // Verify category belongs to user
+        const check = await sql`
+          SELECT c.id FROM "Category" c
+          JOIN "Account" a ON c.account_id = a.id
+          WHERE c.id = ${id} AND a.user_id = ${userId}
+        `;
+        if (check.length === 0) {
+          return c.json({ error: 'Category not found or access denied' }, 404);
+        }
         
         // Since categories are directly linked to accounts, we delete the category
         await sql`DELETE FROM "Category" WHERE id = ${id}`;
@@ -723,13 +807,14 @@ export default {
     app.get('/api/categories/:id/accounts', async (c) => {
       try {
         const { id } = c.req.param();
+        const userId = getUserIdFromHeaders(c);
         
-        // Get category with its account
+        // Get category with its account (verify user ownership)
         const rows = await sql`
           SELECT c.*, a.name as account_name, a.type as account_type
           FROM "Category" c
           JOIN "Account" a ON c.account_id = a.id
-          WHERE c.id = ${id}
+          WHERE c.id = ${id} AND a.user_id = ${userId}
         `;
         
         if (rows.length === 0) {
@@ -748,6 +833,7 @@ export default {
     // ====================================================================
     app.get('/api/transactions', async (c) => {
       try {
+        const userId = getUserIdFromHeaders(c);
         const transactions = await sql`
           SELECT 
             t.*,
@@ -758,6 +844,7 @@ export default {
           FROM "Transaction" t
           LEFT JOIN "Account" a ON t.account_id = a.id
           LEFT JOIN "Category" c ON t.category_id = c.id
+          WHERE a.user_id = ${userId}
           ORDER BY t.date DESC, t.created_at DESC
         `;
         return c.json(transactions);
@@ -770,6 +857,7 @@ export default {
     // Specific routes MUST come before dynamic :id routes
     app.post('/api/transactions/import', async (c) => {
       try {
+        const userId = getUserIdFromHeaders(c);
         const { data, options } = await c.req.json<{
           data: Array<{ date: string; amount: string; note?: string }>;
           options: {
@@ -779,6 +867,12 @@ export default {
             skipFirstRow: boolean;
           };
         }>();
+
+        // Verify account belongs to user
+        const account = await sql`SELECT * FROM "Account" WHERE id = ${options.targetAccountId} AND user_id = ${userId} LIMIT 1`;
+        if (account.length === 0) {
+          return c.json({ error: 'Account not found or access denied' }, 404);
+        }
 
         const result = {
           total: data.length,
@@ -950,7 +1044,13 @@ export default {
     app.get('/api/transactions/:id', async (c) => {
       try {
         const { id } = c.req.param();
-        const rows = await sql`SELECT * FROM "Transaction" WHERE id = ${id} LIMIT 1`;
+        const userId = getUserIdFromHeaders(c);
+        const rows = await sql`
+          SELECT t.* FROM "Transaction" t
+          JOIN "Account" a ON t.account_id = a.id
+          WHERE t.id = ${id} AND a.user_id = ${userId}
+          LIMIT 1
+        `;
         if (rows.length === 0) {
           return c.json({ error: 'Transaction not found' }, 404);
         }
@@ -958,6 +1058,117 @@ export default {
       } catch (error) {
         console.error('Database error:', error);
         return c.json({ error: 'Failed to fetch transaction', details: String(error) }, 500);
+      }
+    });
+
+    app.post('/api/transactions', async (c) => {
+      try {
+        const userId = getUserIdFromHeaders(c);
+        const body = await c.req.json<{ 
+          account_id: number;
+          category_id?: number;
+          amount: number;
+          note?: string;
+          date: string;
+        }>();
+        
+        // Verify account belongs to user
+        const account = await sql`SELECT * FROM "Account" WHERE id = ${body.account_id} AND user_id = ${userId} LIMIT 1`;
+        if (account.length === 0) {
+          return c.json({ error: 'Account not found or access denied' }, 404);
+        }
+        
+        // Verify category belongs to user (if provided)
+        if (body.category_id) {
+          const category = await sql`
+            SELECT c.* FROM "Category" c
+            JOIN "Account" a ON c.account_id = a.id
+            WHERE c.id = ${body.category_id} AND a.user_id = ${userId}
+            LIMIT 1
+          `;
+          if (category.length === 0) {
+            return c.json({ error: 'Category not found or access denied' }, 404);
+          }
+        }
+        
+        const created = await sql`
+          INSERT INTO "Transaction" (account_id, category_id, amount, note, date, created_at, updated_at) 
+          VALUES (
+            ${body.account_id},
+            ${body.category_id || null},
+            ${body.amount},
+            ${body.note || null},
+            ${body.date},
+            NOW(),
+            NOW()
+          ) 
+          RETURNING *
+        `;
+        return c.json(created[0], 201);
+      } catch (error) {
+        console.error('Database error:', error);
+        return c.json({ error: 'Failed to create transaction', details: String(error) }, 500);
+      }
+    });
+
+    app.patch('/api/transactions/:id', async (c) => {
+      try {
+        const { id } = c.req.param();
+        const userId = getUserIdFromHeaders(c);
+        const body = await c.req.json<{ amount?: number; note?: string; date?: string }>();
+        
+        // Verify transaction belongs to user
+        const check = await sql`
+          SELECT t.id FROM "Transaction" t
+          JOIN "Account" a ON t.account_id = a.id
+          WHERE t.id = ${id} AND a.user_id = ${userId}
+        `;
+        if (check.length === 0) {
+          return c.json({ error: 'Transaction not found or access denied' }, 404);
+        }
+        
+        const updated = await sql`
+          UPDATE "Transaction" 
+          SET 
+            amount = COALESCE(${body.amount}, amount),
+            note = COALESCE(${body.note}, note),
+            date = COALESCE(${body.date}, date),
+            updated_at = NOW() 
+          WHERE id = ${id} 
+          RETURNING *
+        `;
+        
+        if (updated.length === 0) {
+          return c.json({ error: 'Transaction not found' }, 404);
+        }
+        
+        return c.json(updated[0]);
+      } catch (error) {
+        console.error('Database error:', error);
+        return c.json({ error: 'Failed to update transaction', details: String(error) }, 500);
+      }
+    });
+
+    app.delete('/api/transactions/:id', async (c) => {
+      try {
+        const { id } = c.req.param();
+        const userId = getUserIdFromHeaders(c);
+        
+        // Verify transaction belongs to user
+        const check = await sql`
+          SELECT t.id FROM "Transaction" t
+          JOIN "Account" a ON t.account_id = a.id
+          WHERE t.id = ${id} AND a.user_id = ${userId}
+        `;
+        if (check.length === 0) {
+          return c.json({ error: 'Transaction not found or access denied' }, 404);
+        }
+        
+        await sql`DELETE FROM "Transaction" WHERE id = ${id}`;
+        return c.json({ ok: true });
+      } catch (error) {
+        console.error('Database error:', error);
+        return c.json({ error: 'Failed to delete transaction', details: String(error) }, 500);
       }
     });
 
