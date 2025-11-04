@@ -1248,6 +1248,8 @@ export default {
             skipFirstRow: boolean;
           };
         }>();
+        
+        console.log('📥 POST /api/transactions/import - Data rows:', data.length, 'Options:', options);
 
         // Verify account belongs to user
         const account =
@@ -1414,8 +1416,34 @@ export default {
             });
           }
         }
+        
+        // Serialize created transactions
+        const serializedTransactions = await Promise.all(
+          result.createdTransactions.map(async (t) => {
+            // Fetch full transaction with relations for proper serialization
+            const full = await sql`
+              SELECT 
+                t.*,
+                a.name as account_name,
+                c.name as category_name,
+                c.emoji as category_emoji,
+                c.color as category_color,
+                c.transaction_type as category_transaction_type
+              FROM "Transaction" t
+              LEFT JOIN "Account" a ON t.account_id = a.id
+              LEFT JOIN "Category" c ON t.category_id = c.id
+              WHERE t.id = ${t.id}
+              LIMIT 1
+            `;
+            return full.length > 0 ? serializeTransaction(full[0]) : t;
+          })
+        );
 
-        return c.json(result);
+        console.log('✅ Import completed - Successful:', result.successful, 'Errors:', result.errors);
+        return c.json({
+          ...result,
+          createdTransactions: serializedTransactions,
+        });
       } catch (error) {
         console.error('Import error:', error);
         return c.json({ error: 'Failed to import transactions', details: String(error) }, 500);
