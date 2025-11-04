@@ -367,12 +367,119 @@ export default {
     app.delete('/api/accounts/:id', async (c) => {
       try {
         const { id } = c.req.param();
-        // Soft delete
-        await sql`UPDATE "Account" SET is_active = false WHERE id = ${id}`;
+        
+        // Check if account has transactions
+        const transactions = await sql`
+          SELECT COUNT(*) as count FROM "Transaction" WHERE account_id = ${id}
+        `;
+        
+        if (Number(transactions[0].count) > 0) {
+          // Soft delete by setting is_active to false
+          const updated = await sql`
+            UPDATE "Account" 
+            SET is_active = false, updated_at = NOW() 
+            WHERE id = ${id} 
+            RETURNING *
+          `;
+          return c.json(updated[0]);
+        }
+        
+        // Hard delete if no transactions
+        await sql`DELETE FROM "Account" WHERE id = ${id}`;
         return c.json({ ok: true });
       } catch (error) {
         console.error('Database error:', error);
         return c.json({ error: 'Failed to delete account', details: String(error) }, 500);
+      }
+    });
+
+    app.get('/api/accounts/statistics', async (c) => {
+      try {
+        const accounts = await sql`
+          SELECT * FROM "Account" WHERE is_active = true
+        `;
+        
+        const totalBalance = accounts.reduce((sum: number, acc: any) => 
+          sum + Number(acc.initial_balance), 0);
+        const activeAccounts = accounts.length;
+        const totalAccountsResult = await sql`SELECT COUNT(*) as count FROM "Account"`;
+        const totalAccounts = Number(totalAccountsResult[0].count);
+        
+        return c.json({
+          totalBalance,
+          activeAccounts,
+          totalAccounts
+        });
+      } catch (error) {
+        console.error('Database error:', error);
+        return c.json({ error: 'Failed to fetch account statistics', details: String(error) }, 500);
+      }
+    });
+
+    app.get('/api/accounts/with-balances', async (c) => {
+      try {
+        const accounts = await sql`
+          SELECT a.*, 
+            COUNT(DISTINCT t.id) as transaction_count
+          FROM "Account" a
+          LEFT JOIN "Transaction" t ON t.account_id = a.id
+          GROUP BY a.id
+          ORDER BY a.created_at DESC
+        `;
+        
+        // Calculate balances for each account
+        const accountsWithBalances = await Promise.all(accounts.map(async (account: any) => {
+          const transactions = await sql`
+            SELECT t.amount, c.transaction_type
+            FROM "Transaction" t
+            JOIN "Category" c ON t.category_id = c.id
+            WHERE t.account_id = ${account.id}
+            ORDER BY t.date DESC
+          `;
+          
+          let calculatedBalance = Number(account.initial_balance);
+          let totalIncome = 0;
+          let totalExpenses = 0;
+          
+          for (const tx of transactions) {
+            const amount = Number(tx.amount);
+            if (tx.transaction_type === 'INCOME') {
+              calculatedBalance += amount;
+              totalIncome += amount;
+            } else if (tx.transaction_type === 'EXPENSE') {
+              calculatedBalance -= amount;
+              totalExpenses += amount;
+            }
+          }
+          
+          const lastTransaction = transactions[0];
+          
+          return {
+            ...account,
+            calculatedBalance,
+            totalIncome,
+            totalExpenses,
+            lastTransactionDate: lastTransaction?.date || null,
+            transactionCount: Number(account.transaction_count)
+          };
+        }));
+        
+        return c.json(accountsWithBalances);
+      } catch (error) {
+        console.error('Database error:', error);
+        return c.json({ error: 'Failed to fetch accounts with balances', details: String(error) }, 500);
+      }
+    });
+
+    app.post('/api/accounts/recalculate-balances', async (c) => {
+      try {
+        // With the new schema, we only have initialBalance (no balance field)
+        // This endpoint returns all accounts (balances are calculated on-the-fly)
+        const accounts = await sql`SELECT * FROM "Account" ORDER BY created_at DESC`;
+        return c.json(accounts);
+      } catch (error) {
+        console.error('Database error:', error);
+        return c.json({ error: 'Failed to recalculate balances', details: String(error) }, 500);
       }
     });
 
@@ -486,6 +593,87 @@ export default {
       }
     });
 
+    // Category-Account relationship endpoints
+    app.post('/api/categories/:id/accounts/:accountId', async (c) => {
+      try {
+        const { id, accountId } = c.req.param();
+        
+        // Update category's accountId
+        const updated = await sql`
+          UPDATE "Category" 
+          SET account_id = ${accountId}, updated_at = NOW() 
+          WHERE id = ${id} 
+          RETURNING *
+        `;
+        
+        if (updated.length === 0) {
+          return c.json({ error: 'Category not found' }, 404);
+        }
+        
+        return c.json(updated[0]);
+      } catch (error) {
+        console.error('Database error:', error);
+        return c.json({ error: 'Failed to assign category to account', details: String(error) }, 500);
+      }
+    });
+
+    app.delete('/api/categories/:id/accounts/:accountId', async (c) => {
+      try {
+        const { id } = c.req.param();
+        
+        // Since categories are directly linked to accounts, we delete the category
+        await sql`DELETE FROM "Category" WHERE id = ${id}`;
+        return c.json({ ok: true });
+      } catch (error) {
+        console.error('Database error:', error);
+        return c.json({ error: 'Failed to remove category from account', details: String(error) }, 500);
+      }
+    });
+
+    app.get('/api/categories/:id/accounts', async (c) => {
+      try {
+        const { id } = c.req.param();
+        
+        // Get category with its account
+        const rows = await sql`
+          SELECT c.*, a.name as account_name, a.type as account_type
+          FROM "Category" c
+          JOIN "Account" a ON c.account_id = a.id
+          WHERE c.id = ${id}
+        `;
+        
+        if (rows.length === 0) {
+          return c.json({ error: 'Category not found' }, 404);
+        }
+        
+        return c.json([{ category: rows[0], account: rows[0] }]);
+      } catch (error) {
+        console.error('Database error:', error);
+        return c.json({ error: 'Failed to fetch category accounts', details: String(error) }, 500);
+      }
+    });
+
+    app.post('/api/categories/auto-assign/:accountId', async (c) => {
+      try {
+        const { accountId } = c.req.param();
+        
+        // Find all categories that have transactions for this account
+        const categories = await sql`
+          SELECT DISTINCT c.*, COUNT(t.id) as transaction_count
+          FROM "Category" c
+          JOIN "Transaction" t ON t.category_id = c.id
+          WHERE t.account_id = ${accountId}
+          GROUP BY c.id
+          ORDER BY transaction_count DESC
+        `;
+        
+        return c.json(categories);
+      } catch (error) {
+        console.error('Database error:', error);
+        return c.json({ error: 'Failed to auto-assign categories', details: String(error) }, 500);
+      }
+    });
+
     // ====================================================================
     // TRANSACTIONS ENDPOINTS
     // ====================================================================
@@ -595,6 +783,185 @@ export default {
       } catch (error) {
         console.error('Database error:', error);
         return c.json({ error: 'Failed to delete transaction', details: String(error) }, 500);
+      }
+    });
+
+    app.post('/api/transactions/import', async (c) => {
+      try {
+        const { data, options } = await c.req.json<{
+          data: Array<{ date: string; amount: string; note?: string }>;
+          options: {
+            targetAccountId: string;
+            dateFormat: string;
+            amountFormat: string;
+            skipFirstRow: boolean;
+          };
+        }>();
+
+        const result = {
+          total: data.length,
+          successful: 0,
+          skipped: 0,
+          errors: 0,
+          errorDetails: [] as Array<{ row: number; data: any; error: string }>,
+          createdTransactions: [] as any[]
+        };
+
+        // Helper function to parse date
+        const parseDate = (dateStr: string, format: string): Date | null => {
+          try {
+            const parts = dateStr.split(/[.\-/]/);
+            let day: number, month: number, year: number;
+
+            switch (format) {
+              case 'DD.MM.YYYY':
+              case 'DD-MM-YYYY':
+                day = parseInt(parts[0], 10);
+                month = parseInt(parts[1], 10) - 1;
+                year = parseInt(parts[2], 10);
+                break;
+              case 'MM/DD/YYYY':
+                month = parseInt(parts[0], 10) - 1;
+                day = parseInt(parts[1], 10);
+                year = parseInt(parts[2], 10);
+                break;
+              case 'YYYY-MM-DD':
+                year = parseInt(parts[0], 10);
+                month = parseInt(parts[1], 10) - 1;
+                day = parseInt(parts[2], 10);
+                break;
+              default:
+                return null;
+            }
+
+            const date = new Date(Date.UTC(year, month, day, 12, 0, 0, 0));
+            return isNaN(date.getTime()) ? null : date;
+          } catch {
+            return null;
+          }
+        };
+
+        // Helper function to parse amount
+        const parseAmount = (amountStr: string, format: string): number => {
+          try {
+            let cleaned = amountStr.trim();
+
+            switch (format) {
+              case 'de':
+                cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+                break;
+              case 'en':
+                cleaned = cleaned.replace(/,/g, '');
+                break;
+              case 'simple':
+                break;
+            }
+
+            return parseFloat(cleaned);
+          } catch {
+            return NaN;
+          }
+        };
+
+        // Pre-create "Unbekannt" categories
+        const categoryConfigs = [
+          { type: 'INCOME', name: 'Unbekannte Einnahmen', emoji: '❓', color: '#4CAF50' },
+          { type: 'EXPENSE', name: 'Unbekannte Ausgaben', emoji: '❓', color: '#F44336' }
+        ];
+
+        for (const config of categoryConfigs) {
+          const existing = await sql`
+            SELECT * FROM "Category" 
+            WHERE account_id = ${options.targetAccountId} 
+            AND name = ${config.name} 
+            AND transaction_type = ${config.type}
+            LIMIT 1
+          `;
+
+          if (existing.length === 0) {
+            await sql`
+              INSERT INTO "Category" (account_id, name, emoji, color, transaction_type, created_at, updated_at)
+              VALUES (
+                ${options.targetAccountId},
+                ${config.name},
+                ${config.emoji},
+                ${config.color},
+                ${config.type},
+                NOW(),
+                NOW()
+              )
+            `;
+          }
+        }
+
+        // Process each transaction
+        for (let i = 0; i < data.length; i++) {
+          const row = data[i];
+          const rowNumber = i + 1 + (options.skipFirstRow ? 1 : 0);
+
+          try {
+            const parsedDate = parseDate(row.date, options.dateFormat);
+            if (!parsedDate) {
+              throw new Error(`Ungültiges Datum: ${row.date}`);
+            }
+
+            const parsedAmount = parseAmount(row.amount.toString(), options.amountFormat);
+            if (isNaN(parsedAmount)) {
+              throw new Error(`Ungültiger Betrag: ${row.amount}`);
+            }
+
+            const transactionType = parsedAmount >= 0 ? 'INCOME' : 'EXPENSE';
+            const absoluteAmount = Math.abs(parsedAmount);
+            const categoryName = transactionType === 'INCOME' 
+              ? 'Unbekannte Einnahmen' 
+              : 'Unbekannte Ausgaben';
+
+            // Find category
+            const categories = await sql`
+              SELECT * FROM "Category" 
+              WHERE account_id = ${options.targetAccountId} 
+              AND name = ${categoryName} 
+              AND transaction_type = ${transactionType}
+              LIMIT 1
+            `;
+
+            if (categories.length === 0) {
+              throw new Error(`Kategorie "${categoryName}" für ${transactionType} nicht gefunden`);
+            }
+
+            const category = categories[0];
+
+            // Create transaction
+            const transaction = await sql`
+              INSERT INTO "Transaction" (date, amount, note, category_id, account_id, created_at, updated_at)
+              VALUES (
+                ${parsedDate.toISOString()},
+                ${absoluteAmount},
+                ${row.note || null},
+                ${category.id},
+                ${options.targetAccountId},
+                NOW(),
+                NOW()
+              )
+              RETURNING *
+            `;
+
+            result.successful++;
+            result.createdTransactions.push(transaction[0]);
+          } catch (error) {
+            result.errors++;
+            result.errorDetails.push({
+              row: rowNumber,
+              data: row,
+              error: error instanceof Error ? error.message : 'Unbekannter Fehler'
+            });
+          }
+        }
+
+        return c.json(result);
+      } catch (error) {
+        console.error('Import error:', error);
+        return c.json({ error: 'Failed to import transactions', details: String(error) }, 500);
       }
     });
 
