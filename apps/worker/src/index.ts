@@ -145,16 +145,28 @@ export default {
 
     // Helper function to generate mock JWT
     function generateMockToken(email: string, userId: number): string {
-      const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-      const payload = btoa(JSON.stringify({
+      const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
+      const payload = Buffer.from(JSON.stringify({
         sub: userId.toString(),
         email: email,
         iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours
-      }));
+        exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
+      })).toString('base64url');
       const signature = 'mock-signature';
       return `${header}.${payload}.${signature}`;
     }
+
+    // Helper function to get user ID from headers
+    function getUserIdFromHeaders(c: any): string {
+      const userId = c.req.header('x-user-id');
+      if (!userId) {
+        console.log('⚠️ No user ID in headers, using test user ID');
+        return '1'; // Test User ID
+      }
+      return userId;
+    }
+
+    // ====================================================================
 
     // ====================================================================
     // BUDGETS ENDPOINTS
@@ -280,9 +292,10 @@ export default {
     // ====================================================================
     app.get('/api/accounts', async (c) => {
       try {
+        const userId = getUserIdFromHeaders(c);
         const accounts = await sql`
           SELECT * FROM "Account" 
-          WHERE is_active = true 
+          WHERE is_active = true AND user_id = ${userId}
           ORDER BY created_at DESC
         `;
         return c.json(accounts);
@@ -295,14 +308,15 @@ export default {
     // Specific routes MUST come before dynamic :id routes
     app.get('/api/accounts/statistics', async (c) => {
       try {
+        const userId = getUserIdFromHeaders(c);
         const accounts = await sql`
-          SELECT * FROM "Account" WHERE is_active = true
+          SELECT * FROM "Account" WHERE is_active = true AND user_id = ${userId}
         `;
         
         const totalBalance = accounts.reduce((sum: number, acc: any) => 
           sum + Number(acc.initial_balance), 0);
         const activeAccounts = accounts.length;
-        const totalAccountsResult = await sql`SELECT COUNT(*) as count FROM "Account"`;
+        const totalAccountsResult = await sql`SELECT COUNT(*) as count FROM "Account" WHERE user_id = ${userId}`;
         const totalAccounts = Number(totalAccountsResult[0].count);
         
         return c.json({
@@ -318,11 +332,13 @@ export default {
 
     app.get('/api/accounts/with-balances', async (c) => {
       try {
+        const userId = getUserIdFromHeaders(c);
         const accounts = await sql`
           SELECT a.*, 
             COUNT(DISTINCT t.id) as transaction_count
           FROM "Account" a
           LEFT JOIN "Transaction" t ON t.account_id = a.id
+          WHERE a.user_id = ${userId}
           GROUP BY a.id
           ORDER BY a.created_at DESC
         `;
@@ -373,9 +389,10 @@ export default {
 
     app.post('/api/accounts/recalculate-balances', async (c) => {
       try {
+        const userId = getUserIdFromHeaders(c);
         // With the new schema, we only have initialBalance (no balance field)
         // This endpoint returns all accounts (balances are calculated on-the-fly)
-        const accounts = await sql`SELECT * FROM "Account" ORDER BY created_at DESC`;
+        const accounts = await sql`SELECT * FROM "Account" WHERE user_id = ${userId} ORDER BY created_at DESC`;
         return c.json(accounts);
       } catch (error) {
         console.error('Database error:', error);
@@ -386,7 +403,8 @@ export default {
     app.get('/api/accounts/:id', async (c) => {
       try {
         const { id } = c.req.param();
-        const rows = await sql`SELECT * FROM "Account" WHERE id = ${id} LIMIT 1`;
+        const userId = getUserIdFromHeaders(c);
+        const rows = await sql`SELECT * FROM "Account" WHERE id = ${id} AND user_id = ${userId} LIMIT 1`;
         if (rows.length === 0) {
           return c.json({ error: 'Account not found' }, 404);
         }
@@ -399,6 +417,7 @@ export default {
 
     app.post('/api/accounts', async (c) => {
       try {
+        const userId = getUserIdFromHeaders(c);
         const body = await c.req.json<{ 
           user_id: number; 
           name: string; 
@@ -410,7 +429,7 @@ export default {
         const created = await sql`
           INSERT INTO "Account" (user_id, name, type, initial_balance, note, is_active, created_at, updated_at) 
           VALUES (
-            ${body.user_id}, 
+            ${userId}, 
             ${body.name}, 
             ${body.type}, 
             ${body.initial_balance}, 
@@ -431,6 +450,7 @@ export default {
     app.patch('/api/accounts/:id', async (c) => {
       try {
         const { id } = c.req.param();
+        const userId = getUserIdFromHeaders(c);
         const body = await c.req.json<{ name?: string; note?: string; is_active?: boolean }>();
         
         const updated = await sql`
@@ -440,7 +460,7 @@ export default {
             note = COALESCE(${body.note}, note),
             is_active = COALESCE(${body.is_active}, is_active),
             updated_at = NOW() 
-          WHERE id = ${id} 
+          WHERE id = ${id} AND user_id = ${userId}
           RETURNING *
         `;
         
@@ -458,10 +478,12 @@ export default {
     app.delete('/api/accounts/:id', async (c) => {
       try {
         const { id } = c.req.param();
+        const userId = getUserIdFromHeaders(c);
         
         // Check if account has transactions
         const transactions = await sql`
-          SELECT COUNT(*) as count FROM "Transaction" WHERE account_id = ${id}
+          SELECT COUNT(*) as count FROM "Transaction" 
+          WHERE account_id = ${id}
         `;
         
         if (Number(transactions[0].count) > 0) {
@@ -469,14 +491,14 @@ export default {
           const updated = await sql`
             UPDATE "Account" 
             SET is_active = false, updated_at = NOW() 
-            WHERE id = ${id} 
+            WHERE id = ${id} AND user_id = ${userId}
             RETURNING *
           `;
           return c.json(updated[0]);
         }
         
         // Hard delete if no transactions
-        await sql`DELETE FROM "Account" WHERE id = ${id}`;
+        await sql`DELETE FROM "Account" WHERE id = ${id} AND user_id = ${userId}`;
         return c.json({ ok: true });
       } catch (error) {
         console.error('Database error:', error);
