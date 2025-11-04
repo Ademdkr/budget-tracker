@@ -1,186 +1,340 @@
-# Budget Tracker# Budget Tracker# Budget Tracker (Angular + NestJS)# Budget Tracker (Angular + NestJS)
+# Budget Tracker# Budget Tracker# Budget Tracker# Budget Tracker (Angular + NestJS)# Budget Tracker (Angular + NestJS)
 
-[![CI](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml)[![CI](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml)[![CI](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml)[![CI](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml)
+[![CI](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml)[![CI](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml)[![CI](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml)[![CI](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml)[![CI](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/Ademdkr/budget-tracker/actions/workflows/ci.yml)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 [![Built with PNPM](https://img.shields.io/badge/built%20with-pnpm-orange)](https://pnpm.io)[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> Eine moderne Full-Stack Finanzmanagement-Anwendung zur Verwaltung persönlicher Finanzen mit Multi-Account-Support, intelligenten Kategorien und CSV-Import.[![Built with PNPM](https://img.shields.io/badge/built%20with-pnpm-orange)](https://pnpm.io)[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+Eine moderne Full-Stack Finanzmanagement-Anwendung mit Angular 18, NestJS 10 und PostgreSQL.[![Built with PNPM](https://img.shields.io/badge/built%20with-pnpm-orange)](https://pnpm.io)[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
----> Eine moderne Full-Stack Finanzmanagement-Anwendung zur Verwaltung persönlicher Finanzen mit Multi-Account-Support, intelligenten Kategorien und CSV-Import.[![Built with PNPM](https://img.shields.io/badge/built%20with-pnpm-orange)](https://pnpm.io)[![Built with PNPM](https://img.shields.io/badge/built%20with-pnpm-orange)](https://pnpm.io)
+## 🚀 Features> Eine moderne Full-Stack Finanzmanagement-Anwendung zur Verwaltung persönlicher Finanzen mit Multi-Account-Support, intelligenten Kategorien und CSV-Import.[![Built with PNPM](https://img.shields.io/badge/built%20with-pnpm-orange)](https://pnpm.io)[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## 💰 Features**Live Demo**: _(Coming Soon)_ | **[Dokumentation](./docs/)** | **[Changelog](./CHANGELOG.md)**Eine umfassende **Budget-Tracking-Anwendung** mit Angular 18 (Frontend), NestJS 10 (Backend), Cloudflare Workers und PostgreSQL. Eine umfassende **Budget-Tracking-Anwendung** mit Angular 18 (Frontend), NestJS 10 (Backend), Cloudflare Workers und PostgreSQL.
+- 💸 **Transaktions-Management** - Einnahmen und Ausgaben verwalten---> Eine moderne Full-Stack Finanzmanagement-Anwendung zur Verwaltung persönlicher Finanzen mit Multi-Account-Support, intelligenten Kategorien und CSV-Import.[![Built with PNPM](https://img.shields.io/badge/built%20with-pnpm-orange)](https://pnpm.io)[![Built with PNPM](https://img.shields.io/badge/built%20with-pnpm-orange)](https://pnpm.io)
 
-- **💸 Transaktions-Management**: Erstellen, bearbeiten und kategorisieren Sie Ihre Einnahmen und Ausgaben---Verwalten Sie Ihre Einnahmen und Ausgaben, kategorisieren Sie Transaktionen und behalten Sie den Überblick über Ihre Finanzen.Verwalten Sie Ihre Einnahmen und Ausgaben, kategorisieren Sie Transaktionen und behalten Sie den Überblick über Ihre Finanzen.
+- 📊 **Dashboard** - Finanzübersicht mit Charts und Statistiken
 
-- **📊 Dashboard**: Übersichtliche Darstellung Ihrer Finanzen mit Charts und Statistiken
+- 🏦 **Multi-Account** - Mehrere Konten (Giro, Sparkonto, Kreditkarte, etc.)## 💰 Features**Live Demo**: _(Coming Soon)_ | **[Dokumentation](./docs/)** | **[Changelog](./CHANGELOG.md)**Eine umfassende **Budget-Tracking-Anwendung** mit Angular 18 (Frontend), NestJS 10 (Backend), Cloudflare Workers und PostgreSQL. Eine umfassende **Budget-Tracking-Anwendung** mit Angular 18 (Frontend), NestJS 10 (Backend), Cloudflare Workers und PostgreSQL.
 
-- **🏷️ Kategorien**: Individuelle Kategorisierung mit Emojis und Farben für bessere Übersicht## 📋 Über das Projekt## 💰 Features## 💰 Features
+- 🏷️ **Kategorien** - Individuelle Kategorisierung mit Emojis und Farben
 
-- **🏦 Multi-Account**: Verwalten Sie mehrere Bankkonten (Girokonto, Sparkonto, Kreditkarte, etc.)
+- 💼 **Budget-Planung** - Monatliche Budgets setzen und verfolgen- **💸 Transaktions-Management**: Erstellen, bearbeiten und kategorisieren Sie Ihre Einnahmen und Ausgaben---Verwalten Sie Ihre Einnahmen und Ausgaben, kategorisieren Sie Transaktionen und behalten Sie den Überblick über Ihre Finanzen.Verwalten Sie Ihre Einnahmen und Ausgaben, kategorisieren Sie Transaktionen und behalten Sie den Überblick über Ihre Finanzen.
 
-- **💼 Budget-Planung**: Setzen Sie monatliche Budgets und verfolgen Sie Ihre AusgabenBudget Tracker ist eine professionelle Finanzmanagement-Lösung, die Ihnen hilft:- **💸 Transaktions-Management**: Erstellen, bearbeiten und kategorisieren Sie Ihre Einnahmen und Ausgaben- **💸 Transaktions-Management**: Erstellen, bearbeiten und kategorisieren Sie Ihre Einnahmen und Ausgaben
+- 📁 **CSV-Import** - Transaktionen aus CSV-Dateien importieren
+
+- 🔐 **Sicherheit** - JWT-Authentication mit bcrypt- **📊 Dashboard**: Übersichtliche Darstellung Ihrer Finanzen mit Charts und Statistiken
+
+## 📦 Tech-Stack- **🏷️ Kategorien**: Individuelle Kategorisierung mit Emojis und Farben für bessere Übersicht## 📋 Über das Projekt## 💰 Features## 💰 Features
+
+- **Frontend:** Angular 18, TypeScript, Material UI- **🏦 Multi-Account**: Verwalten Sie mehrere Bankkonten (Girokonto, Sparkonto, Kreditkarte, etc.)
+
+- **Backend:** NestJS 10, Prisma 6, PostgreSQL
+
+- **Worker:** Cloudflare Workers, Hono- **💼 Budget-Planung**: Setzen Sie monatliche Budgets und verfolgen Sie Ihre AusgabenBudget Tracker ist eine professionelle Finanzmanagement-Lösung, die Ihnen hilft:- **💸 Transaktions-Management**: Erstellen, bearbeiten und kategorisieren Sie Ihre Einnahmen und Ausgaben- **💸 Transaktions-Management**: Erstellen, bearbeiten und kategorisieren Sie Ihre Einnahmen und Ausgaben
+
+- **Tools:** pnpm, Docker, ESLint, Prettier
 
 - **📁 CSV-Import**: Importieren Sie Transaktionen aus CSV-Dateien mit automatischer Kategorisierung
 
+## ⚡ Quick Start
+
 - **🔐 Sicherheit**: JWT-basierte Authentifizierung mit sicherer Passwortverschlüsselung- 💰 Einnahmen und Ausgaben über mehrere Konten zu verwalten
-
----- 📊 Finanzielle Übersicht durch interaktive Dashboards zu erhalten- **📊 Dashboard**: Übersichtliche Darstellung Ihrer Finanzen mit Charts und Statistiken- **📊 Dashboard**: Übersichtliche Darstellung Ihrer Finanzen mit Charts und Statistiken
-
-## 🏗️ Architektur- 🎯 Budgets zu planen und Ausgaben zu kontrollieren
-
-### 🧩 Monorepo-Struktur- 📁 Transaktionen per CSV-Import effizient zu erfassen- **🏷️ Kategorien**: Individuelle Kategorisierung für bessere Übersicht- **🏷️ Kategorien**: Individuelle Kategorisierung für bessere Übersicht
-
-```plaintext- 🏷️ Ausgaben intelligent zu kategorisieren
-
-budget-tracker/
-
-├── apps/- **🏦 Konten**: Verwalten Sie mehrere Bankkonten und Zahlungsmethoden- **🏦 Konten**: Verwalten Sie mehrere Bankkonten und Zahlungsmethoden
-
-│   ├── frontend/          # Angular 18 Frontend
-
-│   ├── backend/           # NestJS 10 REST API**Gebaut als Full-Stack Portfolio-Projekt mit modernen Technologien und Best Practices.**
-
-│   └── worker/            # Cloudflare Worker
-
-├── docs/                  # Dokumentation- **💼 Budget-Planung**: Setzen Sie Budgets und verfolgen Sie Ihre Ausgaben- **💼 Budget-Planung**: Setzen Sie Budgets und verfolgen Sie Ihre Ausgaben
-
-├── tools/                 # Setup-Scripts
-
-└── docker-compose.yml     # PostgreSQL Container---
-
-```
-
-- **📁 Daten-Import**: Importieren Sie Transaktionen aus CSV-Dateien- **📁 Daten-Import**: Importieren Sie Transaktionen aus CSV-Dateien
-
-### 📦 Tech-Stack
-
-## ✨ Hauptfunktionen
-
-| Bereich | Technologie |
-
-| ------------ | -------------------------------------- |## 🏗️ Architektur---
-
-| **Frontend** | Angular 18, TypeScript 5, Material UI |
-
-| **Backend** | NestJS 10, Prisma 6, PostgreSQL |### 🏦 Multi-Account-Management
-
-| **Worker** | Cloudflare Workers, Hono, Neon Adapter |
-
-| **DevOps** | Docker Compose, GitHub Actions |- Verwalten Sie verschiedene Konten (Girokonto, Sparkonto, Kreditkarte, etc.)- 🧩 **Monorepo-Struktur** mit pnpm Workspaces## 🏗️ Architektur
-
-| **Tooling** | pnpm, ESLint, Prettier, Husky |
-
-| **Testing** | Jest, Karma, Jasmine |- Account-spezifische Kategorien und Transaktionen - `apps/frontend` - Angular 18 Frontend mit Material Design
-
----- Kontoübergreifende Übersicht und Filterung
-
-- `apps/backend` - NestJS 10 REST API mit Prisma ORM- 🧩 **Monorepo-Struktur** mit pnpm Workspaces
-
-## 🚀 Schnellstart
-
-### 💸 Intelligentes Transaktions-Management
 
 ### Voraussetzungen
 
-- Schnelles Erfassen von Einnahmen und Ausgaben - `apps/worker` - Cloudflare Worker für Edge-Funktionen - `apps/frontend` - Angular 18 Frontend mit Material Design
+---- 📊 Finanzielle Übersicht durch interaktive Dashboards zu erhalten- **📊 Dashboard**: Übersichtliche Darstellung Ihrer Finanzen mit Charts und Statistiken- **📊 Dashboard**: Übersichtliche Darstellung Ihrer Finanzen mit Charts und Statistiken
 
-- **Node.js** >= 18
+- Node.js >= 18
 
-- **pnpm** >= 8 (empfohlen) oder npm- Kategorisierung mit benutzerdefinierten Kategorien
+- pnpm >= 8## 🏗️ Architektur- 🎯 Budgets zu planen und Ausgaben zu kontrollieren
 
-- **Docker** & **Docker Compose** (für lokale Datenbank)
+- Docker & Docker Compose
 
-- Such- und Filterfunktionen - `apps/backend` - NestJS 10 REST API mit Prisma ORM
+### 🧩 Monorepo-Struktur- 📁 Transaktionen per CSV-Import effizient zu erfassen- **🏷️ Kategorien**: Individuelle Kategorisierung für bessere Übersicht- **🏷️ Kategorien**: Individuelle Kategorisierung für bessere Übersicht
 
 ### Installation
 
-- Bulk-Import via CSV mit automatischer Kategorie-Zuordnung
+````plaintext- 🏷️ Ausgaben intelligent zu kategorisieren
 
 ```bash
 
-# Repository klonen### 🎯 Frontend (Angular 18) - `apps/worker` - Cloudflare Worker für Edge-Funktionen
+# Repository klonenbudget-tracker/
 
 git clone https://github.com/Ademdkr/budget-tracker.git
 
-cd budget-tracker### 📊 Dashboard & Visualisierung
+cd budget-tracker├── apps/- **🏦 Konten**: Verwalten Sie mehrere Bankkonten und Zahlungsmethoden- **🏦 Konten**: Verwalten Sie mehrere Bankkonten und Zahlungsmethoden
 
 
 
-# Dependencies installieren- Monatliche Übersicht mit KPIs (Einnahmen, Ausgaben, Bilanz, Sparquote)- 🔄 **Hot Reload** für Frontend & Backend gleichzeitig
+# Dependencies installieren│   ├── frontend/          # Angular 18 Frontend
 
 pnpm install
 
-- Interaktive Charts (Ausgaben nach Kategorie, Top-Ausgaben)
+│   ├── backend/           # NestJS 10 REST API**Gebaut als Full-Stack Portfolio-Projekt mit modernen Technologien und Best Practices.**
 
-# Datenbank starten (PostgreSQL mit Docker)
+# Datenbank starten
 
-pnpm db:up- Budget-Fortschritt mit visueller Darstellung- ⚡ **Standalone Components** - Moderne Angular-Architektur- � **Proxy-Konfiguration** - `/api` Requests werden automatisch ans Backend weitergeleitet
+pnpm db:up│   └── worker/            # Cloudflare Worker
 
 
 
-# Backend konfigurieren- Aktuelle Transaktionsübersicht
+# Backend Setup├── docs/                  # Dokumentation- **💼 Budget-Planung**: Setzen Sie Budgets und verfolgen Sie Ihre Ausgaben- **💼 Budget-Planung**: Setzen Sie Budgets und verfolgen Sie Ihre Ausgaben
 
 cd apps/backend
 
-cp .env.example .env- 🎨 **Angular Material** - Konsistentes Design System
+cp .env.example .env├── tools/                 # Setup-Scripts
 
-# Bearbeite .env falls nötig (Standard-Werte funktionieren für lokale Entwicklung)
+pnpm prisma:migrate
 
-### 🎯 Budget-Planung
-
-# Datenbank migrieren und mit Test-Daten füllen
-
-pnpm prisma:migrate- Monatliche Budgets pro Kategorie- 📱 **Responsive Design** - Funktioniert auf allen Geräten### 🛠️ Developer Experience
-
-pnpm prisma:generate
-
-pnpm prisma:seed- Echtzeit-Tracking des Verbrauchs
+pnpm prisma:seed└── docker-compose.yml     # PostgreSQL Container---
 
 cd ../..
 
-- Visuelle Warnung bei Budgetüberschreitung- 📈 **Chart.js Integration** - Interaktive Finanz-Charts
+````
 
-# Entwicklungsserver starten (Frontend + Backend)
+# Development starten
 
-pnpm dev- Historische Budget-Analyse
+pnpm dev- **📁 Daten-Import**: Importieren Sie Transaktionen aus CSV-Dateien- **📁 Daten-Import**: Importieren Sie Transaktionen aus CSV-Dateien
+
+````
+
+### 📦 Tech-Stack
+
+### URLs
+
+## ✨ Hauptfunktionen
+
+- Frontend: http://localhost:4201
+
+- Backend API: http://localhost:3001/api| Bereich | Technologie |
+
+- API Docs: http://localhost:3001/api/docs
+
+| ------------ | -------------------------------------- |## 🏗️ Architektur---
+
+### Test-Accounts
+
+| **Frontend** | Angular 18, TypeScript 5, Material UI |
+
+| Email | Passwort | Beschreibung |
+
+|-------|----------|--------------|| **Backend** | NestJS 10, Prisma 6, PostgreSQL |### 🏦 Multi-Account-Management
+
+| `example@example.com` | `password` | Bausparkonto, Deutsche Bank |
+
+| `example2@example.com` | `password` | Klarna, Aktienkonto || **Worker** | Cloudflare Workers, Hono, Neon Adapter |
+
+| `example3@example.com` | `password` | Bunker, Sonstiges |
+
+| **DevOps** | Docker Compose, GitHub Actions |- Verwalten Sie verschiedene Konten (Girokonto, Sparkonto, Kreditkarte, etc.)- 🧩 **Monorepo-Struktur** mit pnpm Workspaces## 🏗️ Architektur
+
+## 🐳 Docker
+
+| **Tooling** | pnpm, ESLint, Prettier, Husky |
+
+```bash
+
+# Gesamtes Projekt mit Docker starten| **Testing** | Jest, Karma, Jasmine |- Account-spezifische Kategorien und Transaktionen - `apps/frontend` - Angular 18 Frontend mit Material Design
+
+docker compose up -d --build
+
+---- Kontoübergreifende Übersicht und Filterung
+
+# Logs anzeigen
+
+docker compose logs -f- `apps/backend` - NestJS 10 REST API mit Prisma ORM- 🧩 **Monorepo-Struktur** mit pnpm Workspaces
+
+
+
+# Stoppen## 🚀 Schnellstart
+
+docker compose down
+
+```### 💸 Intelligentes Transaktions-Management
+
+
+
+Services verfügbar:### Voraussetzungen
+
+- Frontend: http://localhost:4201
+
+- Backend: http://localhost:3001/api- Schnelles Erfassen von Einnahmen und Ausgaben - `apps/worker` - Cloudflare Worker für Edge-Funktionen - `apps/frontend` - Angular 18 Frontend mit Material Design
+
+- PostgreSQL: localhost:5434
+
+- **Node.js** >= 18
+
+## 📜 Scripts
+
+- **pnpm** >= 8 (empfohlen) oder npm- Kategorisierung mit benutzerdefinierten Kategorien
+
+### Development
+
+```bash- **Docker** & **Docker Compose** (für lokale Datenbank)
+
+pnpm dev          # Frontend + Backend
+
+pnpm dev:web      # Nur Frontend- Such- und Filterfunktionen - `apps/backend` - NestJS 10 REST API mit Prisma ORM
+
+pnpm dev:api      # Nur Backend
+
+```### Installation
+
+
+
+### Build- Bulk-Import via CSV mit automatischer Kategorie-Zuordnung
+
+```bash
+
+pnpm build        # Alles bauen```bash
+
+pnpm build:web    # Frontend bauen
+
+pnpm build:api    # Backend bauen# Repository klonen### 🎯 Frontend (Angular 18) - `apps/worker` - Cloudflare Worker für Edge-Funktionen
+
+````
+
+git clone https://github.com/Ademdkr/budget-tracker.git
+
+### Datenbank
+
+```bashcd budget-tracker### 📊 Dashboard & Visualisierung
+
+pnpm db:up        # PostgreSQL starten
+
+pnpm db:down      # PostgreSQL stoppen
+
+pnpm db:studio    # Prisma Studio öffnen
+
+pnpm gen:prisma   # Prisma Client generieren# Dependencies installieren- Monatliche Übersicht mit KPIs (Einnahmen, Ausgaben, Bilanz, Sparquote)- 🔄 **Hot Reload** für Frontend & Backend gleichzeitig
 
 ```
 
-- 🔐 **Authentication** - Sichere Benutzeranmeldung- ⚙️ **Automatisches Setup-Script** - Ersetzt alle Platzhalter mit einem Befehl
+pnpm install
+
+### Qualität
+
+````bash- Interaktive Charts (Ausgaben nach Kategorie, Top-Ausgaben)
+
+pnpm test         # Alle Tests
+
+pnpm lint         # Code linten# Datenbank starten (PostgreSQL mit Docker)
+
+pnpm format       # Code formatieren
+
+```pnpm db:up- Budget-Fortschritt mit visueller Darstellung- ⚡ **Standalone Components** - Moderne Angular-Architektur- � **Proxy-Konfiguration** - `/api` Requests werden automatisch ans Backend weitergeleitet
+
+
+
+## 📁 Projektstruktur
+
+
+
+```# Backend konfigurieren- Aktuelle Transaktionsübersicht
+
+budget-tracker/
+
+├── apps/cd apps/backend
+
+│   ├── frontend/       # Angular 18 App
+
+│   ├── backend/        # NestJS APIcp .env.example .env- 🎨 **Angular Material** - Konsistentes Design System
+
+│   └── worker/         # Cloudflare Worker
+
+├── docs/               # Dokumentation# Bearbeite .env falls nötig (Standard-Werte funktionieren für lokale Entwicklung)
+
+├── tools/              # Build-Tools
+
+└── docker-compose.yml### 🎯 Budget-Planung
+
+````
+
+# Datenbank migrieren und mit Test-Daten füllen
+
+## 🚢 Deployment
+
+pnpm prisma:migrate- Monatliche Budgets pro Kategorie- 📱 **Responsive Design** - Funktioniert auf allen Geräten### 🛠️ Developer Experience
+
+### Unterstützte Plattformen
+
+pnpm prisma:generate
+
+- **Frontend:** Cloudflare Pages, Vercel, Netlify
+
+- **Backend:** Railway, Render, Fly.iopnpm prisma:seed- Echtzeit-Tracking des Verbrauchs
+
+- **Worker:** Cloudflare Workers
+
+- **Datenbank:** Neon, Supabase, Railwaycd ../..
+
+Push zu `main` triggert automatisches Deployment via GitHub Actions.- Visuelle Warnung bei Budgetüberschreitung- 📈 **Chart.js Integration** - Interaktive Finanz-Charts
+
+Siehe [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) für Details.# Entwicklungsserver starten (Frontend + Backend)
+
+## 📚 Dokumentationpnpm dev- Historische Budget-Analyse
+
+- [Setup Guide](./docs/SETUP.md) - Detaillierte Installationsanleitung```
+
+- [Deployment Guide](./docs/DEPLOYMENT.md) - Deployment-Optionen
+
+- [Contributing](./CONTRIBUTING.md) - Contribution Guidelines- 🔐 **Authentication** - Sichere Benutzeranmeldung- ⚙️ **Automatisches Setup-Script** - Ersetzt alle Platzhalter mit einem Befehl
+
+- [Changelog](./CHANGELOG.md) - Versionshistorie
 
 ### URLs nach dem Start
 
+## 🤝 Contributing
+
 ### 📁 CSV-Import
+
+Beiträge sind willkommen!
 
 - **Frontend**: http://localhost:4201
 
-- **Backend API**: http://localhost:3001/api- Import von Banktransaktionen aus CSV-Dateien- 🌐 **PWA Ready** - Progressive Web App Funktionalität- 📝 **TypeScript überall** - Type-Safety im gesamten Stack
+1. Fork das Repository
 
-- **API Dokumentation**: http://localhost:3001/api/docs
+2. Feature-Branch erstellen (`git checkout -b feature/amazing-feature`)- **Backend API**: http://localhost:3001/api- Import von Banktransaktionen aus CSV-Dateien- 🌐 **PWA Ready** - Progressive Web App Funktionalität- 📝 **TypeScript überall** - Type-Safety im gesamten Stack
+
+3. Änderungen committen (`git commit -m 'feat: add amazing feature'`)
+
+4. Branch pushen (`git push origin feature/amazing-feature`)- **API Dokumentation**: http://localhost:3001/api/docs
+
+5. Pull Request öffnen
 
 - **Prisma Studio**: http://localhost:5555 (mit `pnpm db:studio`)- Flexible Spaltenzuordnung (Datum, Betrag, Notiz)
 
+## 📄 License
+
 ### Test-Login- Unterstützung verschiedener Datums- und Zahlenformate- 🎨 **ESLint & Prettier** vorkonfiguriert
+
+MIT License - siehe [LICENSE](LICENSE)
 
 Nach dem Seeding sind folgende Test-User verfügbar:- Automatische Kategorisierung (Unbekannte Einnahmen/Ausgaben)
 
+## 👤 Autor
+
 | Email | Passwort | Konten |- Detaillierte Fehlerberichterstattung### 🚀 Backend (NestJS 10)- 🪝 **Git Hooks** mit Husky & lint-staged
 
-| ------------------------- | ---------- | ------------------------- |
+**Adem Dokur**
 
-| `example@example.com` | `password` | Bausparkonto, Deutsche Bank |### 🔐 Sicherheit- � **Conventional Commits** mit Commitlint
+- GitHub: [@Ademdkr](https://github.com/Ademdkr)| ------------------------- | ---------- | ------------------------- |
 
-| `example2@example.com` | `password` | Klarna, Aktienkonto |
+## 🙏 Credits| `example@example.com` | `password` | Bausparkonto, Deutsche Bank |### 🔐 Sicherheit- � **Conventional Commits** mit Commitlint
 
-| `example3@example.com` | `password` | Bunker, Sonstiges Konto |- JWT-basierte Authentifizierung
+- [NestJS](https://nestjs.com/)| `example2@example.com` | `password` | Klarna, Aktienkonto |
 
-Jeder Benutzer hat vordefinierte Kategorien, Budgets und Transaktionen zum Testen.- Sichere Password-Speicherung mit bcrypt- 🏛️ **REST API** - Vollständige CRUD-Operationen- 🧪 **Testing** - Jest (Backend) + Karma/Jasmine (Frontend)
+- [Angular](https://angular.io/)
 
----- User-spezifische Datenisolierung
+- [Prisma](https://www.prisma.io/)| `example3@example.com` | `password` | Bunker, Sonstiges Konto |- JWT-basierte Authentifizierung
 
-## 🐳 Docker (Production-like)- CORS-Schutz- 🗄️ **Prisma ORM** - Type-safe Datenbankzugriff
+- [Cloudflare Workers](https://workers.cloudflare.com/)
+
+- [Neon](https://neon.tech/)Jeder Benutzer hat vordefinierte Kategorien, Budgets und Transaktionen zum Testen.- Sichere Password-Speicherung mit bcrypt- 🏛️ **REST API** - Vollständige CRUD-Operationen- 🧪 **Testing** - Jest (Backend) + Karma/Jasmine (Frontend)
+
+------- User-spezifische Datenisolierung
+
+**Entwickelt mit ❤️ als Full-Stack Portfolio-Projekt**## 🐳 Docker (Production-like)- CORS-Schutz- 🗄️ **Prisma ORM** - Type-safe Datenbankzugriff
 
 Das gesamte Projekt kann mit Docker Compose gestartet werden:---- 🔒 **Validation** - Request/Response Validierung### 🚀 CI/CD & Deployment
 
