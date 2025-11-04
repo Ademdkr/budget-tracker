@@ -38,7 +38,7 @@ export default {
 
     app.get('/api/budgets', async (c) => {
       try {
-        const rows = await sql`SELECT * FROM "Budget" ORDER BY "createdAt" DESC`;
+        const rows = await sql`SELECT * FROM "Budget" ORDER BY created_at DESC`;
         return c.json(rows);
       } catch (error) {
         console.error('Database error:', error);
@@ -46,29 +46,44 @@ export default {
       }
     });
     app.post('/api/budgets', async (c) => {
-      const body = await c.req.json<{ name: string }>();
-      const created = await sql`
-        INSERT INTO "Budget" (id, name, "totalAmount", spent, "createdAt", "updatedAt") 
-        VALUES (gen_random_uuid(), ${body.name}, 0, 0, NOW(), NOW()) 
-        RETURNING *
-      `;
-      return c.json(created[0], 201);
+      try {
+        const body = await c.req.json<{ name: string }>();
+        const created = await sql`
+          INSERT INTO "Budget" (id, name, total_amount, spent, created_at, updated_at) 
+          VALUES (gen_random_uuid(), ${body.name}, 0, 0, NOW(), NOW()) 
+          RETURNING *
+        `;
+        return c.json(created[0], 201);
+      } catch (error) {
+        console.error('Database error:', error);
+        return c.json({ error: 'Failed to create budget', details: String(error) }, 500);
+      }
     });
     app.patch('/api/budgets/:id', async (c) => {
-      const { id } = c.req.param();
-      const body = await c.req.json<{ name: string }>();
-      const updated = await sql`
-        UPDATE "Budget" 
-        SET name = ${body.name}, "updatedAt" = NOW() 
-        WHERE id = ${id} 
-        RETURNING *
-      `;
-      return c.json(updated[0]);
+      try {
+        const { id } = c.req.param();
+        const body = await c.req.json<{ name: string }>();
+        const updated = await sql`
+          UPDATE "Budget" 
+          SET name = ${body.name}, updated_at = NOW() 
+          WHERE id = ${id} 
+          RETURNING *
+        `;
+        return c.json(updated[0]);
+      } catch (error) {
+        console.error('Database error:', error);
+        return c.json({ error: 'Failed to update budget', details: String(error) }, 500);
+      }
     });
     app.delete('/api/budgets/:id', async (c) => {
-      const { id } = c.req.param();
-      await sql`DELETE FROM "Budget" WHERE id = ${id}`;
-      return c.json({ ok: true });
+      try {
+        const { id } = c.req.param();
+        await sql`DELETE FROM "Budget" WHERE id = ${id}`;
+        return c.json({ ok: true });
+      } catch (error) {
+        console.error('Database error:', error);
+        return c.json({ error: 'Failed to delete budget', details: String(error) }, 500);
+      }
     });
 
     return app.fetch(req, env, ctx);
