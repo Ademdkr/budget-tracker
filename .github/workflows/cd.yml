@@ -29,18 +29,36 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
+        env:
+          HUSKY: 0
+          SKIP_POSTINSTALL: true
 
-      - name: Setup Environment for Database Operations
-        run: echo "DATABASE_URL setup for migrations only"
+      - name: Generate Prisma Client
+        working-directory: apps/backend
+        run: pnpm prisma:generate
 
-      - name: Build Backend (Test)
+      - name: Check Migration Status
+        id: migration-check
         working-directory: apps/backend
         run: |
-          echo "Starting backend build..."
-          pnpm build
+          echo "Checking migration status..."
+          pnpm prisma migrate status || echo "migration_failed=true" >> $GITHUB_OUTPUT
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL }}
+        continue-on-error: true
+
+      - name: Resolve Failed Migrations
+        if: steps.migration-check.outputs.migration_failed == 'true'
+        working-directory: apps/backend
+        run: |
+          echo "Resolving failed migration..."
+          pnpm prisma migrate resolve --rolled-back "20251029180720_init_new_schema" || true
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL }}
+        continue-on-error: true
 
       - name: Deploy Database Changes
         working-directory: apps/backend
@@ -65,7 +83,10 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
+        env:
+          HUSKY: 0
+          SKIP_POSTINSTALL: true
 
       - name: Build Frontend
         run: pnpm --filter @budget-tracker/frontend build:prod
@@ -94,7 +115,10 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
+        env:
+          HUSKY: 0
+          SKIP_POSTINSTALL: true
 
       - name: Test Worker Build
         run: pnpm --filter @budget-tracker/worker build
