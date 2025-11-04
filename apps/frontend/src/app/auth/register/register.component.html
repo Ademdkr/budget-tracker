@@ -10,13 +10,19 @@
         <!-- Email Field -->
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>E-Mail</mat-label>
-          <input matInput 
-                 type="email" 
-                 formControlName="email"
-                 placeholder="ihre@email.com"
-                 [class.mat-mdc-input-invalid]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
+          <input
+            matInput
+            type="email"
+            formControlName="email"
+            placeholder="ihre@email.com"
+            [class.mat-mdc-input-invalid]="
+              registerForm.get('email')?.invalid && registerForm.get('email')?.touched
+            "
+          />
           <mat-icon matPrefix>email</mat-icon>
-          <mat-error *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.invalid">
+          <mat-error
+            *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.invalid"
+          >
             {{ getErrorMessage('email') }}
           </mat-error>
         </mat-form-field>
@@ -24,25 +30,38 @@
         <!-- Password Field -->
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Passwort</mat-label>
-          <input matInput 
-                 [type]="hidePassword ? 'password' : 'text'"
-                 formControlName="password"
-                 placeholder="Mindestens 8 Zeichen"
-                 [class.mat-mdc-input-invalid]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
+          <input
+            matInput
+            [type]="hidePassword ? 'password' : 'text'"
+            formControlName="password"
+            placeholder="Mindestens 8 Zeichen"
+            [class.mat-mdc-input-invalid]="
+              registerForm.get('password')?.invalid && registerForm.get('password')?.touched
+            "
+          />
           <mat-icon matPrefix>lock</mat-icon>
-          <button mat-icon-button 
-                  matSuffix 
-                  type="button"
-                  (click)="hidePassword = !hidePassword"
-                  [attr.aria-label]="'Passwort ' + (hidePassword ? 'anzeigen' : 'verbergen')"
-                  [attr.aria-pressed]="!hidePassword">
-            <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="hidePassword = !hidePassword"
+            [attr.aria-label]="'Passwort ' + (hidePassword ? 'anzeigen' : 'verbergen')"
+            [attr.aria-pressed]="!hidePassword"
+          >
+            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
           </button>
-          <mat-error *ngIf="registerForm.get('password')?.touched && registerForm.get('password')?.invalid">
+          <mat-error
+            *ngIf="registerForm.get('password')?.touched && registerForm.get('password')?.invalid"
+          >
             {{ getErrorMessage('password') }}
           </mat-error>
-          <mat-hint *ngIf="registerForm.get('password')?.hasError('passwordStrength') && registerForm.get('password')?.touched" 
-                    class="password-hint">
+          <mat-hint
+            *ngIf="
+              registerForm.get('password')?.hasError('passwordStrength') &&
+              registerForm.get('password')?.touched
+            "
+            class="password-hint"
+          >
             {{ getPasswordStrengthText() }}
           </mat-hint>
         </mat-form-field>
@@ -50,21 +69,35 @@
         <!-- Confirm Password Field -->
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Passwort wiederholen</mat-label>
-          <input matInput 
-                 [type]="hideConfirmPassword ? 'password' : 'text'"
-                 formControlName="confirmPassword"
-                 placeholder="Passwort bestätigen"
-                 [class.mat-mdc-input-invalid]="(registerForm.get('confirmPassword')?.invalid || registerForm.hasError('passwordMismatch')) && registerForm.get('confirmPassword')?.touched">
+          <input
+            matInput
+            [type]="hideConfirmPassword ? 'password' : 'text'"
+            formControlName="confirmPassword"
+            placeholder="Passwort bestätigen"
+            [class.mat-mdc-input-invalid]="
+              (registerForm.get('confirmPassword')?.invalid ||
+                registerForm.hasError('passwordMismatch')) &&
+              registerForm.get('confirmPassword')?.touched
+            "
+          />
           <mat-icon matPrefix>lock</mat-icon>
-          <button mat-icon-button 
-                  matSuffix 
-                  type="button"
-                  (click)="hideConfirmPassword = !hideConfirmPassword"
-                  [attr.aria-label]="'Passwort ' + (hideConfirmPassword ? 'anzeigen' : 'verbergen')"
-                  [attr.aria-pressed]="!hideConfirmPassword">
-            <mat-icon>{{hideConfirmPassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="hideConfirmPassword = !hideConfirmPassword"
+            [attr.aria-label]="'Passwort ' + (hideConfirmPassword ? 'anzeigen' : 'verbergen')"
+            [attr.aria-pressed]="!hideConfirmPassword"
+          >
+            <mat-icon>{{ hideConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
           </button>
-          <mat-error *ngIf="registerForm.get('confirmPassword')?.touched && (registerForm.get('confirmPassword')?.invalid || registerForm.hasError('passwordMismatch'))">
+          <mat-error
+            *ngIf="
+              registerForm.get('confirmPassword')?.touched &&
+              (registerForm.get('confirmPassword')?.invalid ||
+                registerForm.hasError('passwordMismatch'))
+            "
+          >
             {{ getErrorMessage('confirmPassword') }}
           </mat-error>
         </mat-form-field>
@@ -76,11 +109,13 @@
         </div>
 
         <!-- Submit Button -->
-        <button mat-raised-button 
-                color="primary" 
-                type="submit"
-                class="full-width register-button"
-                [disabled]="isLoading">
+        <button
+          mat-raised-button
+          color="primary"
+          type="submit"
+          class="full-width register-button"
+          [disabled]="isLoading"
+        >
           <mat-spinner *ngIf="isLoading" diameter="20" class="button-spinner"></mat-spinner>
           <span *ngIf="!isLoading">Registrieren</span>
         </button>

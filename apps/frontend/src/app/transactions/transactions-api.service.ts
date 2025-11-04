@@ -52,7 +52,7 @@ export interface TransactionFilters {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class TransactionsApiService {
   private api = inject(ApiService);
@@ -73,20 +73,34 @@ export class TransactionsApiService {
     }
 
     return this.api.get<unknown[]>(endpoint).pipe(
-      map(transactions => transactions.map((tRaw) => {
-        type RawTxn = { categoryId?: string; budgetId?: string; category?: { id?: string; name?: string } | string | null; date: string | Date } & Record<string, unknown>;
-        const t = tRaw as RawTxn;
-        const catId = t.categoryId ?? (typeof t.category === 'object' && t.category ? t.category.id : undefined);
-        const catName = typeof t.category === 'string' ? t.category : (typeof t.category === 'object' && t.category ? t.category.name : undefined);
-        const legacyCategory = typeof t.category === 'string' ? t.category : undefined;
-        return {
-          ...(t as object),
-          category: catName ?? legacyCategory,
-          categoryId: catId,
-          budgetId: t.budgetId,
-          date: new Date(t.date)
-        } as Transaction;
-      }))
+      map((transactions) =>
+        transactions.map((tRaw) => {
+          type RawTxn = {
+            categoryId?: string;
+            budgetId?: string;
+            category?: { id?: string; name?: string } | string | null;
+            date: string | Date;
+          } & Record<string, unknown>;
+          const t = tRaw as RawTxn;
+          const catId =
+            t.categoryId ??
+            (typeof t.category === 'object' && t.category ? t.category.id : undefined);
+          const catName =
+            typeof t.category === 'string'
+              ? t.category
+              : typeof t.category === 'object' && t.category
+                ? t.category.name
+                : undefined;
+          const legacyCategory = typeof t.category === 'string' ? t.category : undefined;
+          return {
+            ...(t as object),
+            category: catName ?? legacyCategory,
+            categoryId: catId,
+            budgetId: t.budgetId,
+            date: new Date(t.date),
+          } as Transaction;
+        }),
+      ),
     );
   }
 
@@ -96,19 +110,31 @@ export class TransactionsApiService {
   getById(id: string): Observable<Transaction> {
     return this.api.get<unknown>(`transactions/${id}`).pipe(
       map((tRaw) => {
-        type RawTxn = { categoryId?: string; budgetId?: string; category?: { id?: string; name?: string } | string | null; date: string | Date } & Record<string, unknown>;
+        type RawTxn = {
+          categoryId?: string;
+          budgetId?: string;
+          category?: { id?: string; name?: string } | string | null;
+          date: string | Date;
+        } & Record<string, unknown>;
         const t = tRaw as RawTxn;
-        const catId = t.categoryId ?? (typeof t.category === 'object' && t.category ? t.category.id : undefined);
-        const catName = typeof t.category === 'string' ? t.category : (typeof t.category === 'object' && t.category ? t.category.name : undefined);
+        const catId =
+          t.categoryId ??
+          (typeof t.category === 'object' && t.category ? t.category.id : undefined);
+        const catName =
+          typeof t.category === 'string'
+            ? t.category
+            : typeof t.category === 'object' && t.category
+              ? t.category.name
+              : undefined;
         const legacyCategory = typeof t.category === 'string' ? t.category : undefined;
         return {
           ...(t as object),
           category: catName ?? legacyCategory,
           categoryId: catId,
           budgetId: t.budgetId,
-          date: new Date(t.date)
+          date: new Date(t.date),
         } as Transaction;
-      })
+      }),
     );
   }
 
@@ -118,19 +144,31 @@ export class TransactionsApiService {
   create(dto: CreateTransactionDto): Observable<Transaction> {
     return this.api.post<unknown>('transactions', dto).pipe(
       map((tRaw) => {
-        type RawTxn = { categoryId?: string; budgetId?: string; category?: { id?: string; name?: string } | string | null; date: string | Date } & Record<string, unknown>;
+        type RawTxn = {
+          categoryId?: string;
+          budgetId?: string;
+          category?: { id?: string; name?: string } | string | null;
+          date: string | Date;
+        } & Record<string, unknown>;
         const t = tRaw as RawTxn;
-        const catId = t.categoryId ?? (typeof t.category === 'object' && t.category ? t.category.id : undefined);
-        const catName = typeof t.category === 'string' ? t.category : (typeof t.category === 'object' && t.category ? t.category.name : undefined);
+        const catId =
+          t.categoryId ??
+          (typeof t.category === 'object' && t.category ? t.category.id : undefined);
+        const catName =
+          typeof t.category === 'string'
+            ? t.category
+            : typeof t.category === 'object' && t.category
+              ? t.category.name
+              : undefined;
         const legacyCategory = typeof t.category === 'string' ? t.category : undefined;
         return {
           ...(t as object),
           category: catName ?? legacyCategory,
           categoryId: catId,
           budgetId: t.budgetId,
-          date: new Date(t.date)
+          date: new Date(t.date),
         } as Transaction;
-      })
+      }),
     );
   }
 
@@ -140,19 +178,31 @@ export class TransactionsApiService {
   update(id: string, dto: UpdateTransactionDto): Observable<Transaction> {
     return this.api.patch<unknown>(`transactions/${id}`, dto).pipe(
       map((tRaw) => {
-        type RawTxn = { categoryId?: string; budgetId?: string; category?: { id?: string; name?: string } | string | null; date: string | Date } & Record<string, unknown>;
+        type RawTxn = {
+          categoryId?: string;
+          budgetId?: string;
+          category?: { id?: string; name?: string } | string | null;
+          date: string | Date;
+        } & Record<string, unknown>;
         const t = tRaw as RawTxn;
-        const catId = t.categoryId ?? (typeof t.category === 'object' && t.category ? t.category.id : undefined);
-        const catName = typeof t.category === 'string' ? t.category : (typeof t.category === 'object' && t.category ? t.category.name : undefined);
+        const catId =
+          t.categoryId ??
+          (typeof t.category === 'object' && t.category ? t.category.id : undefined);
+        const catName =
+          typeof t.category === 'string'
+            ? t.category
+            : typeof t.category === 'object' && t.category
+              ? t.category.name
+              : undefined;
         const legacyCategory = typeof t.category === 'string' ? t.category : undefined;
         return {
           ...(t as object),
           category: catName ?? legacyCategory,
           categoryId: catId,
           budgetId: t.budgetId,
-          date: new Date(t.date)
+          date: new Date(t.date),
         } as Transaction;
-      })
+      }),
     );
   }
 

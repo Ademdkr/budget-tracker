@@ -269,12 +269,7 @@ export function registerTransactionRoutes(app: Hono<any>, sql: NeonQueryFunction
         }),
       );
 
-      console.log(
-        '✅ Import completed - Successful:',
-        result.successful,
-        'Errors:',
-        result.errors,
-      );
+      console.log('✅ Import completed - Successful:', result.successful, 'Errors:', result.errors);
       return c.json({
         ...result,
         createdTransactions: serializedTransactions,

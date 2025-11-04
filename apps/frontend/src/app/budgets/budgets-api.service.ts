@@ -49,7 +49,7 @@ export interface BudgetWithStats {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class BudgetsApiService {
   private api = inject(ApiService);
@@ -92,15 +92,19 @@ export class BudgetsApiService {
   /**
    * Get budgets with calculated statistics for a specific period and account
    */
-  getBudgetsWithStats(year?: number, month?: number, accountId?: string): Observable<BudgetWithStats[]> {
+  getBudgetsWithStats(
+    year?: number,
+    month?: number,
+    accountId?: string,
+  ): Observable<BudgetWithStats[]> {
     const params = new URLSearchParams();
     if (year) params.append('year', year.toString());
     if (month) params.append('month', month.toString());
     if (accountId) params.append('accountId', accountId);
-    
+
     const queryString = params.toString();
     const url = queryString ? `budgets/with-stats?${queryString}` : 'budgets/with-stats';
-    
+
     return this.api.get<BudgetWithStats[]>(url);
   }
 }

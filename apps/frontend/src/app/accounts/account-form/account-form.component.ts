@@ -29,7 +29,7 @@ export enum AccountType {
   CREDIT_CARD = 'CREDIT_CARD',
   INVESTMENT = 'INVESTMENT',
   CASH = 'CASH',
-  OTHER = 'OTHER'
+  OTHER = 'OTHER',
 }
 
 export interface AccountDialogData {
@@ -50,11 +50,11 @@ export interface AccountDialogData {
     MatButtonModule,
     MatIconModule,
     MatSnackBarModule,
-    MatSlideToggleModule
+    MatSlideToggleModule,
   ],
   templateUrl: './account-form.component.html',
 
-  styleUrls: ['./account-form.component.scss']
+  styleUrls: ['./account-form.component.scss'],
 })
 export class AccountFormComponent implements OnInit {
   accountForm: FormGroup;
@@ -65,38 +65,38 @@ export class AccountFormComponent implements OnInit {
       value: AccountType.CHECKING,
       label: 'Girokonto',
       icon: 'account_balance',
-      color: '#2196F3'
+      color: '#2196F3',
     },
     {
       value: AccountType.SAVINGS,
       label: 'Sparkonto',
       icon: 'savings',
-      color: '#4CAF50'
+      color: '#4CAF50',
     },
     {
       value: AccountType.CREDIT_CARD,
       label: 'Kreditkarte',
       icon: 'credit_card',
-      color: '#FF9800'
+      color: '#FF9800',
     },
     {
       value: AccountType.INVESTMENT,
       label: 'Anlagekonto',
       icon: 'trending_up',
-      color: '#9C27B0'
+      color: '#9C27B0',
     },
     {
       value: AccountType.CASH,
       label: 'Bargeld',
       icon: 'payments',
-      color: '#795548'
+      color: '#795548',
     },
     {
       value: AccountType.OTHER,
       label: 'Sonstiges',
       icon: 'more_horiz',
-      color: '#607D8B'
-    }
+      color: '#607D8B',
+    },
   ];
 
   private fb = inject(FormBuilder);
@@ -127,7 +127,7 @@ export class AccountFormComponent implements OnInit {
       type: [AccountType.CHECKING, [Validators.required]],
       balance: [0, [Validators.required]],
       note: [''],
-      isActive: [true]
+      isActive: [true],
     });
 
     console.log('📝 Form created with values:', form.value);
@@ -141,7 +141,7 @@ export class AccountFormComponent implements OnInit {
       type: account.type,
       balance: account.balance,
       note: account.note || '',
-      isActive: account.isActive
+      isActive: account.isActive,
     });
 
     // Remove balance control for edit mode
@@ -172,7 +172,7 @@ export class AccountFormComponent implements OnInit {
         name: formValue.name.trim(),
         type: formValue.type,
         note: formValue.note?.trim() || undefined,
-        isActive: formValue.isActive
+        isActive: formValue.isActive,
       };
 
       this.accountsApi.update(this.data.account.id, updateData).subscribe({
@@ -180,13 +180,13 @@ export class AccountFormComponent implements OnInit {
           this.isSubmitting = false;
           this.dialogRef.close({
             action: 'edit',
-            account: account
+            account: account,
           });
         },
         error: (error) => {
           console.error('Error updating account:', error);
           this.isSubmitting = false;
-        }
+        },
       });
     } else {
       // Create new account
@@ -196,7 +196,7 @@ export class AccountFormComponent implements OnInit {
         type: formValue.type,
         balance: formValue.balance || 0,
         note: formValue.note?.trim() || undefined,
-        isActive: formValue.isActive
+        isActive: formValue.isActive,
       };
       console.log('📤 Create data:', createData);
 
@@ -206,13 +206,13 @@ export class AccountFormComponent implements OnInit {
           this.isSubmitting = false;
           this.dialogRef.close({
             action: 'create',
-            account: account
+            account: account,
           });
         },
         error: (error) => {
           console.error('❌ Error creating account:', error);
           this.isSubmitting = false;
-        }
+        },
       });
     }
   }
@@ -220,7 +220,9 @@ export class AccountFormComponent implements OnInit {
   onCancel(): void {
     if (this.accountForm.dirty) {
       // In a real app, you might want to show a confirmation dialog
-      const confirmLeave = confirm('Möchten Sie wirklich abbrechen? Ungespeicherte Änderungen gehen verloren.');
+      const confirmLeave = confirm(
+        'Möchten Sie wirklich abbrechen? Ungespeicherte Änderungen gehen verloren.',
+      );
       if (!confirmLeave) {
         return;
       }
@@ -238,7 +240,7 @@ export class AccountFormComponent implements OnInit {
         type: AccountType.CHECKING,
         balance: 0,
         note: '',
-        isActive: true
+        isActive: true,
       });
     }
     this.accountForm.markAsUntouched();
@@ -246,10 +248,13 @@ export class AccountFormComponent implements OnInit {
 
   private markFormGroupTouched(): void {
     console.log('👆 Marking form fields as touched');
-    Object.keys(this.accountForm.controls).forEach(key => {
+    Object.keys(this.accountForm.controls).forEach((key) => {
       const control = this.accountForm.get(key);
       if (control) {
-        console.log(`📝 Field ${key}: value=${control.value}, valid=${control.valid}, errors=`, control.errors);
+        console.log(
+          `📝 Field ${key}: value=${control.value}, valid=${control.valid}, errors=`,
+          control.errors,
+        );
         control.markAsTouched();
       }
     });
@@ -257,6 +262,6 @@ export class AccountFormComponent implements OnInit {
 
   // Helper method to get account type info
   getAccountTypeInfo(type: AccountType) {
-    return this.accountTypes.find(t => t.value === type);
+    return this.accountTypes.find((t) => t.value === type);
   }
 }

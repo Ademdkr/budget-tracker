@@ -87,7 +87,7 @@ export class CategoriesComponent extends BaseComponent implements OnInit, OnDest
   ngOnInit() {
     // BaseComponent initialisieren
     this.initializeLoadingState();
-    
+
     // Zuerst den AccountSelectionService initialisieren
     this.accountSelection.initialize();
 
@@ -104,7 +104,6 @@ export class CategoriesComponent extends BaseComponent implements OnInit, OnDest
 
   private loadCategories() {
     this.setLoading();
-    
 
     const selectedAccountId = this.accountSelection.getSelectedAccountId();
     console.log('🔍 Loading categories with accountId:', selectedAccountId);
@@ -170,14 +169,16 @@ export class CategoriesComponent extends BaseComponent implements OnInit, OnDest
     try {
       // Get selected account ID to filter transactions
       const selectedAccountId = this.accountSelection.getSelectedAccountId();
-      
+
       // Wenn kein Account ausgewählt ist, keine Stats laden
       if (!selectedAccountId) {
         console.log('⚠️ No account selected, skipping transaction stats');
         return;
       }
 
-      const transactions = await this.transactionsApi.getAll({ accountId: selectedAccountId }).toPromise();
+      const transactions = await this.transactionsApi
+        .getAll({ accountId: selectedAccountId })
+        .toPromise();
       type CatStats = {
         incomeCount: number;
         incomeTotal: number;
@@ -498,7 +499,7 @@ export class CategoriesComponent extends BaseComponent implements OnInit, OnDest
   }
 
   clearAccountFilter(): void {
-    this.accountSelection.clearSelection().catch(err => {
+    this.accountSelection.clearSelection().catch((err) => {
       console.error('Error clearing account filter:', err);
     });
   }

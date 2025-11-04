@@ -307,10 +307,7 @@ export function registerCategoryRoutes(app: Hono<any>, sql: NeonQueryFunction<fa
       return c.json(updated[0]);
     } catch (error) {
       console.error('Database error:', error);
-      return c.json(
-        { error: 'Failed to assign category to account', details: String(error) },
-        500,
-      );
+      return c.json({ error: 'Failed to assign category to account', details: String(error) }, 500);
     }
   });
 

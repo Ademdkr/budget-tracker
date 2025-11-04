@@ -81,7 +81,7 @@ export interface AccountCategory {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AccountsApiService {
   private api = inject(ApiService);
@@ -131,17 +131,19 @@ export class AccountsApiService {
     accountCount: number;
     activeAccounts: number;
   }> {
-    return this.api.get<{
-      totalBalance: number;
-      activeAccounts: number;
-      totalAccounts: number;
-    }>('accounts/statistics').pipe(
-      map(stats => ({
-        totalBalance: stats.totalBalance,
-        accountCount: stats.totalAccounts,
-        activeAccounts: stats.activeAccounts
-      }))
-    );
+    return this.api
+      .get<{
+        totalBalance: number;
+        activeAccounts: number;
+        totalAccounts: number;
+      }>('accounts/statistics')
+      .pipe(
+        map((stats) => ({
+          totalBalance: stats.totalBalance,
+          accountCount: stats.totalAccounts,
+          activeAccounts: stats.activeAccounts,
+        })),
+      );
   }
 
   /**
@@ -193,7 +195,7 @@ export class AccountsApiService {
    */
   getActiveAccount(): Observable<Account | null> {
     return this.getAll().pipe(
-      map(accounts => accounts.find(account => account.isActive) || null)
+      map((accounts) => accounts.find((account) => account.isActive) || null),
     );
   }
 }

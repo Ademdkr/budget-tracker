@@ -15,7 +15,7 @@ export class LoadingInterceptor implements HttpInterceptor {
       finalize(() => {
         // Stop loading when request completes (success or error)
         this.loadingService.setLoading(false);
-      })
+      }),
     );
   }
 }

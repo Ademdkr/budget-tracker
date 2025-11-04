@@ -13,14 +13,16 @@ async function updateUncategorizedTransactions() {
   // Finde alle Transaktionen ohne categoryId
   const uncategorizedTransactions = await prisma.transaction.findMany({
     where: {
-      categoryId: null
+      categoryId: null,
     },
     include: {
-      budget: true
-    }
+      budget: true,
+    },
   });
 
-  console.log(`Found ${uncategorizedTransactions.length} uncategorized transactions`);
+  console.log(
+    `Found ${uncategorizedTransactions.length} uncategorized transactions`,
+  );
 
   if (uncategorizedTransactions.length === 0) {
     console.log('No uncategorized transactions found. All good!');
@@ -32,14 +34,14 @@ async function updateUncategorizedTransactions() {
 
   for (const transaction of uncategorizedTransactions) {
     const budgetId = transaction.budgetId;
-    
+
     if (!budgetMiscCategories.has(budgetId)) {
       // Prüfe, ob bereits eine "Sonstiges" Kategorie für dieses Budget existiert
       let miscCategory = await prisma.category.findFirst({
         where: {
           budgetId: budgetId,
-          name: 'Sonstiges'
-        }
+          name: 'Sonstiges',
+        },
       });
 
       // Falls nicht, erstelle eine neue
@@ -47,13 +49,16 @@ async function updateUncategorizedTransactions() {
         miscCategory = await prisma.category.create({
           data: {
             name: 'Sonstiges',
-            description: 'Verschiedene Transaktionen ohne spezifische Kategorie',
+            description:
+              'Verschiedene Transaktionen ohne spezifische Kategorie',
             color: '#9E9E9E',
             icon: '📝',
             budgetId: budgetId,
           },
         });
-        console.log(`Created "Sonstiges" category for budget: ${transaction.budget.name}`);
+        console.log(
+          `Created "Sonstiges" category for budget: ${transaction.budget.name}`,
+        );
       }
 
       budgetMiscCategories.set(budgetId, miscCategory.id);
@@ -62,13 +67,15 @@ async function updateUncategorizedTransactions() {
     // Aktualisiere die Transaktion mit der "Sonstiges" Kategorie
     await prisma.transaction.update({
       where: { id: transaction.id },
-      data: { categoryId: budgetMiscCategories.get(budgetId) }
+      data: { categoryId: budgetMiscCategories.get(budgetId) },
     });
 
     console.log(`Updated transaction: ${transaction.title} -> Sonstiges`);
   }
 
-  console.log(`Successfully updated ${uncategorizedTransactions.length} transactions`);
+  console.log(
+    `Successfully updated ${uncategorizedTransactions.length} transactions`,
+  );
 }
 
 updateUncategorizedTransactions()

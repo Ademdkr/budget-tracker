@@ -20,7 +20,7 @@ export interface CSVImportOptions {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ImportApiService {
   private api = inject(ApiService);
@@ -84,21 +84,25 @@ export class ImportApiService {
   /**
    * Get import history
    */
-  getImportHistory(): Observable<Array<{
-    id: string;
-    fileName: string;
-    importedAt: Date | string;
-    importedCount: number;
-    failedCount: number;
-    status: 'success' | 'partial' | 'failed';
-  }>> {
-    return this.api.get<Array<{
+  getImportHistory(): Observable<
+    Array<{
       id: string;
       fileName: string;
       importedAt: Date | string;
       importedCount: number;
       failedCount: number;
       status: 'success' | 'partial' | 'failed';
-    }>>('import/history');
+    }>
+  > {
+    return this.api.get<
+      Array<{
+        id: string;
+        fileName: string;
+        importedAt: Date | string;
+        importedCount: number;
+        failedCount: number;
+        status: 'success' | 'partial' | 'failed';
+      }>
+    >('import/history');
   }
 }

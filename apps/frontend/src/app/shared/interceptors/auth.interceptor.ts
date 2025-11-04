@@ -14,7 +14,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
 
   // Skip auth header for login/register endpoints
-  if (req.url.includes('/auth/login') || req.url.includes('/auth/register') || req.url.includes('/auth/refresh')) {
+  if (
+    req.url.includes('/auth/login') ||
+    req.url.includes('/auth/register') ||
+    req.url.includes('/auth/refresh')
+  ) {
     return next(req);
   }
 
@@ -26,7 +30,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   if (token) {
     const user = authService.getStoredUser();
     const headers: { [key: string]: string } = {
-      Authorization: `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
     };
 
     // Add user ID to headers if available
@@ -35,13 +39,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     }
 
     authReq = req.clone({
-      setHeaders: headers
+      setHeaders: headers,
     });
   }
 
   // Handle response
   return next(authReq).pipe(
-    catchError(error => {
+    catchError((error) => {
       // If 401 Unauthorized, try to refresh token
       if (error.status === 401 && !req.url.includes('/auth/refresh')) {
         const refreshToken = authService.getRefreshToken();
@@ -54,7 +58,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
               const newToken = authService.getAccessToken();
               const user = authService.getStoredUser();
               const retryHeaders: { [key: string]: string } = {
-                Authorization: `Bearer ${newToken}`
+                Authorization: `Bearer ${newToken}`,
               };
 
               // Add user ID to retry headers if available
@@ -63,16 +67,16 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
               }
 
               const retryReq = req.clone({
-                setHeaders: retryHeaders
+                setHeaders: retryHeaders,
               });
               return next(retryReq);
             }),
-            catchError(refreshError => {
+            catchError((refreshError) => {
               // Refresh failed, redirect to login
               console.error('Token refresh failed:', refreshError);
               void router.navigate(['/auth/login']);
               return throwError(() => refreshError);
-            })
+            }),
           );
         } else {
           // No refresh token, redirect to login
@@ -83,6 +87,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
       // For other errors, just pass them through
       return throwError(() => error);
-    })
+    }),
   );
 };

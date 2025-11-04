@@ -7,13 +7,31 @@ interface UiTransactionFilter {
   searchText?: string;
   type?: 'INCOME' | 'EXPENSE' | 'all';
 }
-import { Component, OnInit, AfterViewInit, inject, ViewChild, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  AfterViewInit,
+  inject,
+  ViewChild,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+} from '@angular/core';
 import { TransactionsApiService, Transaction } from './transactions-api.service';
 import { CategoriesApiService, Category } from '../categories/categories-api.service';
 import { AccountSelectionService } from '../shared/services/account-selection.service';
 import { BaseComponent } from '../shared/components/base.component';
 import { CommonModule } from '@angular/common';
-import { Observable, combineLatest, switchMap, map, startWith, of, debounceTime, distinctUntilChanged, tap } from 'rxjs';
+import {
+  Observable,
+  combineLatest,
+  switchMap,
+  map,
+  startWith,
+  of,
+  debounceTime,
+  distinctUntilChanged,
+  tap,
+} from 'rxjs';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
@@ -34,11 +52,11 @@ import { MaterialModule } from '../shared/material.module';
     ReactiveFormsModule,
     MaterialModule,
     RouterModule,
-    ScrollingModule
+    ScrollingModule,
   ],
   templateUrl: './transactions.component.html',
   styleUrl: './transactions.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TransactionsComponent extends BaseComponent implements OnInit, AfterViewInit {
   protected componentKey = 'transactions';
@@ -65,8 +83,6 @@ export class TransactionsComponent extends BaseComponent implements OnInit, Afte
   // UI states
   isEmpty = false;
   noAccountSelected = false;
-  
-
 
   // Table configuration
   displayedColumns: string[] = ['date', 'category', 'amount', 'note', 'actions'];
@@ -95,7 +111,7 @@ export class TransactionsComponent extends BaseComponent implements OnInit, Afte
       categories: [[]],
       // accounts: [[]],
       searchText: [''],
-      type: ['all']
+      type: ['all'],
     });
   }
 
@@ -104,13 +120,13 @@ export class TransactionsComponent extends BaseComponent implements OnInit, Afte
   ngOnInit() {
     // BaseComponent initialisieren
     this.initializeLoadingState();
-    
+
     // Observable-based streams setup
     this.setupObservableStreams();
 
     // Observable streams handle account changes automatically, no manual subscription needed
     this.setupFilterSubscription();
-    
+
     // Account Selection Service initialisieren und dann Daten laden
     this.initializeAndLoadData();
   }
@@ -118,7 +134,7 @@ export class TransactionsComponent extends BaseComponent implements OnInit, Afte
   private async initializeAndLoadData() {
     // Warte auf die Initialisierung des AccountSelectionService
     await this.accountSelection.initialize();
-    
+
     // Dann Initial data laden
     this.loadInitialData();
   }
@@ -137,17 +153,21 @@ export class TransactionsComponent extends BaseComponent implements OnInit, Afte
 
   private loadInitialData() {
     const selectedAccountId = this.accountSelection.getSelectedAccountId();
-    
+
     // Lade Kategorien zuerst
     if (selectedAccountId) {
-      this.categoriesApi.getAll(selectedAccountId).toPromise().then(categories => {
-        this.categories = categories ?? [];
-        // Dann Transaktionen laden
-        this.loadTransactions();
-      }).catch(() => {
-        this.categories = [];
-        this.loadTransactions();
-      });
+      this.categoriesApi
+        .getAll(selectedAccountId)
+        .toPromise()
+        .then((categories) => {
+          this.categories = categories ?? [];
+          // Dann Transaktionen laden
+          this.loadTransactions();
+        })
+        .catch(() => {
+          this.categories = [];
+          this.loadTransactions();
+        });
     } else {
       this.categories = [];
       this.loadTransactions();
@@ -172,44 +192,50 @@ export class TransactionsComponent extends BaseComponent implements OnInit, Afte
 
     const filters = { accountId: selectedAccountId };
 
-    this.transactionsApi.getAll(filters).toPromise().then(transactions => {
-      // Map transactions with category information
-      this.transactions = (transactions ?? []).map(transaction => {
-        const category = this.categories.find(c => c.id === transaction.categoryId);
-        return {
-          ...transaction,
-          category: category?.name || 'Unbekannt',
-          categoryEmoji: category?.icon || category?.emoji || '📝',
-          note: transaction.description || transaction.note || '',
-          type: category?.transactionType || transaction.type || 'EXPENSE' // Derive type from category
-        };
+    this.transactionsApi
+      .getAll(filters)
+      .toPromise()
+      .then((transactions) => {
+        // Map transactions with category information
+        this.transactions = (transactions ?? []).map((transaction) => {
+          const category = this.categories.find((c) => c.id === transaction.categoryId);
+          return {
+            ...transaction,
+            category: category?.name || 'Unbekannt',
+            categoryEmoji: category?.icon || category?.emoji || '📝',
+            note: transaction.description || transaction.note || '',
+            type: category?.transactionType || transaction.type || 'EXPENSE', // Derive type from category
+          };
+        });
+
+        this.totalTransactions = this.transactions.length;
+
+        // Debug: Log transaction types
+        const typeDistribution = this.transactions.reduce(
+          (acc, t) => {
+            acc[t.type] = (acc[t.type] || 0) + 1;
+            return acc;
+          },
+          {} as Record<string, number>,
+        );
+        console.log('📊 Transaction type distribution:', typeDistribution);
+
+        // DataSource direkt initialisieren und Sort/Paginator binden
+        this.dataSource = new MatTableDataSource<Transaction>(this.transactions);
+        this.dataSource.paginator = this.paginator;
+        this.dataSource.sort = this.sort;
+        this.applyFilters();
+        this.checkEmptyState();
+        this.setSuccess(this.transactions.length === 0);
+        this.initialLoadCompleted = true;
+        this.cdr.markForCheck();
+      })
+      .catch(() => {
+        this.setError('Fehler beim Laden der Transaktionen');
+        this.initialLoadCompleted = true;
+        this.cdr.markForCheck();
       });
-
-      this.totalTransactions = this.transactions.length;
-
-      // Debug: Log transaction types
-      const typeDistribution = this.transactions.reduce((acc, t) => {
-        acc[t.type] = (acc[t.type] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-      console.log('📊 Transaction type distribution:', typeDistribution);
-
-      // DataSource direkt initialisieren und Sort/Paginator binden
-      this.dataSource = new MatTableDataSource<Transaction>(this.transactions);
-      this.dataSource.paginator = this.paginator;
-      this.dataSource.sort = this.sort;
-      this.applyFilters();
-      this.checkEmptyState();
-      this.setSuccess(this.transactions.length === 0);
-      this.initialLoadCompleted = true;
-      this.cdr.markForCheck();
-    }).catch(() => {
-      this.setError('Fehler beim Laden der Transaktionen');
-      this.initialLoadCompleted = true;
-      this.cdr.markForCheck();
-    });
   }
-
 
   private setupFilterSubscription() {
     this.filterForm.valueChanges.subscribe(() => {
@@ -223,7 +249,7 @@ export class TransactionsComponent extends BaseComponent implements OnInit, Afte
 
     // Date range filter
     if (filters.dateFrom) {
-      filteredTransactions = filteredTransactions.filter(t => {
+      filteredTransactions = filteredTransactions.filter((t) => {
         const transactionDate = new Date(t.date);
         const fromDate = new Date(filters.dateFrom!);
         fromDate.setHours(0, 0, 0, 0); // Start of day
@@ -231,7 +257,7 @@ export class TransactionsComponent extends BaseComponent implements OnInit, Afte
       });
     }
     if (filters.dateTo) {
-      filteredTransactions = filteredTransactions.filter(t => {
+      filteredTransactions = filteredTransactions.filter((t) => {
         const transactionDate = new Date(t.date);
         const toDate = new Date(filters.dateTo!);
         toDate.setHours(23, 59, 59, 999); // End of day
@@ -241,8 +267,8 @@ export class TransactionsComponent extends BaseComponent implements OnInit, Afte
 
     // Category filter
     if (filters.categories && filters.categories.length > 0) {
-      filteredTransactions = filteredTransactions.filter(t =>
-        t.category && filters.categories!.includes(t.category)
+      filteredTransactions = filteredTransactions.filter(
+        (t) => t.category && filters.categories!.includes(t.category),
       );
     }
 
@@ -257,10 +283,17 @@ export class TransactionsComponent extends BaseComponent implements OnInit, Afte
     if (filters.type && filters.type !== 'all') {
       console.log('🔍 Filtering by type:', filters.type);
       const beforeFilter = filteredTransactions.length;
-      filteredTransactions = filteredTransactions.filter(t => {
+      filteredTransactions = filteredTransactions.filter((t) => {
         const matches = t.type === filters.type;
         if (!matches) {
-          console.log('❌ Transaction type mismatch:', t.type, 'vs', filters.type, 'for transaction:', t.id);
+          console.log(
+            '❌ Transaction type mismatch:',
+            t.type,
+            'vs',
+            filters.type,
+            'for transaction:',
+            t.id,
+          );
         }
         return matches;
       });
@@ -270,10 +303,11 @@ export class TransactionsComponent extends BaseComponent implements OnInit, Afte
     // Text search
     if (filters.searchText && filters.searchText.trim()) {
       const searchTerm = filters.searchText.toLowerCase().trim();
-      filteredTransactions = filteredTransactions.filter(t =>
-        (t.category && t.category.toLowerCase().includes(searchTerm)) ||
-        // t.account.toLowerCase().includes(searchTerm) ||
-        (t.note && t.note.toLowerCase().includes(searchTerm))
+      filteredTransactions = filteredTransactions.filter(
+        (t) =>
+          (t.category && t.category.toLowerCase().includes(searchTerm)) ||
+          // t.account.toLowerCase().includes(searchTerm) ||
+          (t.note && t.note.toLowerCase().includes(searchTerm)),
       );
     }
 
@@ -293,7 +327,7 @@ export class TransactionsComponent extends BaseComponent implements OnInit, Afte
       dateTo: null,
       categories: [],
       searchText: '',
-      type: 'all'
+      type: 'all',
     });
   }
 
@@ -310,8 +344,13 @@ export class TransactionsComponent extends BaseComponent implements OnInit, Afte
       return categories;
     }
 
-    console.log('🔍 Filtering categories for account:', selectedAccount.name, 'ID:', selectedAccount.id);
-    const filtered = categories.filter(cat => {
+    console.log(
+      '🔍 Filtering categories for account:',
+      selectedAccount.name,
+      'ID:',
+      selectedAccount.id,
+    );
+    const filtered = categories.filter((cat) => {
       const accountId = cat.account?.id || cat.accountId;
       const matches = accountId === selectedAccount.id;
       if (matches) {
@@ -336,10 +375,10 @@ export class TransactionsComponent extends BaseComponent implements OnInit, Afte
           categories: this.categories,
           // accounts: this.accounts
         },
-        disableClose: true
+        disableClose: true,
       });
 
-      dialogRef.afterClosed().subscribe(result => {
+      dialogRef.afterClosed().subscribe((result) => {
         if (result) {
           // Lade die Transaktionen neu
           this.loadTransactions();
@@ -360,10 +399,10 @@ export class TransactionsComponent extends BaseComponent implements OnInit, Afte
           categories: this.categories,
           // accounts: this.accounts
         },
-        disableClose: true
+        disableClose: true,
       });
 
-      dialogRef.afterClosed().subscribe(result => {
+      dialogRef.afterClosed().subscribe((result) => {
         if (result) {
           // Lade die Transaktionen neu
           this.loadTransactions();
@@ -375,7 +414,7 @@ export class TransactionsComponent extends BaseComponent implements OnInit, Afte
   deleteTransaction(transaction: Transaction) {
     // Simple confirm dialog for now - could be enhanced with custom dialog
     const confirmed = window.confirm(
-      `Möchten Sie die Transaktion "${transaction.note || transaction.category}" wirklich löschen?`
+      `Möchten Sie die Transaktion "${transaction.note || transaction.category}" wirklich löschen?`,
     );
 
     if (confirmed) {
@@ -387,7 +426,7 @@ export class TransactionsComponent extends BaseComponent implements OnInit, Afte
         error: (error) => {
           console.error('Fehler beim Löschen:', error);
           alert('Fehler beim Löschen der Transaktion');
-        }
+        },
       });
     }
   }
@@ -407,7 +446,7 @@ export class TransactionsComponent extends BaseComponent implements OnInit, Afte
   }
 
   getCategoryColor(categoryName: string): string {
-    const category = this.categories.find(c => c.name === categoryName);
+    const category = this.categories.find((c) => c.name === categoryName);
     return category?.color || '#666';
   }
 
@@ -426,7 +465,7 @@ export class TransactionsComponent extends BaseComponent implements OnInit, Afte
   }
 
   clearAccountFilter(): void {
-    this.accountSelection.clearSelection().catch(err => {
+    this.accountSelection.clearSelection().catch((err) => {
       console.error('Error clearing account filter:', err);
     });
   }
@@ -438,64 +477,68 @@ export class TransactionsComponent extends BaseComponent implements OnInit, Afte
   private setupObservableStreams() {
     // Observable stream für gefilterte Kategorien
     this.filteredCategories$ = this.accountSelection.selectedAccount$.pipe(
-      switchMap(account => {
+      switchMap((account) => {
         if (!account) return of([]);
         return this.categoriesApi.getAll(account.id);
       }),
-      tap(categories => {
+      tap((categories) => {
         // Categories auch in die Component-Property setzen für andere Verwendungen
         this.categories = categories;
-      })
+      }),
     );
 
     // Observable stream für gefilterte Transaktionen mit Debounce für Search
     const searchControl = this.filterForm.get('searchText');
-    const debouncedSearch$ = searchControl ? 
-      searchControl.valueChanges.pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        startWith(searchControl.value)
-      ) : of('');
+    const debouncedSearch$ = searchControl
+      ? searchControl.valueChanges.pipe(
+          debounceTime(300),
+          distinctUntilChanged(),
+          startWith(searchControl.value),
+        )
+      : of('');
 
     const otherFilters$ = this.filterForm.valueChanges.pipe(
-      map(form => ({ ...form, searchText: undefined })),
-      startWith({ ...this.filterForm.value, searchText: undefined })
+      map((form) => ({ ...form, searchText: undefined })),
+      startWith({ ...this.filterForm.value, searchText: undefined }),
     );
 
     this.filteredTransactions$ = combineLatest([
       this.accountSelection.selectedAccount$,
       otherFilters$,
       debouncedSearch$,
-      this.filteredCategories$ // Categories als Dependency hinzufügen
+      this.filteredCategories$, // Categories als Dependency hinzufügen
     ]).pipe(
       switchMap(([account, filters, searchText, categories]) => {
         if (!account) return of([]);
         return this.transactionsApi.getAll({ accountId: account.id }).pipe(
-          map(transactions => {
-            const enrichedTransactions = (transactions ?? []).map(transaction => {
-              const category = categories.find(c => c.id === transaction.categoryId);
+          map((transactions) => {
+            const enrichedTransactions = (transactions ?? []).map((transaction) => {
+              const category = categories.find((c) => c.id === transaction.categoryId);
               return {
                 ...transaction,
                 category: category?.name || 'Unbekannt',
                 categoryEmoji: category?.icon || category?.emoji || '📝',
                 note: transaction.description || transaction.note || '',
-                type: category?.transactionType || transaction.type || 'EXPENSE'
+                type: category?.transactionType || transaction.type || 'EXPENSE',
               };
             });
             const filtersWithSearch = { ...filters, searchText };
             return this.applyFiltersToTransactions(enrichedTransactions, filtersWithSearch);
-          })
+          }),
         );
-      })
+      }),
     );
   }
 
-  private applyFiltersToTransactions(transactions: Transaction[], filters: UiTransactionFilter): Transaction[] {
+  private applyFiltersToTransactions(
+    transactions: Transaction[],
+    filters: UiTransactionFilter,
+  ): Transaction[] {
     let filtered = [...transactions];
 
     // Date range filter
     if (filters.dateFrom) {
-      filtered = filtered.filter(t => {
+      filtered = filtered.filter((t) => {
         const transactionDate = new Date(t.date);
         const fromDate = new Date(filters.dateFrom!);
         fromDate.setHours(0, 0, 0, 0);
@@ -504,7 +547,7 @@ export class TransactionsComponent extends BaseComponent implements OnInit, Afte
     }
 
     if (filters.dateTo) {
-      filtered = filtered.filter(t => {
+      filtered = filtered.filter((t) => {
         const transactionDate = new Date(t.date);
         const toDate = new Date(filters.dateTo!);
         toDate.setHours(23, 59, 59, 999);
@@ -514,25 +557,24 @@ export class TransactionsComponent extends BaseComponent implements OnInit, Afte
 
     // Category filter
     if (filters.categories && filters.categories.length > 0) {
-      filtered = filtered.filter(t => filters.categories!.includes(t.category || ''));
+      filtered = filtered.filter((t) => filters.categories!.includes(t.category || ''));
     }
 
     // Type filter
     if (filters.type && filters.type !== 'all') {
-      filtered = filtered.filter(t => t.type === filters.type);
+      filtered = filtered.filter((t) => t.type === filters.type);
     }
 
     // Search text filter
     if (filters.searchText) {
       const searchTerm = filters.searchText.toLowerCase();
-      filtered = filtered.filter(t =>
-        (t.note?.toLowerCase().includes(searchTerm)) ||
-        (t.category?.toLowerCase().includes(searchTerm))
+      filtered = filtered.filter(
+        (t) =>
+          t.note?.toLowerCase().includes(searchTerm) ||
+          t.category?.toLowerCase().includes(searchTerm),
       );
     }
 
     return filtered;
   }
-
-
 }

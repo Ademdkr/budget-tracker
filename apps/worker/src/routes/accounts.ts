@@ -94,9 +94,7 @@ export function registerAccountRoutes(app: Hono<any>, sql: NeonQueryFunction<fal
           let totalIncome = 0;
           let totalExpenses = 0;
 
-          console.log(
-            `\n🔍 Calculating balance for account: ${account.name} (ID: ${account.id})`,
-          );
+          console.log(`\n🔍 Calculating balance for account: ${account.name} (ID: ${account.id})`);
           console.log(`💰 Initial Balance: ${calculatedBalance}€`);
 
           for (const tx of transactions) {

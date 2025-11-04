@@ -1,6 +1,12 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  Validators,
+  ReactiveFormsModule,
+  AbstractControl,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -32,10 +38,10 @@ export interface CategoryFormData {
     MatIconModule,
     MatRadioModule,
     MatCardModule,
-    MatChipsModule
+    MatChipsModule,
   ],
   templateUrl: './category-form.component.html',
-  styleUrl: './category-form.component.scss'
+  styleUrl: './category-form.component.scss',
 })
 export class CategoryFormComponent implements OnInit {
   private fb = inject(FormBuilder);
@@ -49,17 +55,61 @@ export class CategoryFormComponent implements OnInit {
 
   // Predefined options
   commonEmojis = [
-    '💰', '💻', '📈', '🏪', '🎁', '💼', '🏦', '📊',
-    '🍕', '🚗', '🎬', '💊', '🛍️', '📚', '🏠', '🛡️',
-    '⚡', '🎮', '🏋️', '✈️', '📱', '🎵', '🍔', '☕',
-    '🚇', '🏥', '📝', '🧾', '💡', '🔧', '🎯', '🌟'
+    '💰',
+    '💻',
+    '📈',
+    '🏪',
+    '🎁',
+    '💼',
+    '🏦',
+    '📊',
+    '🍕',
+    '🚗',
+    '🎬',
+    '💊',
+    '🛍️',
+    '📚',
+    '🏠',
+    '🛡️',
+    '⚡',
+    '🎮',
+    '🏋️',
+    '✈️',
+    '📱',
+    '🎵',
+    '🍔',
+    '☕',
+    '🚇',
+    '🏥',
+    '📝',
+    '🧾',
+    '💡',
+    '🔧',
+    '🎯',
+    '🌟',
   ];
 
   predefinedColors = [
-    '#4caf50', '#2196f3', '#9c27b0', '#ff9800', '#f44336',
-    '#e91e63', '#03dac6', '#ff5722', '#673ab7', '#795548',
-    '#607d8b', '#009688', '#3f51b5', '#8bc34a', '#ffc107',
-    '#ff4081', '#00bcd4', '#cddc39', '#ffeb3b', '#9e9e9e'
+    '#4caf50',
+    '#2196f3',
+    '#9c27b0',
+    '#ff9800',
+    '#f44336',
+    '#e91e63',
+    '#03dac6',
+    '#ff5722',
+    '#673ab7',
+    '#795548',
+    '#607d8b',
+    '#009688',
+    '#3f51b5',
+    '#8bc34a',
+    '#ffc107',
+    '#ff4081',
+    '#00bcd4',
+    '#cddc39',
+    '#ffeb3b',
+    '#9e9e9e',
   ];
 
   constructor() {}
@@ -73,12 +123,12 @@ export class CategoryFormComponent implements OnInit {
     this.categoryForm = this.fb.group({
       name: [
         data.category?.name || '',
-        [Validators.required, Validators.minLength(2), this.uniqueNameValidator.bind(this)]
+        [Validators.required, Validators.minLength(2), this.uniqueNameValidator.bind(this)],
       ],
       emoji: [data.category?.emoji || '💰', [Validators.required]],
       color: [data.category?.color || '#4caf50', [Validators.required]],
       type: [data.category?.type || 'expense', [Validators.required]],
-      description: [data.category?.description || '']
+      description: [data.category?.description || ''],
     });
 
     // Pre-select first available emoji if none selected
@@ -116,7 +166,7 @@ export class CategoryFormComponent implements OnInit {
   getPreviewStyle() {
     return {
       'background-color': this.categoryForm.get('color')?.value,
-      'color': this.getContrastColor(this.categoryForm.get('color')?.value)
+      color: this.getContrastColor(this.categoryForm.get('color')?.value),
     };
   }
 
@@ -139,7 +189,7 @@ export class CategoryFormComponent implements OnInit {
       const formValue = this.categoryForm.value;
       const category = {
         ...formValue,
-        name: formValue.name.trim()
+        name: formValue.name.trim(),
       };
 
       // Simulate API call

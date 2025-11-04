@@ -11,7 +11,7 @@ export interface ApiError {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ApiService {
   private http = inject(HttpClient);
@@ -21,7 +21,8 @@ export class ApiService {
    * GET request
    */
   get<T>(endpoint: string, params?: HttpParams): Observable<T> {
-    return this.http.get<T>(`${this.baseUrl}/${endpoint}`, { params })
+    return this.http
+      .get<T>(`${this.baseUrl}/${endpoint}`, { params })
       .pipe(catchError(this.handleError));
   }
 
@@ -29,7 +30,8 @@ export class ApiService {
    * POST request
    */
   post<T>(endpoint: string, body: unknown): Observable<T> {
-    return this.http.post<T>(`${this.baseUrl}/${endpoint}`, body)
+    return this.http
+      .post<T>(`${this.baseUrl}/${endpoint}`, body)
       .pipe(catchError(this.handleError));
   }
 
@@ -37,15 +39,15 @@ export class ApiService {
    * PUT request
    */
   put<T>(endpoint: string, body: unknown): Observable<T> {
-    return this.http.put<T>(`${this.baseUrl}/${endpoint}`, body)
-      .pipe(catchError(this.handleError));
+    return this.http.put<T>(`${this.baseUrl}/${endpoint}`, body).pipe(catchError(this.handleError));
   }
 
   /**
    * PATCH request
    */
   patch<T>(endpoint: string, body: unknown): Observable<T> {
-    return this.http.patch<T>(`${this.baseUrl}/${endpoint}`, body)
+    return this.http
+      .patch<T>(`${this.baseUrl}/${endpoint}`, body)
       .pipe(catchError(this.handleError));
   }
 
@@ -53,15 +55,15 @@ export class ApiService {
    * DELETE request
    */
   delete<T>(endpoint: string): Observable<T> {
-    return this.http.delete<T>(`${this.baseUrl}/${endpoint}`)
-      .pipe(catchError(this.handleError));
+    return this.http.delete<T>(`${this.baseUrl}/${endpoint}`).pipe(catchError(this.handleError));
   }
 
   /**
    * POST file upload
    */
   upload<T>(endpoint: string, formData: FormData): Observable<T> {
-    return this.http.post<T>(`${this.baseUrl}/${endpoint}`, formData)
+    return this.http
+      .post<T>(`${this.baseUrl}/${endpoint}`, formData)
       .pipe(catchError(this.handleError));
   }
 

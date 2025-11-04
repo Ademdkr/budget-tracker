@@ -1,4 +1,11 @@
-import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  inject,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -78,7 +85,7 @@ export interface MonthlyBudgetSummary {
   ],
   templateUrl: './budgets.component.html',
   styleUrl: './budgets.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy {
   protected componentKey = 'budgets';
@@ -159,7 +166,7 @@ export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy
   private async initializeAndLoadData() {
     // Warte auf die Initialisierung des AccountSelectionService
     await this.accountSelection.initialize();
-    
+
     // Dann Initial load
     this.loadBudgetsForPeriod();
   }
@@ -190,11 +197,9 @@ export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy
     });
   }
 
-
-
   private loadBudgetsForPeriod() {
     console.log('🔄 Loading budgets for period:', this.selectedYear, this.selectedMonth);
-    
+
     // Verwende die ausgewählte Account-ID
     const selectedAccountId = this.accountSelection.getSelectedAccountId();
 
@@ -212,16 +217,18 @@ export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy
 
     // Verwende die neue optimierte API mit bereits berechneten Statistiken
     const budgetMonth = this.selectedMonth + 1; // Frontend: 0-11, Backend: 1-12
-    
+
     // Lade nur Kategorien für Dialog-Zwecke, Budgets kommen bereits mit allen Statistiken
     Promise.all([
-      this.budgetsApi.getBudgetsWithStats(this.selectedYear, budgetMonth, selectedAccountId).toPromise(),
+      this.budgetsApi
+        .getBudgetsWithStats(this.selectedYear, budgetMonth, selectedAccountId)
+        .toPromise(),
       this.categoriesApi.getAll(selectedAccountId).toPromise(), // Nur für Dialog-Zwecke
     ])
       .then(([budgetsWithStats, categories]) => {
         // Store categories for reuse in dialogs
         this.availableCategories = categories ?? [];
-        
+
         console.log('📊 Budgets with stats loaded:', budgetsWithStats?.length);
         console.log('📊 Sample budget data:', budgetsWithStats?.[0]);
 
@@ -237,7 +244,9 @@ export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy
           remainingAmount: budget.remainingAmount,
           percentageUsed: budget.percentageUsed,
           transactionCount: budget.transactionCount,
-          lastTransactionDate: budget.lastTransactionDate ? new Date(budget.lastTransactionDate) : undefined,
+          lastTransactionDate: budget.lastTransactionDate
+            ? new Date(budget.lastTransactionDate)
+            : undefined,
           month: budget.month - 1, // Backend: 1-12, Frontend: 0-11
           year: budget.year,
           createdAt: budget.createdAt ? new Date(budget.createdAt) : new Date(),
@@ -615,7 +624,7 @@ export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy
   }
 
   clearAccountFilter(): void {
-    this.accountSelection.clearSelection().catch(err => {
+    this.accountSelection.clearSelection().catch((err) => {
       console.error('Error clearing account filter:', err);
     });
   }

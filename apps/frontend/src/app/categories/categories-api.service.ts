@@ -8,7 +8,7 @@ export interface Category {
   id: string;
   name: string;
   accountId?: string; // Direct foreign key to Account
-  icon?: string;  // Backend field name
+  icon?: string; // Backend field name
   emoji?: string; // Alias for icon (for compatibility)
   color?: string;
   type?: 'income' | 'expense' | 'both';
@@ -53,9 +53,9 @@ export interface CreateCategoryDto {
   name: string;
   description?: string;
   color?: string;
-  emoji?: string;           // Backend expects 'emoji'
+  emoji?: string; // Backend expects 'emoji'
   transactionType: 'INCOME' | 'EXPENSE'; // Required by backend
-  accountId: string;        // Required by backend (changed from budgetId)
+  accountId: string; // Required by backend (changed from budgetId)
 }
 
 export interface UpdateCategoryDto {
@@ -67,7 +67,7 @@ export interface UpdateCategoryDto {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class CategoriesApiService {
   private api = inject(ApiService);
@@ -109,7 +109,7 @@ export class CategoriesApiService {
    */
   delete(id: string): Observable<void> {
     return this.api.delete<Category>(`categories/${id}`).pipe(
-      map(() => void 0) // Response ignorieren und void zurückgeben
+      map(() => void 0), // Response ignorieren und void zurückgeben
     );
   }
 

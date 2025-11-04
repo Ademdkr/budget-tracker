@@ -21,16 +21,13 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    provideHttpClient(
-      withFetch(),
-      withInterceptors([authInterceptor])
-    ),
+    provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
     provideAnimationsAsync(),
     provideCharts(withDefaultRegisterables()),
     {
       provide: HTTP_INTERCEPTORS,
       useClass: LoadingInterceptor,
-      multi: true
+      multi: true,
     },
     { provide: LOCALE_ID, useValue: 'de-DE' },
     { provide: MAT_DATE_LOCALE, useValue: 'de-DE' },

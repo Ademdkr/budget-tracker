@@ -551,7 +551,7 @@ export class AccountsComponent extends BaseComponent implements OnInit {
 
     this.checkEmptyState();
     this.calculateStats();
-    
+
     // Wenn das neue Konto aktiv ist, setze es als ausgewähltes Konto
     if (accountData.isActive) {
       const selectedAccount: SelectedAccount = {
@@ -562,13 +562,13 @@ export class AccountsComponent extends BaseComponent implements OnInit {
         icon: this.getAccountTypeInfo(newAccountWithStats.type)?.icon,
         color: this.getAccountTypeInfo(newAccountWithStats.type)?.color,
       };
-      
+
       // Aktualisiere den AccountSelectionService (das Konto wurde bereits im Backend als aktiv gesetzt)
-      this.accountSelection.selectAccount(selectedAccount).catch(err => {
+      this.accountSelection.selectAccount(selectedAccount).catch((err) => {
         console.error('Error updating selected account:', err);
       });
     }
-    
+
     // Trigger Change Detection um die View zu aktualisieren
     this.cdr.detectChanges();
   }
@@ -687,14 +687,16 @@ export class AccountsComponent extends BaseComponent implements OnInit {
 
           // Account Selection Service aktualisieren falls nötig
           if (account.isActive) {
-            this.accountSelection.selectAccount({
-              id: account.id,
-              name: account.name,
-              type: account.type,
-              balance: account.balance,
-            }).catch(err => {
-              console.error('Error updating selected account:', err);
-            });
+            this.accountSelection
+              .selectAccount({
+                id: account.id,
+                name: account.name,
+                type: account.type,
+                balance: account.balance,
+              })
+              .catch((err) => {
+                console.error('Error updating selected account:', err);
+              });
           }
         } else {
           console.warn('⚠️ Account not found in local list, reloading all data');
@@ -722,10 +724,10 @@ export class AccountsComponent extends BaseComponent implements OnInit {
 
     if (confirmed) {
       console.log('📤 Sending delete request for account ID:', account.id);
-      
+
       // Prüfe ob das zu löschende Konto das aktuell ausgewählte ist
       const isSelectedAccount = this.isAccountSelected(account.id);
-      
+
       this.accountsApi.delete(account.id).subscribe({
         next: (response) => {
           console.log('✅ Account delete response:', response);
@@ -736,15 +738,15 @@ export class AccountsComponent extends BaseComponent implements OnInit {
 
           this.calculateStats();
           console.log('✅ Account removed from UI list. Remaining accounts:', this.accounts.length);
-          
+
           // Wenn das gelöschte Konto das ausgewählte war, hebe die Auswahl auf
           if (isSelectedAccount) {
             console.log('🔄 Deleted account was selected, clearing selection');
-            this.accountSelection.clearSelection().catch(err => {
+            this.accountSelection.clearSelection().catch((err) => {
               console.error('Error clearing account selection:', err);
             });
           }
-          
+
           // Trigger Change Detection
           this.cdr.detectChanges();
         },
@@ -780,7 +782,7 @@ export class AccountsComponent extends BaseComponent implements OnInit {
     // Wichtig: Prüfe ob es ein aktives Konto in der Datenbank gibt
     // Wenn KEIN Konto isActive=true hat, bedeutet das, der User hat die Auswahl aufgehoben
     const hasAnyActiveAccount = this.accounts.some((account) => account.isActive);
-    
+
     if (!hasAnyActiveAccount) {
       console.log('ℹ️ No active accounts found - user has cleared selection, skipping auto-select');
       return;
@@ -804,7 +806,7 @@ export class AccountsComponent extends BaseComponent implements OnInit {
   }
 
   clearAccountFilter(): void {
-    this.accountSelection.clearSelection().catch(err => {
+    this.accountSelection.clearSelection().catch((err) => {
       console.error('Error clearing account filter:', err);
     });
   }

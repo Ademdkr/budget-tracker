@@ -28,10 +28,10 @@ import { MatDividerModule } from '@angular/material/divider';
     MatProgressSpinnerModule,
     MatIconModule,
     MatSelectModule,
-    MatDividerModule
+    MatDividerModule,
   ],
   templateUrl: './login.component.html',
-  styleUrl: './login.component.scss'
+  styleUrl: './login.component.scss',
 })
 export class LoginComponent implements OnInit {
   private fb = inject(FormBuilder);
@@ -49,7 +49,7 @@ export class LoginComponent implements OnInit {
   constructor() {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+      password: ['', [Validators.required, Validators.minLength(6)]],
     });
   }
 
@@ -67,14 +67,14 @@ export class LoginComponent implements OnInit {
       error: (error) => {
         console.error('Error loading users:', error);
         this.isLoadingUsers = false;
-      }
+      },
     });
   }
 
   selectUser(user: UserInfo) {
     this.loginForm.patchValue({
       email: user.email,
-      password: 'password' // Default password for all demo users
+      password: 'password', // Default password for all demo users
     });
   }
 
@@ -94,7 +94,7 @@ export class LoginComponent implements OnInit {
         error: (error) => {
           this.isLoading = false;
           this.errorMessage = error.message || 'Ungültige E-Mail oder Passwort';
-        }
+        },
       });
     } else {
       this.markFormGroupTouched();
@@ -106,7 +106,7 @@ export class LoginComponent implements OnInit {
   }
 
   private markFormGroupTouched() {
-    Object.keys(this.loginForm.controls).forEach(key => {
+    Object.keys(this.loginForm.controls).forEach((key) => {
       const control = this.loginForm.get(key);
       control?.markAsTouched();
     });

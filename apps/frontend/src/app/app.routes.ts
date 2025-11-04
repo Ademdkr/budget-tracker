@@ -4,52 +4,57 @@ import { authGuard, guestGuard } from './shared/guards/auth.guard';
 export const routes: Routes = [
   {
     path: 'login',
-    loadComponent: () => import('./auth/login/login.component').then(m => m.LoginComponent),
-    canActivate: [guestGuard]
+    loadComponent: () => import('./auth/login/login.component').then((m) => m.LoginComponent),
+    canActivate: [guestGuard],
   },
   {
     path: 'register',
-    loadComponent: () => import('./auth/register/register.component').then(m => m.RegisterComponent),
-    canActivate: [guestGuard]
+    loadComponent: () =>
+      import('./auth/register/register.component').then((m) => m.RegisterComponent),
+    canActivate: [guestGuard],
   },
   {
     path: '',
-    loadComponent: () => import('./layout/layout.component').then(m => m.LayoutComponent),
+    loadComponent: () => import('./layout/layout.component').then((m) => m.LayoutComponent),
     canActivate: [authGuard],
     children: [
       {
         path: '',
         redirectTo: 'dashboard',
-        pathMatch: 'full'
+        pathMatch: 'full',
       },
       {
         path: 'dashboard',
-        loadComponent: () => import('./dashboard/dashboard.component').then(m => m.DashboardComponent)
+        loadComponent: () =>
+          import('./dashboard/dashboard.component').then((m) => m.DashboardComponent),
       },
       {
         path: 'transactions',
-        loadComponent: () => import('./transactions/transactions.component').then(m => m.TransactionsComponent)
+        loadComponent: () =>
+          import('./transactions/transactions.component').then((m) => m.TransactionsComponent),
       },
       {
         path: 'budgets',
-        loadComponent: () => import('./budgets/budgets.component').then(m => m.BudgetsComponent)
+        loadComponent: () => import('./budgets/budgets.component').then((m) => m.BudgetsComponent),
       },
       {
         path: 'categories',
-        loadComponent: () => import('./categories/categories.component').then(m => m.CategoriesComponent)
+        loadComponent: () =>
+          import('./categories/categories.component').then((m) => m.CategoriesComponent),
       },
       {
         path: 'accounts',
-        loadComponent: () => import('./accounts/accounts.component').then(m => m.AccountsComponent)
+        loadComponent: () =>
+          import('./accounts/accounts.component').then((m) => m.AccountsComponent),
       },
       {
         path: 'import',
-        loadComponent: () => import('./import/import.component').then(m => m.ImportComponent)
-      }
-    ]
+        loadComponent: () => import('./import/import.component').then((m) => m.ImportComponent),
+      },
+    ],
   },
   {
     path: '**',
-    redirectTo: '/login'
-  }
+    redirectTo: '/login',
+  },
 ];

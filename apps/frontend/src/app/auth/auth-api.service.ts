@@ -38,7 +38,7 @@ export interface RefreshTokenDto {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthApiService {
   private api = inject(ApiService);
@@ -50,18 +50,18 @@ export class AuthApiService {
    * Login with email and password
    */
   login(dto: LoginDto): Observable<AuthResponse> {
-    return this.api.post<AuthResponse>('auth/login', dto).pipe(
-      tap(response => this.storeAuthData(response))
-    );
+    return this.api
+      .post<AuthResponse>('auth/login', dto)
+      .pipe(tap((response) => this.storeAuthData(response)));
   }
 
   /**
    * Register new user
    */
   register(dto: RegisterDto): Observable<AuthResponse> {
-    return this.api.post<AuthResponse>('auth/register', dto).pipe(
-      tap(response => this.storeAuthData(response))
-    );
+    return this.api
+      .post<AuthResponse>('auth/register', dto)
+      .pipe(tap((response) => this.storeAuthData(response)));
   }
 
   /**
@@ -73,18 +73,16 @@ export class AuthApiService {
       throw new Error('No refresh token available');
     }
 
-    return this.api.post<AuthResponse>('auth/refresh', { refresh_token: token } as RefreshTokenDto).pipe(
-      tap(response => this.storeAuthData(response))
-    );
+    return this.api
+      .post<AuthResponse>('auth/refresh', { refresh_token: token } as RefreshTokenDto)
+      .pipe(tap((response) => this.storeAuthData(response)));
   }
 
   /**
    * Logout user
    */
   logout(): Observable<void> {
-    return this.api.post<void>('auth/logout', {}).pipe(
-      tap(() => this.clearAuthData())
-    );
+    return this.api.post<void>('auth/logout', {}).pipe(tap(() => this.clearAuthData()));
   }
 
   /**
