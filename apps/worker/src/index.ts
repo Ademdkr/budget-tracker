@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { neon } from '@neondatabase/serverless';
 
-type Env = { 
+type Env = {
   DATABASE_URL: string;
   ENVIRONMENT?: string;
 };
@@ -10,40 +10,49 @@ type Env = {
 export default {
   fetch: async (req: Request, env: Env, ctx: ExecutionContext) => {
     const app = new Hono<{ Bindings: Env }>();
-    
+
     // Check if DATABASE_URL is set
     if (!env.DATABASE_URL) {
       return new Response('DATABASE_URL environment variable is not set', { status: 500 });
     }
-    
+
     const sql = neon(env.DATABASE_URL);
 
     // CORS für Cloudflare Pages Frontend
-    app.use('/*', cors({
-      origin: ['https://budget-tracker-frontend.pages.dev', 'https://7c847dee.budget-tracker-frontend.pages.dev', 'http://localhost:4201'],
-      allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowHeaders: ['Content-Type', 'Authorization'],
-      exposeHeaders: ['Content-Length'],
-      maxAge: 600,
-      credentials: true,
-    }));
+    app.use(
+      '/*',
+      cors({
+        origin: [
+          'https://budget-tracker-frontend.pages.dev',
+          'https://7c847dee.budget-tracker-frontend.pages.dev',
+          'http://localhost:4201',
+        ],
+        allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        allowHeaders: ['Content-Type', 'Authorization', 'X-User-Id'],
+        exposeHeaders: ['Content-Length'],
+        maxAge: 600,
+        credentials: true,
+      }),
+    );
 
     app.get('/', (c) => c.text('Budget Tracker API - Running!'));
-    app.get('/api/health', (c) => c.json({ 
-      status: 'ok', 
-      service: 'Budget Tracker API',
-      ts: new Date().toISOString(),
-      environment: env.ENVIRONMENT || 'production'
-    }));
+    app.get('/api/health', (c) =>
+      c.json({
+        status: 'ok',
+        service: 'Budget Tracker API',
+        ts: new Date().toISOString(),
+        environment: env.ENVIRONMENT || 'production',
+      }),
+    );
 
     // Auth Endpoints
     app.post('/api/auth/login', async (c) => {
       try {
         const { email } = await c.req.json<{ email: string; password: string }>();
-        
+
         // Find user by email
         const users = await sql`SELECT * FROM "User" WHERE email = ${email} LIMIT 1`;
-        
+
         if (users.length === 0) {
           return c.json({ message: 'Ungültige E-Mail oder Passwort' }, 401);
         }
@@ -53,7 +62,7 @@ export default {
         // TODO: In production, use bcrypt to compare password
         // For now, accept any password for demo purposes
         // const isValidPassword = await bcrypt.compare(password, user.password);
-        
+
         // Generate mock JWT tokens
         const accessToken = generateMockToken(user.email, user.id);
         const refreshToken = 'mock-refresh-token-' + Date.now();
@@ -65,8 +74,8 @@ export default {
             id: user.id.toString(),
             name: user.name,
             surname: user.surname,
-            email: user.email
-          }
+            email: user.email,
+          },
         });
       } catch (error) {
         console.error('Login error:', error);
@@ -76,23 +85,23 @@ export default {
 
     app.post('/api/auth/register', async (c) => {
       try {
-        const { email, password, name, surname } = await c.req.json<{ 
-          email: string; 
+        const { email, password, name, surname } = await c.req.json<{
+          email: string;
           password: string;
           name: string;
           surname: string;
         }>();
-        
+
         // Check if user already exists
         const existingUsers = await sql`SELECT id FROM "User" WHERE email = ${email} LIMIT 1`;
-        
+
         if (existingUsers.length > 0) {
           return c.json({ message: 'E-Mail bereits registriert' }, 400);
         }
 
         // TODO: In production, hash password with bcrypt
         // const hashedPassword = await bcrypt.hash(password, 10);
-        
+
         // Create new user
         const newUsers = await sql`
           INSERT INTO "User" (name, surname, email, password, created_at)
@@ -106,16 +115,19 @@ export default {
         const accessToken = generateMockToken(user.email, user.id);
         const refreshToken = 'mock-refresh-token-' + Date.now();
 
-        return c.json({
-          accessToken,
-          refreshToken,
-          user: {
-            id: user.id.toString(),
-            name: user.name,
-            surname: user.surname,
-            email: user.email
-          }
-        }, 201);
+        return c.json(
+          {
+            accessToken,
+            refreshToken,
+            user: {
+              id: user.id.toString(),
+              name: user.name,
+              surname: user.surname,
+              email: user.email,
+            },
+          },
+          201,
+        );
       } catch (error) {
         console.error('Registration error:', error);
         return c.json({ error: 'Registrierung fehlgeschlagen', details: String(error) }, 500);
@@ -129,14 +141,16 @@ export default {
           FROM "User" 
           ORDER BY created_at DESC
         `;
-        
-        return c.json(users.map(user => ({
-          id: user.id.toString(),
-          name: user.name,
-          surname: user.surname,
-          email: user.email,
-          createdAt: user.created_at
-        })));
+
+        return c.json(
+          users.map((user) => ({
+            id: user.id.toString(),
+            name: user.name,
+            surname: user.surname,
+            email: user.email,
+            createdAt: user.created_at,
+          })),
+        );
       } catch (error) {
         console.error('Error fetching users:', error);
         return c.json({ error: 'Failed to fetch users', details: String(error) }, 500);
@@ -145,13 +159,17 @@ export default {
 
     // Helper function to generate mock JWT
     function generateMockToken(email: string, userId: number): string {
-      const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
-      const payload = Buffer.from(JSON.stringify({
-        sub: userId.toString(),
-        email: email,
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
-      })).toString('base64url');
+      const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString(
+        'base64url',
+      );
+      const payload = Buffer.from(
+        JSON.stringify({
+          sub: userId.toString(),
+          email: email,
+          iat: Math.floor(Date.now() / 1000),
+          exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
+        }),
+      ).toString('base64url');
       const signature = 'mock-signature';
       return `${header}.${payload}.${signature}`;
     }
@@ -239,8 +257,13 @@ export default {
     app.post('/api/budgets', async (c) => {
       try {
         const userId = getUserIdFromHeaders(c);
-        const body = await c.req.json<{ category_id: number; total_amount: number; month: number; year: number }>();
-        
+        const body = await c.req.json<{
+          category_id: number;
+          total_amount: number;
+          month: number;
+          year: number;
+        }>();
+
         // Verify category belongs to user
         const category = await sql`
           SELECT c.* FROM "Category" c
@@ -251,7 +274,7 @@ export default {
         if (category.length === 0) {
           return c.json({ error: 'Category not found or access denied' }, 404);
         }
-        
+
         const created = await sql`
           INSERT INTO "Budget" (category_id, total_amount, month, year, created_at, updated_at) 
           VALUES (${body.category_id}, ${body.total_amount}, ${body.month}, ${body.year}, NOW(), NOW()) 
@@ -269,7 +292,7 @@ export default {
         const { id } = c.req.param();
         const userId = getUserIdFromHeaders(c);
         const body = await c.req.json<{ total_amount?: number; month?: number; year?: number }>();
-        
+
         // Verify budget belongs to user
         const check = await sql`
           SELECT b.id FROM "Budget" b
@@ -280,9 +303,9 @@ export default {
         if (check.length === 0) {
           return c.json({ error: 'Budget not found or access denied' }, 404);
         }
-        
+
         const updates: string[] = [];
-        
+
         if (body.total_amount !== undefined) {
           updates.push(`total_amount = ${body.total_amount}`);
         }
@@ -292,7 +315,7 @@ export default {
         if (body.year !== undefined) {
           updates.push(`year = ${body.year}`);
         }
-        
+
         if (updates.length === 0) {
           return c.json({ error: 'No fields to update' }, 400);
         }
@@ -306,11 +329,11 @@ export default {
           WHERE id = ${id} 
           RETURNING *
         `;
-        
+
         if (updated.length === 0) {
           return c.json({ error: 'Budget not found' }, 404);
         }
-        
+
         return c.json(updated[0]);
       } catch (error) {
         console.error('Database error:', error);
@@ -322,7 +345,7 @@ export default {
       try {
         const { id } = c.req.param();
         const userId = getUserIdFromHeaders(c);
-        
+
         // Verify budget belongs to user
         const check = await sql`
           SELECT b.id FROM "Budget" b
@@ -333,7 +356,7 @@ export default {
         if (check.length === 0) {
           return c.json({ error: 'Budget not found or access denied' }, 404);
         }
-        
+
         await sql`DELETE FROM "Budget" WHERE id = ${id}`;
         return c.json({ ok: true });
       } catch (error) {
@@ -345,7 +368,7 @@ export default {
     // ====================================================================
     // ACCOUNTS ENDPOINTS
     // ====================================================================
-    
+
     // Helper function to serialize account data
     function serializeAccount(account: any) {
       return {
@@ -362,20 +385,20 @@ export default {
         transactionCount: account.transaction_count || 0,
       };
     }
-    
+
     app.get('/api/accounts', async (c) => {
       try {
         const userId = getUserIdFromHeaders(c);
         console.log('🔍 GET /api/accounts called for user:', userId);
-        
+
         const accounts = await sql`
           SELECT * FROM "Account" 
           WHERE user_id = ${userId}
           ORDER BY created_at DESC
         `;
-        
+
         console.log('📊 Found accounts:', accounts.length);
-        
+
         return c.json(accounts.map(serializeAccount));
       } catch (error) {
         console.error('Database error:', error);
@@ -390,17 +413,20 @@ export default {
         const accounts = await sql`
           SELECT * FROM "Account" WHERE is_active = true AND user_id = ${userId}
         `;
-        
-        const totalBalance = accounts.reduce((sum: number, acc: any) => 
-          sum + Number(acc.initial_balance), 0);
+
+        const totalBalance = accounts.reduce(
+          (sum: number, acc: any) => sum + Number(acc.initial_balance),
+          0,
+        );
         const activeAccounts = accounts.length;
-        const totalAccountsResult = await sql`SELECT COUNT(*) as count FROM "Account" WHERE user_id = ${userId}`;
+        const totalAccountsResult =
+          await sql`SELECT COUNT(*) as count FROM "Account" WHERE user_id = ${userId}`;
         const totalAccounts = Number(totalAccountsResult[0].count);
-        
+
         return c.json({
           totalBalance,
           activeAccounts,
-          totalAccounts
+          totalAccounts,
         });
       } catch (error) {
         console.error('Database error:', error);
@@ -412,7 +438,7 @@ export default {
       try {
         const userId = getUserIdFromHeaders(c);
         console.log('🔍 GET /api/accounts/with-balances called for user:', userId);
-        
+
         const accounts = await sql`
           SELECT a.*, 
             COUNT(DISTINCT t.id) as transaction_count
@@ -422,56 +448,63 @@ export default {
           GROUP BY a.id
           ORDER BY a.created_at DESC
         `;
-        
+
         console.log('📊 Found accounts:', accounts.length);
-        
+
         // Calculate balances for each account
-        const accountsWithBalances = await Promise.all(accounts.map(async (account: any) => {
-          const transactions = await sql`
+        const accountsWithBalances = await Promise.all(
+          accounts.map(async (account: any) => {
+            const transactions = await sql`
             SELECT t.amount, c.transaction_type, t.date
             FROM "Transaction" t
             JOIN "Category" c ON t.category_id = c.id
             WHERE t.account_id = ${account.id}
             ORDER BY t.date DESC
           `;
-          
-          let calculatedBalance = Number(account.initial_balance);
-          let totalIncome = 0;
-          let totalExpenses = 0;
-          
-          console.log(`\n🔍 Calculating balance for account: ${account.name} (ID: ${account.id})`);
-          console.log(`💰 Initial Balance: ${calculatedBalance}€`);
-          
-          for (const tx of transactions) {
-            const amount = Number(tx.amount);
-            if (tx.transaction_type === 'INCOME') {
-              calculatedBalance += amount;
-              totalIncome += amount;
-            } else if (tx.transaction_type === 'EXPENSE') {
-              calculatedBalance -= amount;
-              totalExpenses += amount;
+
+            let calculatedBalance = Number(account.initial_balance);
+            let totalIncome = 0;
+            let totalExpenses = 0;
+
+            console.log(
+              `\n🔍 Calculating balance for account: ${account.name} (ID: ${account.id})`,
+            );
+            console.log(`💰 Initial Balance: ${calculatedBalance}€`);
+
+            for (const tx of transactions) {
+              const amount = Number(tx.amount);
+              if (tx.transaction_type === 'INCOME') {
+                calculatedBalance += amount;
+                totalIncome += amount;
+              } else if (tx.transaction_type === 'EXPENSE') {
+                calculatedBalance -= amount;
+                totalExpenses += amount;
+              }
             }
-          }
-          
-          console.log(`💵 Final Balance: ${calculatedBalance}€`);
-          console.log(`📊 Total Income: ${totalIncome}€, Total Expenses: ${totalExpenses}€\n`);
-          
-          const lastTransaction = transactions[0];
-          
-          return {
-            ...serializeAccount(account),
-            calculatedBalance,
-            totalIncome,
-            totalExpenses,
-            lastTransactionDate: lastTransaction?.date || null,
-            transactionCount: Number(account.transaction_count)
-          };
-        }));
-        
+
+            console.log(`💵 Final Balance: ${calculatedBalance}€`);
+            console.log(`📊 Total Income: ${totalIncome}€, Total Expenses: ${totalExpenses}€\n`);
+
+            const lastTransaction = transactions[0];
+
+            return {
+              ...serializeAccount(account),
+              calculatedBalance,
+              totalIncome,
+              totalExpenses,
+              lastTransactionDate: lastTransaction?.date || null,
+              transactionCount: Number(account.transaction_count),
+            };
+          }),
+        );
+
         return c.json(accountsWithBalances);
       } catch (error) {
         console.error('Database error:', error);
-        return c.json({ error: 'Failed to fetch accounts with balances', details: String(error) }, 500);
+        return c.json(
+          { error: 'Failed to fetch accounts with balances', details: String(error) },
+          500,
+        );
       }
     });
 
@@ -479,11 +512,12 @@ export default {
       try {
         const userId = getUserIdFromHeaders(c);
         console.log('🔄 POST /api/accounts/recalculate-balances called for user:', userId);
-        
+
         // With the new schema, we only have initialBalance (no balance field)
         // This endpoint returns all accounts (balances are calculated on-the-fly)
-        const accounts = await sql`SELECT * FROM "Account" WHERE user_id = ${userId} ORDER BY created_at DESC`;
-        
+        const accounts =
+          await sql`SELECT * FROM "Account" WHERE user_id = ${userId} ORDER BY created_at DESC`;
+
         console.log('📊 Returning accounts:', accounts.length);
         return c.json(accounts.map(serializeAccount));
       } catch (error) {
@@ -496,7 +530,8 @@ export default {
       try {
         const { id } = c.req.param();
         const userId = getUserIdFromHeaders(c);
-        const rows = await sql`SELECT * FROM "Account" WHERE id = ${id} AND user_id = ${userId} LIMIT 1`;
+        const rows =
+          await sql`SELECT * FROM "Account" WHERE id = ${id} AND user_id = ${userId} LIMIT 1`;
         if (rows.length === 0) {
           return c.json({ error: 'Account not found' }, 404);
         }
@@ -511,19 +546,19 @@ export default {
       try {
         const userId = getUserIdFromHeaders(c);
         console.log('🔄 POST /api/accounts called for user:', userId);
-        
-        const body = await c.req.json<{ 
-          name: string; 
-          type: string; 
+
+        const body = await c.req.json<{
+          name: string;
+          type: string;
           balance: number;
           note?: string;
           isActive?: boolean;
         }>();
-        
+
         console.log('📤 Request body:', body);
-        
+
         const shouldBeActive = body.isActive ?? true;
-        
+
         // If new account should be active, deactivate all other accounts for this user
         if (shouldBeActive) {
           await sql`
@@ -532,7 +567,7 @@ export default {
             WHERE user_id = ${userId} AND is_active = true
           `;
         }
-        
+
         const created = await sql`
           INSERT INTO "Account" (user_id, name, type, initial_balance, note, is_active, created_at, updated_at) 
           VALUES (
@@ -547,7 +582,7 @@ export default {
           ) 
           RETURNING *
         `;
-        
+
         console.log('✅ Account created:', created[0].id);
         return c.json(serializeAccount(created[0]), 201);
       } catch (error) {
@@ -561,23 +596,24 @@ export default {
         const { id } = c.req.param();
         const userId = getUserIdFromHeaders(c);
         console.log('🔄 PATCH /api/accounts/:id called - ID:', id, 'User:', userId);
-        
-        const body = await c.req.json<{ 
-          name?: string; 
+
+        const body = await c.req.json<{
+          name?: string;
           type?: string;
           balance?: number;
-          note?: string; 
+          note?: string;
           isActive?: boolean;
         }>();
-        
+
         console.log('📤 Update body:', body);
-        
+
         // Check if account exists and belongs to user
-        const check = await sql`SELECT * FROM "Account" WHERE id = ${id} AND user_id = ${userId} LIMIT 1`;
+        const check =
+          await sql`SELECT * FROM "Account" WHERE id = ${id} AND user_id = ${userId} LIMIT 1`;
         if (check.length === 0) {
           return c.json({ error: 'Account not found or access denied' }, 404);
         }
-        
+
         // If setting account to active, deactivate all other accounts
         if (body.isActive === true && !check[0].is_active) {
           await sql`
@@ -586,7 +622,7 @@ export default {
             WHERE user_id = ${userId} AND is_active = true AND id != ${id}
           `;
         }
-        
+
         const updated = await sql`
           UPDATE "Account" 
           SET 
@@ -599,11 +635,11 @@ export default {
           WHERE id = ${id} AND user_id = ${userId}
           RETURNING *
         `;
-        
+
         if (updated.length === 0) {
           return c.json({ error: 'Account not found' }, 404);
         }
-        
+
         console.log('✅ Account updated');
         return c.json(serializeAccount(updated[0]));
       } catch (error) {
@@ -616,13 +652,13 @@ export default {
       try {
         const { id } = c.req.param();
         const userId = getUserIdFromHeaders(c);
-        
+
         // Check if account has transactions
         const transactions = await sql`
           SELECT COUNT(*) as count FROM "Transaction" 
           WHERE account_id = ${id}
         `;
-        
+
         if (Number(transactions[0].count) > 0) {
           // Soft delete by setting is_active to false
           const updated = await sql`
@@ -633,7 +669,7 @@ export default {
           `;
           return c.json(updated[0]);
         }
-        
+
         // Hard delete if no transactions
         await sql`DELETE FROM "Account" WHERE id = ${id} AND user_id = ${userId}`;
         return c.json({ ok: true });
@@ -668,13 +704,14 @@ export default {
       try {
         const { accountId } = c.req.param();
         const userId = getUserIdFromHeaders(c);
-        
+
         // Verify account belongs to user
-        const account = await sql`SELECT * FROM "Account" WHERE id = ${accountId} AND user_id = ${userId} LIMIT 1`;
+        const account =
+          await sql`SELECT * FROM "Account" WHERE id = ${accountId} AND user_id = ${userId} LIMIT 1`;
         if (account.length === 0) {
           return c.json({ error: 'Account not found or access denied' }, 404);
         }
-        
+
         // Find all categories that have transactions for this account
         const categories = await sql`
           SELECT DISTINCT c.*, COUNT(t.id) as transaction_count
@@ -684,7 +721,7 @@ export default {
           GROUP BY c.id
           ORDER BY transaction_count DESC
         `;
-        
+
         return c.json(categories);
       } catch (error) {
         console.error('Database error:', error);
@@ -715,7 +752,7 @@ export default {
     app.post('/api/categories', async (c) => {
       try {
         const userId = getUserIdFromHeaders(c);
-        const body = await c.req.json<{ 
+        const body = await c.req.json<{
           account_id: number;
           name: string;
           description?: string;
@@ -723,13 +760,14 @@ export default {
           emoji: string;
           color: string;
         }>();
-        
+
         // Verify account belongs to user
-        const account = await sql`SELECT * FROM "Account" WHERE id = ${body.account_id} AND user_id = ${userId} LIMIT 1`;
+        const account =
+          await sql`SELECT * FROM "Account" WHERE id = ${body.account_id} AND user_id = ${userId} LIMIT 1`;
         if (account.length === 0) {
           return c.json({ error: 'Account not found or access denied' }, 404);
         }
-        
+
         const created = await sql`
           INSERT INTO "Category" (
             account_id, name, description, transaction_type, emoji, color, created_at, updated_at
@@ -757,13 +795,13 @@ export default {
       try {
         const { id } = c.req.param();
         const userId = getUserIdFromHeaders(c);
-        const body = await c.req.json<{ 
-          name?: string; 
-          description?: string; 
-          emoji?: string; 
+        const body = await c.req.json<{
+          name?: string;
+          description?: string;
+          emoji?: string;
           color?: string;
         }>();
-        
+
         // Verify category belongs to user's account
         const check = await sql`
           SELECT c.id FROM "Category" c
@@ -773,7 +811,7 @@ export default {
         if (check.length === 0) {
           return c.json({ error: 'Category not found or access denied' }, 404);
         }
-        
+
         const updated = await sql`
           UPDATE "Category" 
           SET 
@@ -785,11 +823,11 @@ export default {
           WHERE id = ${id} 
           RETURNING *
         `;
-        
+
         if (updated.length === 0) {
           return c.json({ error: 'Category not found' }, 404);
         }
-        
+
         return c.json(updated[0]);
       } catch (error) {
         console.error('Database error:', error);
@@ -801,7 +839,7 @@ export default {
       try {
         const { id } = c.req.param();
         const userId = getUserIdFromHeaders(c);
-        
+
         // Verify category belongs to user's account
         const check = await sql`
           SELECT c.id FROM "Category" c
@@ -811,7 +849,7 @@ export default {
         if (check.length === 0) {
           return c.json({ error: 'Category not found or access denied' }, 404);
         }
-        
+
         await sql`DELETE FROM "Category" WHERE id = ${id}`;
         return c.json({ ok: true });
       } catch (error) {
@@ -825,7 +863,7 @@ export default {
       try {
         const { id, accountId } = c.req.param();
         const userId = getUserIdFromHeaders(c);
-        
+
         // Verify both category and account belong to user
         const categoryCheck = await sql`
           SELECT c.id FROM "Category" c
@@ -835,14 +873,14 @@ export default {
         if (categoryCheck.length === 0) {
           return c.json({ error: 'Category not found or access denied' }, 404);
         }
-        
+
         const accountCheck = await sql`
           SELECT * FROM "Account" WHERE id = ${accountId} AND user_id = ${userId}
         `;
         if (accountCheck.length === 0) {
           return c.json({ error: 'Account not found or access denied' }, 404);
         }
-        
+
         // Update category's accountId
         const updated = await sql`
           UPDATE "Category" 
@@ -850,15 +888,18 @@ export default {
           WHERE id = ${id} 
           RETURNING *
         `;
-        
+
         if (updated.length === 0) {
           return c.json({ error: 'Category not found' }, 404);
         }
-        
+
         return c.json(updated[0]);
       } catch (error) {
         console.error('Database error:', error);
-        return c.json({ error: 'Failed to assign category to account', details: String(error) }, 500);
+        return c.json(
+          { error: 'Failed to assign category to account', details: String(error) },
+          500,
+        );
       }
     });
 
@@ -866,7 +907,7 @@ export default {
       try {
         const { id } = c.req.param();
         const userId = getUserIdFromHeaders(c);
-        
+
         // Verify category belongs to user
         const check = await sql`
           SELECT c.id FROM "Category" c
@@ -876,13 +917,16 @@ export default {
         if (check.length === 0) {
           return c.json({ error: 'Category not found or access denied' }, 404);
         }
-        
+
         // Since categories are directly linked to accounts, we delete the category
         await sql`DELETE FROM "Category" WHERE id = ${id}`;
         return c.json({ ok: true });
       } catch (error) {
         console.error('Database error:', error);
-        return c.json({ error: 'Failed to remove category from account', details: String(error) }, 500);
+        return c.json(
+          { error: 'Failed to remove category from account', details: String(error) },
+          500,
+        );
       }
     });
 
@@ -890,7 +934,7 @@ export default {
       try {
         const { id } = c.req.param();
         const userId = getUserIdFromHeaders(c);
-        
+
         // Get category with its account (verify user ownership)
         const rows = await sql`
           SELECT c.*, a.name as account_name, a.type as account_type
@@ -898,11 +942,11 @@ export default {
           JOIN "Account" a ON c.account_id = a.id
           WHERE c.id = ${id} AND a.user_id = ${userId}
         `;
-        
+
         if (rows.length === 0) {
           return c.json({ error: 'Category not found' }, 404);
         }
-        
+
         return c.json([{ category: rows[0], account: rows[0] }]);
       } catch (error) {
         console.error('Database error:', error);
@@ -951,7 +995,8 @@ export default {
         }>();
 
         // Verify account belongs to user
-        const account = await sql`SELECT * FROM "Account" WHERE id = ${options.targetAccountId} AND user_id = ${userId} LIMIT 1`;
+        const account =
+          await sql`SELECT * FROM "Account" WHERE id = ${options.targetAccountId} AND user_id = ${userId} LIMIT 1`;
         if (account.length === 0) {
           return c.json({ error: 'Account not found or access denied' }, 404);
         }
@@ -962,7 +1007,7 @@ export default {
           skipped: 0,
           errors: 0,
           errorDetails: [] as Array<{ row: number; data: any; error: string }>,
-          createdTransactions: [] as any[]
+          createdTransactions: [] as any[],
         };
 
         // Helper function to parse date
@@ -1024,7 +1069,7 @@ export default {
         // Pre-create "Unbekannt" categories
         const categoryConfigs = [
           { type: 'INCOME', name: 'Unbekannte Einnahmen', emoji: '❓', color: '#4CAF50' },
-          { type: 'EXPENSE', name: 'Unbekannte Ausgaben', emoji: '❓', color: '#F44336' }
+          { type: 'EXPENSE', name: 'Unbekannte Ausgaben', emoji: '❓', color: '#F44336' },
         ];
 
         for (const config of categoryConfigs) {
@@ -1070,9 +1115,8 @@ export default {
 
             const transactionType = parsedAmount >= 0 ? 'INCOME' : 'EXPENSE';
             const absoluteAmount = Math.abs(parsedAmount);
-            const categoryName = transactionType === 'INCOME' 
-              ? 'Unbekannte Einnahmen' 
-              : 'Unbekannte Ausgaben';
+            const categoryName =
+              transactionType === 'INCOME' ? 'Unbekannte Einnahmen' : 'Unbekannte Ausgaben';
 
             // Find category
             const categories = await sql`
@@ -1111,7 +1155,7 @@ export default {
             result.errorDetails.push({
               row: rowNumber,
               data: row,
-              error: error instanceof Error ? error.message : 'Unbekannter Fehler'
+              error: error instanceof Error ? error.message : 'Unbekannter Fehler',
             });
           }
         }
@@ -1146,20 +1190,21 @@ export default {
     app.post('/api/transactions', async (c) => {
       try {
         const userId = getUserIdFromHeaders(c);
-        const body = await c.req.json<{ 
+        const body = await c.req.json<{
           account_id: number;
           category_id?: number;
           amount: number;
           note?: string;
           date: string;
         }>();
-        
+
         // Verify account belongs to user
-        const account = await sql`SELECT * FROM "Account" WHERE id = ${body.account_id} AND user_id = ${userId} LIMIT 1`;
+        const account =
+          await sql`SELECT * FROM "Account" WHERE id = ${body.account_id} AND user_id = ${userId} LIMIT 1`;
         if (account.length === 0) {
           return c.json({ error: 'Account not found or access denied' }, 404);
         }
-        
+
         // Verify category belongs to user (if provided)
         if (body.category_id) {
           const category = await sql`
@@ -1172,7 +1217,7 @@ export default {
             return c.json({ error: 'Category not found or access denied' }, 404);
           }
         }
-        
+
         const created = await sql`
           INSERT INTO "Transaction" (account_id, category_id, amount, note, date, created_at, updated_at) 
           VALUES (
@@ -1198,7 +1243,7 @@ export default {
         const { id } = c.req.param();
         const userId = getUserIdFromHeaders(c);
         const body = await c.req.json<{ amount?: number; note?: string; date?: string }>();
-        
+
         // Verify transaction belongs to user
         const check = await sql`
           SELECT t.id FROM "Transaction" t
@@ -1208,7 +1253,7 @@ export default {
         if (check.length === 0) {
           return c.json({ error: 'Transaction not found or access denied' }, 404);
         }
-        
+
         const updated = await sql`
           UPDATE "Transaction" 
           SET 
@@ -1219,11 +1264,11 @@ export default {
           WHERE id = ${id} 
           RETURNING *
         `;
-        
+
         if (updated.length === 0) {
           return c.json({ error: 'Transaction not found' }, 404);
         }
-        
+
         return c.json(updated[0]);
       } catch (error) {
         console.error('Database error:', error);
@@ -1235,7 +1280,7 @@ export default {
       try {
         const { id } = c.req.param();
         const userId = getUserIdFromHeaders(c);
-        
+
         // Verify transaction belongs to user
         const check = await sql`
           SELECT t.id FROM "Transaction" t
@@ -1245,7 +1290,7 @@ export default {
         if (check.length === 0) {
           return c.json({ error: 'Transaction not found or access denied' }, 404);
         }
-        
+
         await sql`DELETE FROM "Transaction" WHERE id = ${id}`;
         return c.json({ ok: true });
       } catch (error) {
@@ -1256,14 +1301,14 @@ export default {
 
     app.post('/api/transactions', async (c) => {
       try {
-        const body = await c.req.json<{ 
+        const body = await c.req.json<{
           account_id: number;
           category_id?: number;
           amount: number;
           note?: string;
           date: string;
         }>();
-        
+
         const created = await sql`
           INSERT INTO "Transaction" (account_id, category_id, amount, note, date, created_at, updated_at) 
           VALUES (
@@ -1287,13 +1332,13 @@ export default {
     app.patch('/api/transactions/:id', async (c) => {
       try {
         const { id } = c.req.param();
-        const body = await c.req.json<{ 
+        const body = await c.req.json<{
           amount?: number;
           category_id?: number;
           note?: string;
           date?: string;
         }>();
-        
+
         const updated = await sql`
           UPDATE "Transaction" 
           SET 
@@ -1305,11 +1350,11 @@ export default {
           WHERE id = ${id} 
           RETURNING *
         `;
-        
+
         if (updated.length === 0) {
           return c.json({ error: 'Transaction not found' }, 404);
         }
-        
+
         return c.json(updated[0]);
       } catch (error) {
         console.error('Database error:', error);

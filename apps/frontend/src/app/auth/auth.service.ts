@@ -33,7 +33,7 @@ export interface User {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
   private http = inject(HttpClient);
@@ -58,12 +58,13 @@ export class AuthService {
     const apiUrl = `${environment.apiBaseUrl}/auth/login`;
 
     return this.http.post<AuthResponse>(apiUrl, credentials).pipe(
-      tap(response => this.handleAuthSuccess(response)),
-      catchError(error => {
+      tap((response) => this.handleAuthSuccess(response)),
+      catchError((error) => {
         console.error('Login error:', error);
-        const errorMessage = error?.error?.message || 'Login fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.';
+        const errorMessage =
+          error?.error?.message || 'Login fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.';
         return throwError(() => new Error(errorMessage));
-      })
+      }),
     );
   }
 
@@ -71,11 +72,13 @@ export class AuthService {
     const apiUrl = `${environment.apiBaseUrl}/auth/register`;
 
     return this.http.post<AuthResponse>(apiUrl, userData).pipe(
-      tap(response => this.handleAuthSuccess(response)),
-      catchError(error => {
+      tap((response) => this.handleAuthSuccess(response)),
+      catchError((error) => {
         console.error('Registration error:', error);
-        return throwError(() => new Error('Registrierung fehlgeschlagen. Versuchen Sie es später erneut.'));
-      })
+        return throwError(
+          () => new Error('Registrierung fehlgeschlagen. Versuchen Sie es später erneut.'),
+        );
+      }),
     );
   }
 
@@ -97,12 +100,12 @@ export class AuthService {
     const apiUrl = '/api/auth/refresh';
 
     return this.http.post<AuthResponse>(apiUrl, { refreshToken }).pipe(
-      tap(response => this.handleAuthSuccess(response)),
-      catchError(error => {
+      tap((response) => this.handleAuthSuccess(response)),
+      catchError((error) => {
         console.error('Token refresh error:', error);
         this.logout();
         return throwError(() => new Error('Token-Erneuerung fehlgeschlagen'));
-      })
+      }),
     );
   }
 
@@ -189,8 +192,8 @@ export class AuthService {
               id: '1',
               name: 'Test',
               surname: 'User',
-              email: email
-            }
+              email: email,
+            },
           };
           this.handleAuthSuccess(mockResponse);
           resolve(true);
@@ -212,8 +215,8 @@ export class AuthService {
             id: Date.now().toString(),
             name: 'New',
             surname: 'User',
-            email: email
-          }
+            email: email,
+          },
         };
         this.handleAuthSuccess(mockResponse);
         resolve(true);
@@ -223,12 +226,14 @@ export class AuthService {
 
   private generateMockToken(email: string): string {
     const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-    const payload = btoa(JSON.stringify({
-      sub: '1',
-      email: email,
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours
-    }));
+    const payload = btoa(
+      JSON.stringify({
+        sub: '1',
+        email: email,
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
+      }),
+    );
     const signature = 'mock-signature';
     return `${header}.${payload}.${signature}`;
   }
