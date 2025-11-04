@@ -10,6 +10,12 @@ type Env = {
 export default {
   fetch: async (req: Request, env: Env, ctx: ExecutionContext) => {
     const app = new Hono<{ Bindings: Env }>();
+    
+    // Check if DATABASE_URL is set
+    if (!env.DATABASE_URL) {
+      return new Response('DATABASE_URL environment variable is not set', { status: 500 });
+    }
+    
     const sql = neon(env.DATABASE_URL);
 
     // CORS für Cloudflare Pages Frontend
@@ -31,8 +37,13 @@ export default {
     }));
 
     app.get('/api/budgets', async (c) => {
-      const rows = await sql`SELECT * FROM "Budget" ORDER BY "createdAt" DESC`;
-      return c.json(rows);
+      try {
+        const rows = await sql`SELECT * FROM "Budget" ORDER BY "createdAt" DESC`;
+        return c.json(rows);
+      } catch (error) {
+        console.error('Database error:', error);
+        return c.json({ error: 'Database query failed', details: String(error) }, 500);
+      }
     });
     app.post('/api/budgets', async (c) => {
       const body = await c.req.json<{ name: string }>();
