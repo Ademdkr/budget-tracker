@@ -1,4 +1,4 @@
-export class AuthResponseDto {
+export interface AuthResponseDto {
   accessToken: string;
   refreshToken: string;
   user: {
