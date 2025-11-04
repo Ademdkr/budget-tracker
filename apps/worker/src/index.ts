@@ -345,15 +345,38 @@ export default {
     // ====================================================================
     // ACCOUNTS ENDPOINTS
     // ====================================================================
+    
+    // Helper function to serialize account data
+    function serializeAccount(account: any) {
+      return {
+        id: account.id.toString(),
+        name: account.name,
+        type: account.type,
+        balance: Number(account.initial_balance),
+        currency: 'EUR',
+        note: account.note,
+        isActive: account.is_active,
+        createdAt: account.created_at,
+        updatedAt: account.updated_at,
+        userId: account.user_id?.toString(),
+        transactionCount: account.transaction_count || 0,
+      };
+    }
+    
     app.get('/api/accounts', async (c) => {
       try {
         const userId = getUserIdFromHeaders(c);
+        console.log('🔍 GET /api/accounts called for user:', userId);
+        
         const accounts = await sql`
           SELECT * FROM "Account" 
-          WHERE is_active = true AND user_id = ${userId}
+          WHERE user_id = ${userId}
           ORDER BY created_at DESC
         `;
-        return c.json(accounts);
+        
+        console.log('📊 Found accounts:', accounts.length);
+        
+        return c.json(accounts.map(serializeAccount));
       } catch (error) {
         console.error('Database error:', error);
         return c.json({ error: 'Failed to fetch accounts', details: String(error) }, 500);
@@ -388,6 +411,8 @@ export default {
     app.get('/api/accounts/with-balances', async (c) => {
       try {
         const userId = getUserIdFromHeaders(c);
+        console.log('🔍 GET /api/accounts/with-balances called for user:', userId);
+        
         const accounts = await sql`
           SELECT a.*, 
             COUNT(DISTINCT t.id) as transaction_count
@@ -398,10 +423,12 @@ export default {
           ORDER BY a.created_at DESC
         `;
         
+        console.log('📊 Found accounts:', accounts.length);
+        
         // Calculate balances for each account
         const accountsWithBalances = await Promise.all(accounts.map(async (account: any) => {
           const transactions = await sql`
-            SELECT t.amount, c.transaction_type
+            SELECT t.amount, c.transaction_type, t.date
             FROM "Transaction" t
             JOIN "Category" c ON t.category_id = c.id
             WHERE t.account_id = ${account.id}
@@ -411,6 +438,9 @@ export default {
           let calculatedBalance = Number(account.initial_balance);
           let totalIncome = 0;
           let totalExpenses = 0;
+          
+          console.log(`\n🔍 Calculating balance for account: ${account.name} (ID: ${account.id})`);
+          console.log(`💰 Initial Balance: ${calculatedBalance}€`);
           
           for (const tx of transactions) {
             const amount = Number(tx.amount);
@@ -423,10 +453,13 @@ export default {
             }
           }
           
+          console.log(`💵 Final Balance: ${calculatedBalance}€`);
+          console.log(`📊 Total Income: ${totalIncome}€, Total Expenses: ${totalExpenses}€\n`);
+          
           const lastTransaction = transactions[0];
           
           return {
-            ...account,
+            ...serializeAccount(account),
             calculatedBalance,
             totalIncome,
             totalExpenses,
@@ -445,10 +478,14 @@ export default {
     app.post('/api/accounts/recalculate-balances', async (c) => {
       try {
         const userId = getUserIdFromHeaders(c);
+        console.log('🔄 POST /api/accounts/recalculate-balances called for user:', userId);
+        
         // With the new schema, we only have initialBalance (no balance field)
         // This endpoint returns all accounts (balances are calculated on-the-fly)
         const accounts = await sql`SELECT * FROM "Account" WHERE user_id = ${userId} ORDER BY created_at DESC`;
-        return c.json(accounts);
+        
+        console.log('📊 Returning accounts:', accounts.length);
+        return c.json(accounts.map(serializeAccount));
       } catch (error) {
         console.error('Database error:', error);
         return c.json({ error: 'Failed to recalculate balances', details: String(error) }, 500);
@@ -463,7 +500,7 @@ export default {
         if (rows.length === 0) {
           return c.json({ error: 'Account not found' }, 404);
         }
-        return c.json(rows[0]);
+        return c.json(serializeAccount(rows[0]));
       } catch (error) {
         console.error('Database error:', error);
         return c.json({ error: 'Failed to fetch account', details: String(error) }, 500);
@@ -473,13 +510,28 @@ export default {
     app.post('/api/accounts', async (c) => {
       try {
         const userId = getUserIdFromHeaders(c);
+        console.log('🔄 POST /api/accounts called for user:', userId);
+        
         const body = await c.req.json<{ 
-          user_id: number; 
           name: string; 
           type: string; 
-          initial_balance: number;
+          balance: number;
           note?: string;
+          isActive?: boolean;
         }>();
+        
+        console.log('📤 Request body:', body);
+        
+        const shouldBeActive = body.isActive ?? true;
+        
+        // If new account should be active, deactivate all other accounts for this user
+        if (shouldBeActive) {
+          await sql`
+            UPDATE "Account" 
+            SET is_active = false 
+            WHERE user_id = ${userId} AND is_active = true
+          `;
+        }
         
         const created = await sql`
           INSERT INTO "Account" (user_id, name, type, initial_balance, note, is_active, created_at, updated_at) 
@@ -487,15 +539,17 @@ export default {
             ${userId}, 
             ${body.name}, 
             ${body.type}, 
-            ${body.initial_balance}, 
+            ${body.balance}, 
             ${body.note || null},
-            true,
+            ${shouldBeActive},
             NOW(), 
             NOW()
           ) 
           RETURNING *
         `;
-        return c.json(created[0], 201);
+        
+        console.log('✅ Account created:', created[0].id);
+        return c.json(serializeAccount(created[0]), 201);
       } catch (error) {
         console.error('Database error:', error);
         return c.json({ error: 'Failed to create account', details: String(error) }, 500);
@@ -506,14 +560,41 @@ export default {
       try {
         const { id } = c.req.param();
         const userId = getUserIdFromHeaders(c);
-        const body = await c.req.json<{ name?: string; note?: string; is_active?: boolean }>();
+        console.log('🔄 PATCH /api/accounts/:id called - ID:', id, 'User:', userId);
+        
+        const body = await c.req.json<{ 
+          name?: string; 
+          type?: string;
+          balance?: number;
+          note?: string; 
+          isActive?: boolean;
+        }>();
+        
+        console.log('📤 Update body:', body);
+        
+        // Check if account exists and belongs to user
+        const check = await sql`SELECT * FROM "Account" WHERE id = ${id} AND user_id = ${userId} LIMIT 1`;
+        if (check.length === 0) {
+          return c.json({ error: 'Account not found or access denied' }, 404);
+        }
+        
+        // If setting account to active, deactivate all other accounts
+        if (body.isActive === true && !check[0].is_active) {
+          await sql`
+            UPDATE "Account" 
+            SET is_active = false 
+            WHERE user_id = ${userId} AND is_active = true AND id != ${id}
+          `;
+        }
         
         const updated = await sql`
           UPDATE "Account" 
           SET 
             name = COALESCE(${body.name}, name),
+            type = COALESCE(${body.type}, type),
+            initial_balance = COALESCE(${body.balance}, initial_balance),
             note = COALESCE(${body.note}, note),
-            is_active = COALESCE(${body.is_active}, is_active),
+            is_active = COALESCE(${body.isActive}, is_active),
             updated_at = NOW() 
           WHERE id = ${id} AND user_id = ${userId}
           RETURNING *
@@ -523,7 +604,8 @@ export default {
           return c.json({ error: 'Account not found' }, 404);
         }
         
-        return c.json(updated[0]);
+        console.log('✅ Account updated');
+        return c.json(serializeAccount(updated[0]));
       } catch (error) {
         console.error('Database error:', error);
         return c.json({ error: 'Failed to update account', details: String(error) }, 500);
