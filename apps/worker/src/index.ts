@@ -385,7 +385,6 @@ export default {
           SELECT c.*, a.name as account_name 
           FROM "Category" c
           LEFT JOIN "Account" a ON c.account_id = a.id
-          WHERE c.is_active = true
           ORDER BY c.created_at DESC
         `;
         return c.json(categories);
@@ -422,7 +421,7 @@ export default {
         
         const created = await sql`
           INSERT INTO "Category" (
-            account_id, name, description, transaction_type, emoji, color, is_active, created_at, updated_at
+            account_id, name, description, transaction_type, emoji, color, created_at, updated_at
           ) 
           VALUES (
             ${body.account_id},
@@ -431,7 +430,6 @@ export default {
             ${body.transaction_type},
             ${body.emoji},
             ${body.color},
-            true,
             NOW(),
             NOW()
           ) 
@@ -452,7 +450,6 @@ export default {
           description?: string; 
           emoji?: string; 
           color?: string;
-          is_active?: boolean;
         }>();
         
         const updated = await sql`
@@ -462,7 +459,6 @@ export default {
             description = COALESCE(${body.description}, description),
             emoji = COALESCE(${body.emoji}, emoji),
             color = COALESCE(${body.color}, color),
-            is_active = COALESCE(${body.is_active}, is_active),
             updated_at = NOW() 
           WHERE id = ${id} 
           RETURNING *
@@ -482,8 +478,7 @@ export default {
     app.delete('/api/categories/:id', async (c) => {
       try {
         const { id } = c.req.param();
-        // Soft delete
-        await sql`UPDATE "Category" SET is_active = false WHERE id = ${id}`;
+        await sql`DELETE FROM "Category" WHERE id = ${id}`;
         return c.json({ ok: true });
       } catch (error) {
         console.error('Database error:', error);
