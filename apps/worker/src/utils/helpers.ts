@@ -1,8 +1,20 @@
 import type { Context } from 'hono';
 
 /**
- * Generate a mock JWT token for development/demo purposes
- * TODO: Replace with proper JWT signing in production
+ * Generiert einen Mock-JWT-Token für Entwicklungs-/Demo-Zwecke
+ *
+ * WICHTIG: Dies ist NUR für Demo-Zwecke gedacht!
+ * In Produktion sollte ein echtes JWT-Signing mit Secret verwendet werden.
+ *
+ * @param email - Benutzer-Email
+ * @param userId - Benutzer-ID
+ * @returns Mock JWT-Token (Header.Payload.Signature)
+ *
+ * @example
+ * ```typescript
+ * const token = generateMockToken('user@example.com', 123);
+ * // Returns: "eyJ...}.eyJ...}.mock-signature"
+ * ```
  */
 export function generateMockToken(email: string, userId: number): string {
   const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
@@ -19,8 +31,21 @@ export function generateMockToken(email: string, userId: number): string {
 }
 
 /**
- * Extract user ID from request headers
- * Falls back to test user ID if not present
+ * Extrahiert User-ID aus Request-Headers
+ *
+ * Sucht nach 'x-user-id' Header und gibt diesen zurück.
+ * Falls nicht vorhanden, wird Test-User-ID '1' zurückgegeben.
+ *
+ * @param c - Hono Context-Objekt
+ * @returns User-ID als String
+ *
+ * @example
+ * ```typescript
+ * app.get('/api/data', (c) => {
+ *   const userId = getUserIdFromHeaders(c);
+ *   // Use userId for queries...
+ * });
+ * ```
  */
 export function getUserIdFromHeaders(c: Context): string {
   const userId = c.req.header('x-user-id');
@@ -32,7 +57,19 @@ export function getUserIdFromHeaders(c: Context): string {
 }
 
 /**
- * Serialize account data from database format to API format
+ * Serialisiert Account-Daten von Datenbankformat zu API-Format
+ *
+ * Konvertiert Snake_case zu CamelCase und passt Datentypen an.
+ *
+ * @param account - Account-Objekt aus Datenbank
+ * @returns Serialisiertes Account-Objekt für API
+ *
+ * @example
+ * ```typescript
+ * const dbAccount = await sql`SELECT * FROM "Account" WHERE id = 1`;
+ * const apiAccount = serializeAccount(dbAccount[0]);
+ * // Returns: { id: "1", name: "...", balance: 1000, ... }
+ * ```
  */
 export function serializeAccount(account: any) {
   return {
@@ -51,7 +88,19 @@ export function serializeAccount(account: any) {
 }
 
 /**
- * Serialize category data from database format to API format
+ * Serialisiert Kategorie-Daten von Datenbankformat zu API-Format
+ *
+ * Konvertiert Snake_case zu CamelCase, fügt Statistiken hinzu.
+ *
+ * @param category - Kategorie-Objekt aus Datenbank
+ * @returns Serialisiertes Kategorie-Objekt für API
+ *
+ * @example
+ * ```typescript
+ * const dbCategory = await sql`SELECT * FROM "Category" WHERE id = 1`;
+ * const apiCategory = serializeCategory(dbCategory[0]);
+ * // Returns: { id: "1", name: "...", transactionType: "EXPENSE", ... }
+ * ```
  */
 export function serializeCategory(category: any) {
   return {
@@ -76,7 +125,19 @@ export function serializeCategory(category: any) {
 }
 
 /**
- * Serialize budget data from database format to API format
+ * Serialisiert Budget-Daten von Datenbankformat zu API-Format
+ *
+ * Konvertiert Snake_case zu CamelCase, fügt Kategorie-Informationen hinzu.
+ *
+ * @param budget - Budget-Objekt aus Datenbank
+ * @returns Serialisiertes Budget-Objekt für API
+ *
+ * @example
+ * ```typescript
+ * const dbBudget = await sql`SELECT * FROM "Budget" WHERE id = 1`;
+ * const apiBudget = serializeBudget(dbBudget[0]);
+ * // Returns: { id: "1", totalAmount: 500, month: 11, year: 2025, ... }
+ * ```
  */
 export function serializeBudget(budget: any) {
   return {
@@ -99,7 +160,20 @@ export function serializeBudget(budget: any) {
 }
 
 /**
- * Serialize transaction data from database format to API format
+ * Serialisiert Transaktions-Daten von Datenbankformat zu API-Format
+ *
+ * Konvertiert Snake_case zu CamelCase, mappt note zu title/description,
+ * fügt Kategorie- und Account-Informationen hinzu.
+ *
+ * @param transaction - Transaktions-Objekt aus Datenbank
+ * @returns Serialisiertes Transaktions-Objekt für API
+ *
+ * @example
+ * ```typescript
+ * const dbTx = await sql`SELECT * FROM "Transaction" WHERE id = 1`;
+ * const apiTx = serializeTransaction(dbTx[0]);
+ * // Returns: { id: "1", amount: 50.00, date: "2025-11-05", ... }
+ * ```
  */
 export function serializeTransaction(transaction: any) {
   return {

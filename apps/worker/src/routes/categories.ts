@@ -3,7 +3,35 @@ import type { NeonQueryFunction } from '@neondatabase/serverless';
 import { getUserIdFromHeaders, serializeCategory } from '../utils/helpers';
 
 /**
- * Register category routes
+ * Registriert Kategorien-Verwaltungs-Routen
+ *
+ * Endpoints:
+ * - GET /api/categories: Alle Kategorien abrufen (optional gefiltert nach Account)
+ * - POST /api/categories/auto-assign/:accountId: Auto-Zuordnung basierend auf Transaktionen
+ * - GET /api/categories/:id: Einzelne Kategorie abrufen
+ * - POST /api/categories: Neue Kategorie erstellen
+ * - PATCH /api/categories/:id: Kategorie aktualisieren
+ * - DELETE /api/categories/:id: Kategorie löschen
+ * - POST /api/categories/:id/accounts/:accountId: Kategorie zu Account zuordnen
+ * - DELETE /api/categories/:id/accounts/:accountId: Kategorie von Account entfernen
+ * - GET /api/categories/:id/accounts: Zugeordnete Accounts abrufen
+ *
+ * Features:
+ * - Account-spezifische Filterung
+ * - Automatische Zuordnung basierend auf Transaktions-Historie
+ * - Transaktionstyp-Zuordnung (INCOME/EXPENSE)
+ * - Icon/Emoji und Farb-Support
+ * - Transaktions-Statistiken pro Kategorie
+ *
+ * @param app - Hono App-Instanz
+ * @param sql - Neon SQL Query-Funktion
+ *
+ * @example
+ * ```typescript
+ * const app = new Hono();
+ * const sql = neon(DATABASE_URL);
+ * registerCategoryRoutes(app, sql);
+ * ```
  */
 export function registerCategoryRoutes(app: Hono<any>, sql: NeonQueryFunction<false, false>) {
   /**

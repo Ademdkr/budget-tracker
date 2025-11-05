@@ -3,7 +3,33 @@ import type { NeonQueryFunction } from '@neondatabase/serverless';
 import { getUserIdFromHeaders, serializeAccount } from '../utils/helpers';
 
 /**
- * Register account routes
+ * Registriert Konten-Verwaltungs-Routen
+ *
+ * Endpoints:
+ * - GET /api/accounts: Alle Konten abrufen
+ * - GET /api/accounts/statistics: Konto-Statistiken
+ * - GET /api/accounts/with-balances: Konten mit berechneten Salden
+ * - POST /api/accounts/recalculate-balances: Salden neu berechnen
+ * - GET /api/accounts/:id: Einzelnes Konto abrufen
+ * - POST /api/accounts: Neues Konto erstellen
+ * - PATCH /api/accounts/:id: Konto aktualisieren
+ * - DELETE /api/accounts/:id: Konto löschen (Soft-Delete bei Transaktionen)
+ *
+ * Features:
+ * - Automatische Saldo-Berechnung aus Transaktionen
+ * - Active-Account-Management (nur ein aktives Konto pro User)
+ * - Soft-Delete bei vorhandenen Transaktionen
+ * - Statistiken (Anzahl, Gesamtsaldo, etc.)
+ *
+ * @param app - Hono App-Instanz
+ * @param sql - Neon SQL Query-Funktion
+ *
+ * @example
+ * ```typescript
+ * const app = new Hono();
+ * const sql = neon(DATABASE_URL);
+ * registerAccountRoutes(app, sql);
+ * ```
  */
 export function registerAccountRoutes(app: Hono<any>, sql: NeonQueryFunction<false, false>) {
   /**

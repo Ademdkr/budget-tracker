@@ -3,7 +3,38 @@ import type { NeonQueryFunction } from '@neondatabase/serverless';
 import { getUserIdFromHeaders, serializeBudget } from '../utils/helpers';
 
 /**
- * Register budget routes
+ * Registriert Budget-Verwaltungs-Routen
+ *
+ * Endpoints:
+ * - GET /api/budgets: Alle Budgets abrufen
+ * - GET /api/budgets/with-stats: Budgets mit Statistiken (Ausgaben vs. Limits)
+ * - GET /api/budgets/:id: Einzelnes Budget abrufen
+ * - POST /api/budgets: Neues Budget erstellen
+ * - PATCH /api/budgets/:id: Budget aktualisieren
+ * - DELETE /api/budgets/:id: Budget löschen
+ *
+ * Features:
+ * - Monatliche Budgets pro Kategorie
+ * - Automatische Berechnung von Ausgaben vs. Limit
+ * - Prozentuale Nutzung und verbleibender Betrag
+ * - Filterung nach Jahr, Monat und Account
+ * - Transaktions-Count pro Budget
+ * - Last-Transaction-Date Tracking
+ *
+ * Query Parameters (with-stats):
+ * - year: Jahr (default: aktuelles Jahr)
+ * - month: Monat (default: aktueller Monat)
+ * - accountId: Optional, filtert nach Account
+ *
+ * @param app - Hono App-Instanz
+ * @param sql - Neon SQL Query-Funktion
+ *
+ * @example
+ * ```typescript
+ * const app = new Hono();
+ * const sql = neon(DATABASE_URL);
+ * registerBudgetRoutes(app, sql);
+ * ```
  */
 export function registerBudgetRoutes(app: Hono<any>, sql: NeonQueryFunction<false, false>) {
   /**
