@@ -2,12 +2,17 @@
 
 Eine moderne Full-Stack-Webanwendung zur Verwaltung persönlicher Finanzen, Budgets und Transaktionen.
 
+[![Demo](https://img.shields.io/badge/Demo-Live-brightgreen)](https://budget-tracker-frontend.pages.dev)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)
 ![NestJS](https://img.shields.io/badge/NestJS-10-red)
 ![Angular](https://img.shields.io/badge/Angular-18-red)
 ![Prisma](https://img.shields.io/badge/Prisma-6.18-2D3748)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791)
 ![License](https://img.shields.io/badge/License-MIT-green)
+
+## 🌐 Live Demo
+
+**[https://budget-tracker-frontend.pages.dev](https://budget-tracker-frontend.pages.dev)**
 
 ## 📋 Inhaltsverzeichnis
 
