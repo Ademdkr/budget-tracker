@@ -26,28 +26,78 @@ import {
 } from '../shared/services/account-selection.service';
 import { finalize } from 'rxjs/operators';
 
-// Enhanced Account interface with statistics
+/**
+ * Konto mit erweiterten Statistiken
+ */
+/**
+ * Konto mit erweiterten Statistiken
+ */
 export interface AccountWithStats {
+  /** Eindeutige Konto-ID */
   id: string;
+  /** Name des Kontos */
   name: string;
+  /** Kontotyp (Frontend-Format) */
   type: string;
+  /** Aktueller Saldo */
   currentBalance: number;
+  /** Notiz (optional) */
   note?: string;
+  /** Anzahl Transaktionen */
   transactionCount: number;
+  /** Datum der letzten Transaktion (optional) */
   lastTransactionDate?: Date;
+  /** Erstellungsdatum */
   createdAt: Date;
+  /** Letzte Änderung */
   updatedAt: Date;
+  /** Ob Konto aktiv ist */
   isActive: boolean;
 }
 
+/**
+ * Kontotyp mit Darstellungs-Informationen
+ */
+/**
+ * Kontotyp mit Darstellungs-Informationen
+ */
 export interface AccountType {
+  /** Eindeutige Typ-ID */
   id: string;
+  /** Anzeigename */
   name: string;
+  /** Material Icon Name */
   icon: string;
+  /** Beschreibung */
   description: string;
+  /** Farbe (Hex) */
   color: string;
 }
 
+/**
+ * Accounts Component - Übersicht und Verwaltung aller Konten
+ *
+ * Features:
+ * - Listet alle Konten des Benutzers (Cards oder Table View)
+ * - Erstellen, Bearbeiten, Löschen von Konten
+ * - Kategorie-Zuordnung für Konten
+ * - Kontenauswahl für globalen Filter
+ * - Anzeige von Statistiken (Gesamt-Saldo, Anzahl Transaktionen)
+ * - Berechnung von Salden basierend auf Transaktionen
+ * - Gruppierung nach Kontotyp
+ * - Auto-Selection des ersten Kontos
+ *
+ * Verwendet BaseComponent für Loading/Error States.
+ *
+ * @example
+ * ```typescript
+ * // In app.routes.ts
+ * {
+ *   path: 'accounts',
+ *   component: AccountsComponent
+ * }
+ * ```
+ */
 @Component({
   selector: 'app-accounts',
   standalone: true,
