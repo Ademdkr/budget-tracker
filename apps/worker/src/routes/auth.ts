@@ -3,12 +3,43 @@ import type { NeonQueryFunction } from '@neondatabase/serverless';
 import { generateMockToken } from '../utils/helpers';
 
 /**
- * Register auth routes
+ * Registriert Authentifizierungs-Routen
+ *
+ * Endpoints:
+ * - POST /api/auth/login: Benutzer-Login
+ * - POST /api/auth/register: Benutzer-Registrierung
+ * - GET /api/auth/users: Alle Benutzer abrufen (Admin/Dev)
+ *
+ * Features:
+ * - Mock JWT-Token-Generierung (TODO: Echtes JWT in Produktion)
+ * - Email-basierte Authentifizierung
+ * - User-Management
+ *
+ * Security Notes:
+ * - Aktuell OHNE Passwort-Hashing (nur Demo!)
+ * - TODO: bcrypt für Passwort-Hashing implementieren
+ * - TODO: Echte JWT-Signierung mit Secret
+ *
+ * @param app - Hono App-Instanz
+ * @param sql - Neon SQL Query-Funktion
+ *
+ * @example
+ * ```typescript
+ * const app = new Hono();
+ * const sql = neon(DATABASE_URL);
+ * registerAuthRoutes(app, sql);
+ * ```
  */
 export function registerAuthRoutes(app: Hono<any>, sql: NeonQueryFunction<false, false>) {
   /**
-   * Login endpoint
-   * TODO: Implement proper password hashing with bcrypt in production
+   * Login-Endpoint
+   *
+   * Authentifiziert Benutzer anhand von Email.
+   * TODO: Passwort-Vergleich mit bcrypt implementieren
+   *
+   * @route POST /api/auth/login
+   * @body { email: string, password: string }
+   * @returns { accessToken: string, refreshToken: string, user: User }
    */
   app.post('/api/auth/login', async (c) => {
     try {
@@ -48,8 +79,14 @@ export function registerAuthRoutes(app: Hono<any>, sql: NeonQueryFunction<false,
   });
 
   /**
-   * Register new user endpoint
-   * TODO: Implement proper password hashing with bcrypt in production
+   * Registrierungs-Endpoint
+   *
+   * Erstellt neuen Benutzer in der Datenbank.
+   * TODO: Passwort-Hashing mit bcrypt implementieren
+   *
+   * @route POST /api/auth/register
+   * @body { email: string, password: string, name: string, surname: string }
+   * @returns { accessToken: string, refreshToken: string, user: User }
    */
   app.post('/api/auth/register', async (c) => {
     try {
@@ -103,7 +140,12 @@ export function registerAuthRoutes(app: Hono<any>, sql: NeonQueryFunction<false,
   });
 
   /**
-   * Get all users endpoint (for development/admin)
+   * Alle Benutzer abrufen (Admin/Development)
+   *
+   * Gibt Liste aller registrierten Benutzer zurück.
+   *
+   * @route GET /api/auth/users
+   * @returns User[] - Array mit Benutzer-Objekten
    */
   app.get('/api/auth/users', async (c) => {
     try {

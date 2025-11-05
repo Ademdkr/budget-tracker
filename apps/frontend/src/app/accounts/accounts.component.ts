@@ -26,28 +26,75 @@ import {
 } from '../shared/services/account-selection.service';
 import { finalize } from 'rxjs/operators';
 
-// Enhanced Account interface with statistics
+/**
+ * Konto mit erweiterten Statistiken
+ */
+/**
+ * Konto mit erweiterten Statistiken
+ */
 export interface AccountWithStats {
+  /** Eindeutige Konto-ID */
   id: string;
+  /** Name des Kontos */
   name: string;
+  /** Kontotyp (Frontend-Format) */
   type: string;
+  /** Aktueller Saldo */
   currentBalance: number;
+  /** Notiz (optional) */
   note?: string;
+  /** Anzahl Transaktionen */
   transactionCount: number;
+  /** Datum der letzten Transaktion (optional) */
   lastTransactionDate?: Date;
+  /** Erstellungsdatum */
   createdAt: Date;
+  /** Letzte Änderung */
   updatedAt: Date;
+  /** Ob Konto aktiv ist */
   isActive: boolean;
 }
 
+/**
+ * Kontotyp mit Darstellungs-Informationen
+ */
 export interface AccountType {
+  /** Eindeutige Typ-ID */
   id: string;
+  /** Anzeigename */
   name: string;
+  /** Material Icon Name */
   icon: string;
+  /** Beschreibung */
   description: string;
+  /** Farbe (Hex) */
   color: string;
 }
 
+/**
+ * Accounts Component - Übersicht und Verwaltung aller Konten
+ *
+ * Features:
+ * - Listet alle Konten des Benutzers (Cards oder Table View)
+ * - Erstellen, Bearbeiten, Löschen von Konten
+ * - Kategorie-Zuordnung für Konten
+ * - Kontenauswahl für globalen Filter
+ * - Anzeige von Statistiken (Gesamt-Saldo, Anzahl Transaktionen)
+ * - Berechnung von Salden basierend auf Transaktionen
+ * - Gruppierung nach Kontotyp
+ * - Auto-Selection des ersten Kontos
+ *
+ * Verwendet BaseComponent für Loading/Error States.
+ *
+ * @example
+ * ```typescript
+ * // In app.routes.ts
+ * {
+ *   path: 'accounts',
+ *   component: AccountsComponent
+ * }
+ * ```
+ */
 @Component({
   selector: 'app-accounts',
   standalone: true,
@@ -75,28 +122,30 @@ export class AccountsComponent extends BaseComponent implements OnInit {
   private accountSelection = inject(AccountSelectionService);
   private cdr = inject(ChangeDetectorRef);
 
-  // Data properties
+  /** Liste aller Konten mit Statistiken */
   accounts: AccountWithStats[] = [];
+  /** Verfügbare Kontotypen mit Icons und Farben */
   accountTypes: AccountType[] = [];
+  /** ID des aktuell ausgewählten Kontos */
   selectedAccountId: string | null = null;
 
-  // Helper for template
+  /** Helper für Template-Zugriff auf Object.keys */
   Object = Object;
 
-  // UI states
+  /** Ob Liste leer ist */
   isEmpty = false;
 
-  // View settings
+  /** Ansichtsmodus: Cards oder Tabelle */
   viewMode: 'cards' | 'table' = 'cards';
 
-  // Statistics
+  /** Gesamtstatistiken über alle Konten */
   stats = {
     totalAccounts: 0,
     totalBalance: 0,
     totalTransactions: 0,
   };
 
-  // Table columns
+  /** Tabellenspalten für Table View */
   displayedColumns: string[] = [
     'name',
     'type',
@@ -106,6 +155,9 @@ export class AccountsComponent extends BaseComponent implements OnInit {
     'actions',
   ];
 
+  /**
+   * Angular Lifecycle Hook - Initialisierung
+   */
   ngOnInit() {
     // BaseComponent initialisieren
     this.initializeLoadingState();
@@ -121,6 +173,11 @@ export class AccountsComponent extends BaseComponent implements OnInit {
     this.loadInitialData();
   }
 
+  /**
+   * Lädt initiale Daten (Konten mit berechneten Salden)
+   *
+   * @private
+   */
   private loadInitialData() {
     this.setLoading();
 
@@ -156,6 +213,11 @@ export class AccountsComponent extends BaseComponent implements OnInit {
       });
   }
 
+  /**
+   * Lädt Kontotyp-Definitionen mit Icons und Farben
+   *
+   * @private
+   */
   private loadAccountTypes() {
     this.accountTypes = [
       {
@@ -203,6 +265,13 @@ export class AccountsComponent extends BaseComponent implements OnInit {
     ];
   }
 
+  /**
+   * Mapped einfache Accounts zu AccountWithStats
+   *
+   * @private
+   * @param accounts - Einfache Account-Liste
+   * @returns AccountWithStats Array
+   */
   private mapAccountsToAccountWithStats(accounts: Account[]): AccountWithStats[] {
     return accounts.map((account) => ({
       id: account.id,
@@ -218,6 +287,13 @@ export class AccountsComponent extends BaseComponent implements OnInit {
     }));
   }
 
+  /**
+   * Mapped Accounts mit berechneten Salden zu AccountWithStats
+   *
+   * @private
+   * @param accounts - AccountWithCalculatedBalance Array
+   * @returns AccountWithStats Array
+   */
   private mapCalculatedAccountsToAccountWithStats(
     accounts: AccountWithCalculatedBalance[],
   ): AccountWithStats[] {
@@ -237,6 +313,13 @@ export class AccountsComponent extends BaseComponent implements OnInit {
     }));
   }
 
+  /**
+   * Mapped Backend-Kontotyp zu Frontend-Typ
+   *
+   * @private
+   * @param backendType - Backend AccountType
+   * @returns Frontend Typ-String
+   */
   private mapAccountType(backendType: Account['type']): string {
     const typeMap: { [key in Account['type']]: string } = {
       CHECKING: 'checking',
@@ -251,15 +334,27 @@ export class AccountsComponent extends BaseComponent implements OnInit {
     return result;
   }
 
+  /**
+   * Prüft ob Konten-Liste leer ist
+   *
+   * @private
+   */
   private checkEmptyState() {
     this.isEmpty = this.accounts.length === 0;
   }
 
-  // Public methods
+  /**
+   * Wechselt zwischen Cards und Table View
+   */
   toggleViewMode() {
     this.viewMode = this.viewMode === 'cards' ? 'table' : 'cards';
   }
 
+  /**
+   * Öffnet Kategorie-Zuordnungs-Dialog für Konto
+   *
+   * @param account - Konto für Kategorie-Verwaltung
+   */
   manageCategoriesForAccount(account: AccountWithStats) {
     import('./category-assignment/category-assignment.component').then(
       ({ CategoryAssignmentComponent }) => {
@@ -287,42 +382,83 @@ export class AccountsComponent extends BaseComponent implements OnInit {
     );
   }
 
+  /**
+   * Ruft AccountType-Informationen anhand ID ab
+   *
+   * @param typeId - Typ-ID
+   * @returns AccountType oder undefined
+   */
   getAccountTypeInfo(typeId: string): AccountType | undefined {
     return this.accountTypes.find((t) => t.id === typeId);
   }
 
+  /**
+   * Gibt CSS-Klasse für Saldo-Anzeige zurück
+   *
+   * @param balance - Saldo-Betrag
+   * @returns CSS-Klasse (positive/negative/neutral)
+   */
   getBalanceClass(balance: number): string {
     if (balance > 0) return 'positive';
     if (balance < 0) return 'negative';
     return 'neutral';
   }
 
+  /**
+   * Berechnet Gesamt-Saldo über alle Konten
+   *
+   * @returns Summe aller Kontensalden
+   */
   getTotalBalance(): number {
     return this.accounts.reduce((sum, account) => sum + account.currentBalance, 0); // Summe aller Konten
   }
 
+  /**
+   * Gibt Anzahl aller Konten zurück
+   *
+   * @returns Anzahl Konten
+   */
   getActiveAccountsCount(): number {
     return this.accounts.length; // Alle Konten des Users
   }
 
+  /**
+   * Gibt alle Konten zurück
+   *
+   * @returns Array aller Konten
+   */
   getActiveAccounts(): AccountWithStats[] {
     return this.accounts; // Alle Konten des Users
   }
 
-  // Methode um das aktuell ausgewählte Konto zu bekommen
+  /**
+   * Gibt aktuell ausgewähltes Konto zurück
+   *
+   * @returns Aktives Konto oder undefined
+   */
   getCurrentlySelectedAccount(): AccountWithStats | undefined {
     return this.accounts.find((account) => account.isActive);
   }
 
-  // Methode um zu prüfen, ob ein Konto ausgewählt ist
+  /**
+   * Prüft ob ein Konto ausgewählt ist
+   *
+   * @returns true wenn Konto ausgewählt
+   */
   hasSelectedAccount(): boolean {
     return this.accounts.some((account) => account.isActive);
   }
 
-  // Direkte Properties für Template-Zugriff (werden nur bei Änderungen aktualisiert)
+  /** Cache für Konten gruppiert nach Typ */
   accountsByType: { [key: string]: AccountWithStats[] } = {};
+  /** Array der Typ-Keys für Iteration */
   accountTypeKeys: string[] = [];
 
+  /**
+   * Baut Cache für Konten-Gruppierung nach Typ neu auf
+   *
+   * @private
+   */
   private rebuildAccountsByType(): void {
     console.log('🔧 Rebuilding accounts by type cache');
     console.log(
@@ -371,14 +507,27 @@ export class AccountsComponent extends BaseComponent implements OnInit {
     console.log('✅ Cache updated - accountsByType and accountTypeKeys set');
   }
 
-  // TrackBy Funktionen für bessere Performance - using inherited methods
+  /** TrackBy-Funktion für Accounts (Performance-Optimierung) */
   trackByAccountId = this.trackByUtils.trackByAccountId.bind(this.trackByUtils);
+  /** TrackBy-Funktion für Typ-Keys */
   trackByTypeId = this.trackByUtils.trackByString.bind(this.trackByUtils);
 
+  /**
+   * Formatiert Betrag als Währung
+   *
+   * @param amount - Betrag
+   * @returns Formatierter String
+   */
   formatCurrency(amount: number): string {
     return this.formatUtils.formatCurrency(amount);
   }
 
+  /**
+   * Formatiert Datum im deutschen Format
+   *
+   * @param date - Datum oder undefined
+   * @returns Formatierter String oder 'Nie'
+   */
   formatDate(date: Date | undefined): string {
     if (!date) return 'Nie';
     return new Intl.DateTimeFormat('de-DE', {
@@ -388,6 +537,12 @@ export class AccountsComponent extends BaseComponent implements OnInit {
     }).format(date);
   }
 
+  /**
+   * Berechnet menschenlesbare Zeit seit letzter Transaktion
+   *
+   * @param date - Datum der letzten Transaktion
+   * @returns Relativer Zeit-String (z.B. "vor 3 Tagen")
+   */
   getTimeSinceLastTransaction(date: Date | undefined): string {
     if (!date) return 'Keine Aktivität';
 
@@ -402,10 +557,18 @@ export class AccountsComponent extends BaseComponent implements OnInit {
     return `vor ${Math.ceil(diffDays / 365)} Jahren`;
   }
 
+  /**
+   * Wiederholt das Laden der Daten (Error Recovery)
+   */
   retry() {
     this.loadInitialData();
   }
 
+  /**
+   * Berechnet alle Konto-Salden neu
+   *
+   * Nützlich nach CSV-Import oder manuellen Änderungen.
+   */
   recalculateBalances() {
     this.setLoading();
     this.accountsApi
@@ -422,7 +585,13 @@ export class AccountsComponent extends BaseComponent implements OnInit {
       });
   }
 
-  // Account Selection Methods
+  /**
+   * Wählt Konto für globalen Filter aus
+   *
+   * Setzt Konto als aktiv und aktualisiert AccountSelectionService.
+   *
+   * @param account - Auszuwählendes Konto
+   */
   async selectAccount(account: AccountWithStats): Promise<void> {
     const selectedAccount: SelectedAccount = {
       id: account.id,
@@ -443,6 +612,11 @@ export class AccountsComponent extends BaseComponent implements OnInit {
     }
   }
 
+  /**
+   * Hebt Kontenauswahl auf
+   *
+   * Deaktiviert alle Konten im Backend.
+   */
   async clearAccountSelection(): Promise<void> {
     try {
       await this.accountSelection.clearSelection();
@@ -452,20 +626,38 @@ export class AccountsComponent extends BaseComponent implements OnInit {
     }
   }
 
+  /**
+   * Prüft ob Konto ausgewählt ist
+   *
+   * @param accountId - Konto-ID
+   * @returns true wenn Konto ausgewählt
+   */
   isAccountSelected(accountId: string): boolean {
     return this.selectedAccountId === accountId;
   }
 
+  /**
+   * Prüft ob überhaupt ein Konto ausgewählt ist
+   *
+   * @returns true wenn Auswahl existiert
+   */
   hasAccountSelection(): boolean {
     return this.accountSelection.hasSelection();
   }
 
+  /**
+   * Gibt Name des ausgewählten Kontos zurück
+   *
+   * @returns Kontoname oder leerer String
+   */
   getSelectedAccountName(): string {
     const selected = this.accountSelection.getSelectedAccount();
     return selected ? selected.name : '';
   }
 
-  // Account CRUD Operations
+  /**
+   * Öffnet Dialog zum Erstellen eines neuen Kontos
+   */
   openCreateAccountDialog(): void {
     const dialogRef = this.dialog.open(AccountFormComponent, {
       width: '600px',
@@ -488,6 +680,11 @@ export class AccountsComponent extends BaseComponent implements OnInit {
     });
   }
 
+  /**
+   * Öffnet Dialog zum Bearbeiten eines Kontos
+   *
+   * @param account - Zu bearbeitendes Konto
+   */
   openEditAccountDialog(account: AccountWithStats): void {
     const dialogRef = this.dialog.open(AccountFormComponent, {
       width: '600px',
@@ -517,6 +714,13 @@ export class AccountsComponent extends BaseComponent implements OnInit {
     });
   }
 
+  /**
+   * Fügt neues Konto zur UI hinzu
+   *
+   * Konto wurde bereits vom Dialog erstellt, wird nur zur Liste hinzugefügt.
+   *
+   * @param accountData - Erstelltes Konto vom Backend
+   */
   createAccount(accountData: Account): void {
     console.log('🏦 AccountsComponent.createAccount called with:', accountData);
     console.log('📝 Account already created by form, adding to UI list');
@@ -551,7 +755,7 @@ export class AccountsComponent extends BaseComponent implements OnInit {
 
     this.checkEmptyState();
     this.calculateStats();
-    
+
     // Wenn das neue Konto aktiv ist, setze es als ausgewähltes Konto
     if (accountData.isActive) {
       const selectedAccount: SelectedAccount = {
@@ -562,17 +766,24 @@ export class AccountsComponent extends BaseComponent implements OnInit {
         icon: this.getAccountTypeInfo(newAccountWithStats.type)?.icon,
         color: this.getAccountTypeInfo(newAccountWithStats.type)?.color,
       };
-      
+
       // Aktualisiere den AccountSelectionService (das Konto wurde bereits im Backend als aktiv gesetzt)
-      this.accountSelection.selectAccount(selectedAccount).catch(err => {
+      this.accountSelection.selectAccount(selectedAccount).catch((err) => {
         console.error('Error updating selected account:', err);
       });
     }
-    
+
     // Trigger Change Detection um die View zu aktualisieren
     this.cdr.detectChanges();
   }
 
+  /**
+   * Mapped Frontend-Typ zu Backend-AccountType
+   *
+   * @private
+   * @param frontendType - Frontend Typ-String
+   * @returns Backend AccountType
+   */
   private mapFrontendTypeToBackend(frontendType: string): Account['type'] {
     const typeMap: { [key: string]: Account['type'] } = {
       checking: 'CHECKING',
@@ -585,6 +796,14 @@ export class AccountsComponent extends BaseComponent implements OnInit {
     return typeMap[frontendType] || 'CHECKING';
   }
 
+  /**
+   * Aktualisiert bestehendes Konto
+   *
+   * Sendet Update an Backend und aktualisiert lokale Liste.
+   *
+   * @param accountId - Konto-ID
+   * @param accountData - Aktualisierte Konto-Daten
+   */
   updateAccount(accountId: string, accountData: Account): void {
     console.log('🔄 updateAccount called with ID:', accountId, 'Data:', accountData);
 
@@ -687,14 +906,16 @@ export class AccountsComponent extends BaseComponent implements OnInit {
 
           // Account Selection Service aktualisieren falls nötig
           if (account.isActive) {
-            this.accountSelection.selectAccount({
-              id: account.id,
-              name: account.name,
-              type: account.type,
-              balance: account.balance,
-            }).catch(err => {
-              console.error('Error updating selected account:', err);
-            });
+            this.accountSelection
+              .selectAccount({
+                id: account.id,
+                name: account.name,
+                type: account.type,
+                balance: account.balance,
+              })
+              .catch((err) => {
+                console.error('Error updating selected account:', err);
+              });
           }
         } else {
           console.warn('⚠️ Account not found in local list, reloading all data');
@@ -707,6 +928,14 @@ export class AccountsComponent extends BaseComponent implements OnInit {
     });
   }
 
+  /**
+   * Löscht Konto
+   *
+   * Konten mit Transaktionen werden deaktiviert statt gelöscht.
+   * Fragt Benutzer nach Bestätigung.
+   *
+   * @param account - Zu löschendes Konto
+   */
   deleteAccount(account: AccountWithStats): void {
     console.log('🗑️ Attempting to delete account:', account.name, 'ID:', account.id);
 
@@ -722,10 +951,10 @@ export class AccountsComponent extends BaseComponent implements OnInit {
 
     if (confirmed) {
       console.log('📤 Sending delete request for account ID:', account.id);
-      
+
       // Prüfe ob das zu löschende Konto das aktuell ausgewählte ist
       const isSelectedAccount = this.isAccountSelected(account.id);
-      
+
       this.accountsApi.delete(account.id).subscribe({
         next: (response) => {
           console.log('✅ Account delete response:', response);
@@ -736,15 +965,15 @@ export class AccountsComponent extends BaseComponent implements OnInit {
 
           this.calculateStats();
           console.log('✅ Account removed from UI list. Remaining accounts:', this.accounts.length);
-          
+
           // Wenn das gelöschte Konto das ausgewählte war, hebe die Auswahl auf
           if (isSelectedAccount) {
             console.log('🔄 Deleted account was selected, clearing selection');
-            this.accountSelection.clearSelection().catch(err => {
+            this.accountSelection.clearSelection().catch((err) => {
               console.error('Error clearing account selection:', err);
             });
           }
-          
+
           // Trigger Change Detection
           this.cdr.detectChanges();
         },
@@ -757,12 +986,22 @@ export class AccountsComponent extends BaseComponent implements OnInit {
     }
   }
 
+  /**
+   * Generiert eindeutige ID
+   *
+   * @protected
+   * @returns Generierte ID
+   */
   protected generateId(): string {
     return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
   }
 
   /**
-   * Auto-select the first account if no account is currently selected
+   * Wählt automatisch erstes Konto aus wenn keines ausgewählt
+   *
+   * Wird bei Initialisierung aufgerufen.
+   *
+   * @private
    */
   private autoSelectFirstAccountIfNeeded(): void {
     // Check if an account is already selected
@@ -780,7 +1019,7 @@ export class AccountsComponent extends BaseComponent implements OnInit {
     // Wichtig: Prüfe ob es ein aktives Konto in der Datenbank gibt
     // Wenn KEIN Konto isActive=true hat, bedeutet das, der User hat die Auswahl aufgehoben
     const hasAnyActiveAccount = this.accounts.some((account) => account.isActive);
-    
+
     if (!hasAnyActiveAccount) {
       console.log('ℹ️ No active accounts found - user has cleared selection, skipping auto-select');
       return;
@@ -794,6 +1033,11 @@ export class AccountsComponent extends BaseComponent implements OnInit {
     }
   }
 
+  /**
+   * Berechnet Statistiken über alle Konten
+   *
+   * @private
+   */
   private calculateStats(): void {
     // Statistiken für alle Konten des Users berechnen
     this.stats = {
@@ -803,8 +1047,11 @@ export class AccountsComponent extends BaseComponent implements OnInit {
     };
   }
 
+  /**
+   * Hebt Konto-Filter auf
+   */
   clearAccountFilter(): void {
-    this.accountSelection.clearSelection().catch(err => {
+    this.accountSelection.clearSelection().catch((err) => {
       console.error('Error clearing account filter:', err);
     });
   }

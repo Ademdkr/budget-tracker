@@ -23,22 +23,47 @@ import { MatGridListModule } from '@angular/material/grid-list';
 import { MatBadgeModule } from '@angular/material/badge';
 import { TransactionsApiService, Transaction } from '../transactions/transactions-api.service';
 
-// Enhanced Category interface with transaction count
+/**
+ * Erweiterte Kategorie-Schnittstelle mit Transaktionsstatistiken
+ */
 export interface CategoryWithStats {
+  /** Eindeutige Kategorie-ID */
   id: string;
+  /** Kategoriename */
   name: string;
+  /** Emoji-Icon (optional) */
   emoji?: string;
+  /** Material Icon Name (optional) */
   icon?: string;
+  /** Farbcode (optional) */
   color?: string;
+  /** Kategorietyp */
   type?: 'income' | 'expense' | 'both';
+  /** Anzahl zugeordneter Transaktionen */
   transactionCount: number;
+  /** Gesamtbetrag aller Transaktionen */
   totalAmount: number;
+  /** Beschreibung (optional) */
   description?: string;
+  /** Budget-Limit (optional) */
   budgetLimit?: number;
+  /** Erstellungsdatum */
   createdAt: Date;
+  /** Aktualisierungsdatum */
   updatedAt: Date;
 }
 
+/**
+ * Kategorien-Verwaltungs-Komponente
+ *
+ * Ermöglicht das Erstellen, Anzeigen, Bearbeiten und Löschen von Kategorien
+ * für Einnahmen und Ausgaben mit Transaktionsstatistiken und Kontofilterung.
+ *
+ * @example
+ * ```html
+ * <app-categories></app-categories>
+ * ```
+ */
 @Component({
   selector: 'app-categories',
   standalone: true,
@@ -60,34 +85,56 @@ export interface CategoryWithStats {
   styleUrl: './categories.component.scss',
 })
 export class CategoriesComponent extends BaseComponent implements OnInit, OnDestroy {
+  /** Eindeutiger Komponenten-Schlüssel für BaseComponent */
   protected componentKey = 'categories';
+
+  /** Dialog-Service für Kategorie-Formulare */
   private dialog = inject(MatDialog);
 
   // Data properties
+  /** Alle Kategorien mit Statistiken */
   categories: CategoryWithStats[] = [];
+  /** Gefilterte Einnahme-Kategorien */
   incomeCategories: CategoryWithStats[] = [];
+  /** Gefilterte Ausgaben-Kategorien */
   expenseCategories: CategoryWithStats[] = [];
 
   // UI states
+  /** Gibt an, ob keine Kategorien vorhanden sind */
   isEmpty = false;
 
   // View settings
+  /** Anzeigemodus für Kategorien */
   viewMode: 'grid' | 'list' = 'grid';
+  /** Aktiver Filter für Kategorietypen */
   selectedFilter: 'all' | 'income' | 'expense' = 'all';
 
+  /** API-Service für Kategorie-Operationen */
   private categoriesApi = inject(CategoriesApiService);
+  /** API-Service für Budget-Operationen */
   private budgetsApi = inject(BudgetsApiService);
+  /** API-Service für Transaktions-Operationen */
   private transactionsApi = inject(TransactionsApiService);
+  /** Service zur Konto-Auswahl */
   private accountSelection = inject(AccountSelectionService);
+  /** API-Service für Konto-Operationen */
   private accountsApi = inject(AccountsApiService);
 
+  /** Gibt an, ob der initiale Ladevorgang abgeschlossen ist */
   private initialLoadCompleted = false;
+  /** Subscription für Konto-Änderungen */
   private accountSubscription?: Subscription;
 
+  /**
+   * Initialisiert Komponente und lädt Kategorien
+   *
+   * Setzt den Loading-State, initialisiert den AccountSelectionService
+   * und abonniert Änderungen der Kontoauswahl.
+   */
   ngOnInit() {
     // BaseComponent initialisieren
     this.initializeLoadingState();
-    
+
     // Zuerst den AccountSelectionService initialisieren
     this.accountSelection.initialize();
 
@@ -102,9 +149,16 @@ export class CategoriesComponent extends BaseComponent implements OnInit, OnDest
     });
   }
 
+  /**
+   * Lädt Kategorien für das ausgewählte Konto
+   *
+   * Ruft die Kategorien vom API-Service ab, transformiert sie zu CategoryWithStats
+   * und lädt zugehörige Transaktionsstatistiken.
+   *
+   * @private
+   */
   private loadCategories() {
     this.setLoading();
-    
 
     const selectedAccountId = this.accountSelection.getSelectedAccountId();
     console.log('🔍 Loading categories with accountId:', selectedAccountId);
@@ -166,18 +220,29 @@ export class CategoriesComponent extends BaseComponent implements OnInit, OnDest
       });
   }
 
+  /**
+   * Lädt Transaktionsstatistiken und wendet sie auf Kategorien an
+   *
+   * Holt alle Transaktionen für das ausgewählte Konto, gruppiert sie nach
+   * Kategorie und berechnet Anzahl und Gesamtbeträge für Einnahmen/Ausgaben.
+   *
+   * @private
+   * @returns Promise ohne Rückgabewert
+   */
   private async loadAndApplyTransactionStats(): Promise<void> {
     try {
       // Get selected account ID to filter transactions
       const selectedAccountId = this.accountSelection.getSelectedAccountId();
-      
+
       // Wenn kein Account ausgewählt ist, keine Stats laden
       if (!selectedAccountId) {
         console.log('⚠️ No account selected, skipping transaction stats');
         return;
       }
 
-      const transactions = await this.transactionsApi.getAll({ accountId: selectedAccountId }).toPromise();
+      const transactions = await this.transactionsApi
+        .getAll({ accountId: selectedAccountId })
+        .toPromise();
       type CatStats = {
         incomeCount: number;
         incomeTotal: number;
@@ -243,6 +308,14 @@ export class CategoriesComponent extends BaseComponent implements OnInit, OnDest
     }
   }
 
+  /**
+   * Filtert Kategorien nach Typ (Einnahmen/Ausgaben)
+   *
+   * Befüllt die Arrays incomeCategories und expenseCategories
+   * für die Anzeige in den entsprechenden Tabs.
+   *
+   * @private
+   */
   private filterCategories() {
     // Arrays immer mit allen Kategorien befüllen für korrekte Anzeige der Anzahl
     this.incomeCategories = this.categories.filter((c) => c.type === 'income');
@@ -252,20 +325,39 @@ export class CategoriesComponent extends BaseComponent implements OnInit, OnDest
     // Die Arrays bleiben immer gefüllt für die korrekte Anzeige der Anzahl in den Tabs
   }
 
+  /**
+   * Prüft ob Kategorien vorhanden sind und setzt isEmpty-Flag
+   *
+   * @private
+   */
   private checkEmptyState() {
     this.isEmpty = this.categories.length === 0;
   }
 
   // Public methods
+  /**
+   * Setzt aktiven Filter für Kategorietypen
+   *
+   * @param filter - 'all', 'income' oder 'expense'
+   */
   setFilter(filter: 'all' | 'income' | 'expense') {
     this.selectedFilter = filter;
     this.filterCategories();
   }
 
+  /**
+   * Wechselt zwischen Grid- und Listen-Ansicht
+   */
   toggleViewMode() {
     this.viewMode = this.viewMode === 'grid' ? 'list' : 'grid';
   }
 
+  /**
+   * Öffnet Dialog zum Erstellen einer neuen Kategorie
+   *
+   * Prüft ob ein Konto ausgewählt ist und öffnet CategoryFormComponent
+   * im Dialog-Modus. Nach erfolgreicher Erstellung werden Kategorien neu geladen.
+   */
   addCategory() {
     // Überprüfen ob ein Konto ausgewählt ist
     if (!this.hasAccountSelection()) {
@@ -352,6 +444,14 @@ export class CategoriesComponent extends BaseComponent implements OnInit, OnDest
     });
   }
 
+  /**
+   * Öffnet Dialog zum Bearbeiten einer Kategorie
+   *
+   * Zeigt CategoryFormComponent im Edit-Modus mit vorausgefüllten Daten.
+   * Nach erfolgreicher Aktualisierung werden die Kategorien aktualisiert.
+   *
+   * @param category - Zu bearbeitende Kategorie
+   */
   editCategory(category: CategoryWithStats) {
     import('./category-form/category-form.component').then(({ CategoryFormComponent }) => {
       const dialogRef = this.dialog.open(CategoryFormComponent, {
@@ -417,6 +517,14 @@ export class CategoriesComponent extends BaseComponent implements OnInit, OnDest
     });
   }
 
+  /**
+   * Löscht Kategorie nach Bestätigung
+   *
+   * Zeigt Warnhinweis bei zugeordneten Transaktionen an und fordert
+   * Bestätigung. Nach erfolgreicher Löschung wird die Liste aktualisiert.
+   *
+   * @param category - Zu löschende Kategorie
+   */
   deleteCategory(category: CategoryWithStats) {
     const hasTransactions = category.transactionCount > 0;
 
@@ -449,14 +557,32 @@ export class CategoriesComponent extends BaseComponent implements OnInit, OnDest
     }
   }
 
+  /**
+   * Formatiert Betrag als Währung
+   *
+   * @param amount - Zu formatierender Betrag
+   * @returns Formatierter Währungsstring
+   */
   formatCurrency(amount: number): string {
     return this.formatUtils.formatCurrency(Math.abs(amount));
   }
 
+  /**
+   * Gibt CSS-Klasse für Betrag zurück (Einnahme/Ausgabe)
+   *
+   * @param amount - Betrag zur Klassifizierung
+   * @returns 'income' oder 'expense'
+   */
   getAmountClass(amount: number): string {
     return amount >= 0 ? 'income' : 'expense';
   }
 
+  /**
+   * Gibt lesbares Label für Kategorietyp zurück
+   *
+   * @param type - Kategorietyp
+   * @returns Deutsches Label ('Einnahme', 'Ausgabe', 'Beide', 'Unbekannt')
+   */
   getCategoryTypeLabel(type?: string): string {
     switch (type) {
       case 'income':
@@ -470,6 +596,12 @@ export class CategoriesComponent extends BaseComponent implements OnInit, OnDest
     }
   }
 
+  /**
+   * Gibt Material Design Farbe für Kategorietyp zurück
+   *
+   * @param type - Kategorietyp
+   * @returns Material Design Color ('success', 'error', 'primary', 'default')
+   */
   getCategoryTypeColor(type?: string): string {
     switch (type) {
       case 'income':
@@ -483,29 +615,55 @@ export class CategoriesComponent extends BaseComponent implements OnInit, OnDest
     }
   }
 
+  /**
+   * Lädt Kategorien erneut
+   *
+   * Wird vom Error-Template aufgerufen bei Fehler-Zustand.
+   */
   retry() {
     this.loadCategories();
   }
 
   // Account Selection Helper Methods
+  /**
+   * Gibt Namen des ausgewählten Kontos zurück
+   *
+   * @returns Name des ausgewählten Kontos oder leerer String
+   */
   getSelectedAccountName(): string {
     const selected = this.accountSelection.getSelectedAccount();
     return selected ? selected.name : '';
   }
 
+  /**
+   * Prüft ob ein Konto ausgewählt ist
+   *
+   * @returns true wenn Konto ausgewählt, sonst false
+   */
   hasAccountSelection(): boolean {
     return this.accountSelection.hasSelection();
   }
 
+  /**
+   * Entfernt Kontofilter
+   *
+   * Löscht die aktuelle Kontoauswahl über den AccountSelectionService.
+   */
   clearAccountFilter(): void {
-    this.accountSelection.clearSelection().catch(err => {
+    this.accountSelection.clearSelection().catch((err) => {
       console.error('Error clearing account filter:', err);
     });
   }
 
   // TrackBy functions for performance optimization - using inherited methods
+  /** TrackBy-Funktion für Performance-Optimierung bei Kategorie-Listen */
   trackByCategory = this.trackByUtils.trackByCategoryId.bind(this.trackByUtils);
 
+  /**
+   * Räumt Subscriptions beim Zerstören der Komponente auf
+   *
+   * Verhindert Memory Leaks und duplizierte API-Calls während Navigation.
+   */
   ngOnDestroy() {
     // Cleanup subscriptions to prevent memory leaks and duplicate API calls during navigation
     if (this.accountSubscription) {

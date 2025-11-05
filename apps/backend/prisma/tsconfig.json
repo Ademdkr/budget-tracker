@@ -5,5 +5,5 @@
     "outDir": "../../dist/prisma",
     "types": ["node"]
   },
-  "include": ["seed.ts"]
+  "include": ["seed.ts", "seeds/**/*.ts"]
 }

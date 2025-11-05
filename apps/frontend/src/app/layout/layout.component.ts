@@ -20,19 +20,59 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { AuthService } from '../auth/auth.service';
 import { LoadingService } from '../shared/services/loading.service';
 
+/**
+ * Navigationselement für die Sidebar
+ */
 export interface NavigationItem {
+  /** Material Icon Name */
   icon: string;
+  /** Anzeigetext */
   label: string;
+  /** Router-Pfad */
   route: string;
+  /** Aktiv-Status (optional, wird dynamisch gesetzt) */
   active?: boolean;
 }
 
+/**
+ * Datumsfilter für Transaktionen und Berichte
+ */
 export interface DateFilter {
+  /** Filtertyp: Einzelner Monat oder Datumsbereich */
   type: 'month' | 'range';
+  /** Start-Datum */
   startDate: Date;
+  /** End-Datum (nur bei type='range') */
   endDate?: Date;
 }
 
+/**
+ * Layout-Komponente mit Navigation und Header
+ *
+ * Funktionalität:
+ * - Sidebar mit Navigation zu allen Hauptbereichen
+ * - Top-Bar mit Benutzermenü und Logout
+ * - Globaler Loading-Indikator
+ * - Datum-Filter (aktuell auskommentiert)
+ * - Responsive Design mit Material Sidenav
+ *
+ * Features:
+ * - Reactive Forms für Datumsfilter
+ * - RxJS Observables für User und Loading State
+ * - Material Design Komponenten
+ * - Router-Integration für aktive Route-Hervorhebung
+ *
+ * @example
+ * ```typescript
+ * // Wird automatisch durch Routing geladen
+ * {
+ *   path: '',
+ *   loadComponent: () => import('./layout/layout.component').then(m => m.LayoutComponent),
+ *   canActivate: [authGuard],
+ *   children: [...]
+ * }
+ * ```
+ */
 @Component({
   selector: 'app-layout',
   standalone: true,
@@ -58,14 +98,22 @@ export interface DateFilter {
   styleUrl: './layout.component.scss',
 })
 export class LayoutComponent {
+  /** Service für Authentifizierung und User-Daten */
   private authService = inject(AuthService);
+  /** Router für Navigation */
   private router = inject(Router);
+  /** Service für globalen Loading-State */
   private loadingService = inject(LoadingService);
 
+  /** Observable des aktuell eingeloggten Benutzers */
   currentUser$ = this.authService.currentUser$;
+  /** Observable des globalen Loading-States */
   isLoading$ = this.loadingService.loading$;
 
-  // Navigation items
+  /**
+   * Navigation items für die Sidebar
+   * Enthält alle Hauptbereiche der Anwendung mit Icons und Routen
+   */
   navigationItems: NavigationItem[] = [
     { icon: 'dashboard', label: 'Dashboard', route: '/dashboard' },
     { icon: 'account_balance_wallet', label: 'Transaktionen', route: '/transactions' },
@@ -75,10 +123,26 @@ export class LayoutComponent {
     { icon: 'upload_file', label: 'Import', route: '/import' },
   ];
 
-  // Date filter controls
+  /**
+   * FormControl für Filtertyp (Monat oder Datumsbereich)
+   * Aktuell nicht aktiv verwendet
+   */
   filterTypeControl = new FormControl<'month' | 'range'>('month');
+
+  /**
+   * FormControl für Monatsauswahl
+   * Standard: Aktueller Monat
+   */
   monthControl = new FormControl<Date>(new Date());
+
+  /**
+   * FormControl für Start-Datum bei Datumsbereich
+   */
   startDateControl = new FormControl<Date>(new Date());
+
+  /**
+   * FormControl für End-Datum bei Datumsbereich
+   */
   endDateControl = new FormControl<Date>(new Date());
 
   constructor() {
@@ -91,10 +155,19 @@ export class LayoutComponent {
     this.endDateControl.setValue(new Date(now.getFullYear(), now.getMonth() + 1, 0));
   }
 
+  /**
+   * Loggt den aktuellen Benutzer aus
+   * Leitet zur Login-Seite weiter
+   */
   logout() {
     this.authService.logout();
   }
 
+  /**
+   * Navigiert zu einer bestimmten Route
+   *
+   * @param route - Ziel-Route (z.B. '/dashboard')
+   */
   navigateTo(route: string) {
     this.router.navigate([route]);
   }
@@ -117,6 +190,12 @@ export class LayoutComponent {
     });
   } */
 
+  /**
+   * Gibt den aktuellen Datumsfilter zurück
+   * Basierend auf ausgewähltem Filtertyp (Monat oder Bereich)
+   *
+   * @returns DateFilter mit Start- und End-Datum
+   */
   getCurrentFilter(): DateFilter {
     const filterType = this.filterTypeControl.value || 'month';
 
@@ -136,6 +215,13 @@ export class LayoutComponent {
     }
   }
 
+  /**
+   * Prüft ob eine Route aktuell aktiv ist
+   * Wird für visuelle Hervorhebung in der Navigation verwendet
+   *
+   * @param route - Zu prüfende Route
+   * @returns true wenn Route aktiv ist
+   */
   isActiveRoute(route: string): boolean {
     return this.router.url === route;
   }

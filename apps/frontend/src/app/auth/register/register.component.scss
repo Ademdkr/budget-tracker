@@ -86,9 +86,9 @@
     align-items: center;
     gap: 4px;
     font-weight: 500;
-    
+
     &::before {
-      content: "⚠️";
+      content: '⚠️';
       font-size: 12px;
     }
   }
@@ -99,7 +99,7 @@
   .register-container {
     padding: 16px;
   }
-  
+
   .register-card {
     padding: 16px;
   }

@@ -4,35 +4,91 @@ import { TransactionsApiService } from '../transactions/transactions-api.service
 import { CategoriesApiService } from '../categories/categories-api.service';
 import { BudgetsApiService } from '../budgets/budgets-api.service';
 
+/**
+ * Dashboard KPI (Key Performance Indicator)
+ */
 export interface DashboardKPI {
+  /** Beschriftung des KPI */
   label: string;
+  /** Numerischer Wert */
   value: number;
+  /** Prozentuale Änderung zum Vormonat */
   change: number;
+  /** Material Icon Name */
   icon: string;
+  /** Farbschema (success, error, primary, accent) */
   color: string;
 }
 
+/**
+ * Chart-Daten für ng2-charts
+ */
 export interface ChartData {
+  /** Beschriftungen für Datenpunkte */
   labels: string[];
+  /** Datasets mit Daten und Styling */
   datasets: {
+    /** Label für Dataset */
     label: string;
+    /** Datenpunkte */
     data: number[];
+    /** Hintergrundfarbe(n) */
     backgroundColor?: string | string[];
+    /** Rahmenfarbe */
     borderColor?: string;
+    /** Rahmenbreite */
     borderWidth?: number;
   }[];
 }
 
+/**
+ * Zusammenfassung aller Dashboard-Statistiken
+ */
 export interface DashboardStatistics {
+  /** Gesamte Einnahmen */
   totalIncome: number;
+  /** Gesamte Ausgaben */
   totalExpenses: number;
+  /** Saldo (Einnahmen - Ausgaben) */
   balance: number;
+  /** Sparquote in Prozent */
   savingsRate: number;
+  /** Anzahl der Transaktionen */
   transactionCount: number;
+  /** Ausgaben nach Kategorie (Pie Chart) */
   categoryBreakdown: ChartData;
+  /** Monatlicher Trend (Bar Chart) */
   monthlyTrend: ChartData;
 }
 
+/**
+ * API-Service für Dashboard-Daten
+ *
+ * Funktionalität:
+ * - Aggregiert Daten aus Transactions, Categories und Budgets
+ * - Berechnet KPIs (Einnahmen, Ausgaben, Bilanz, Sparquote)
+ * - Erstellt Chart-Daten für Visualisierungen
+ * - Optimierte Methode getAllDashboardData für Performance
+ * - Filtert Daten nach aktuellem Monat
+ * - Unterstützt Account-basierte Filterung
+ *
+ * Performance:
+ * - Verwendet forkJoin für parallele API-Calls
+ * - Shared Categories Loading (nur ein API-Call)
+ * - Client-seitige Aggregation der Daten
+ *
+ * @example
+ * ```typescript
+ * // In dashboard.component.ts
+ * this.dashboardApi.getAllDashboardData(accountId)
+ *   .subscribe(data => {
+ *     this.kpiCards = data.kpis;
+ *     this.statistics = data.statistics;
+ *     this.budgetProgress = data.budgetProgress;
+ *     this.recentTransactions = data.recentTransactions;
+ *   });
+ * ```
+ */
 @Injectable({
   providedIn: 'root',
 })
@@ -42,8 +98,20 @@ export class DashboardApiService {
   private budgetsApi = inject(BudgetsApiService);
 
   /**
-   * Get all dashboard data with shared categories loading (optimized)
-   * Only shows data for the current month
+   * Holt alle Dashboard-Daten mit optimiertem Shared Categories Loading
+   * Zeigt nur Daten für den aktuellen Monat
+   *
+   * @param accountId - Optionale Account-ID für Filterung
+   * @returns Observable mit allen Dashboard-Daten (KPIs, Statistiken, Budget-Fortschritt, letzte Transaktionen)
+   *
+   * @example
+   * ```typescript
+   * this.dashboardApi.getAllDashboardData('account-123')
+   *   .subscribe(dashboardData => {
+   *     console.log('KPIs:', dashboardData.kpis);
+   *     console.log('Statistiken:', dashboardData.statistics);
+   *   });
+   * ```
    */
   getAllDashboardData(accountId?: string): Observable<{
     kpis: DashboardKPI[];
@@ -322,16 +390,24 @@ export class DashboardApiService {
   }
 
   /**
-   * Get dashboard KPIs (deprecated - use getAllDashboardData instead)
-   * @deprecated Use getAllDashboardData for better performance
+   * Holt KPIs für das Dashboard
+   *
+   * @deprecated Nutze getAllDashboardData für bessere Performance
+   * @param accountId - Optionale Account-ID für Filterung
+   * @returns Observable mit Dashboard-KPIs
    */
   getKPIs(accountId?: string): Observable<DashboardKPI[]> {
     return this.getAllDashboardData(accountId).pipe(map((data) => data.kpis));
   }
 
   /**
-   * Get comprehensive dashboard statistics (deprecated - use getAllDashboardData instead)
-   * @deprecated Use getAllDashboardData for better performance
+   * Holt umfassende Dashboard-Statistiken
+   *
+   * @deprecated Nutze getAllDashboardData für bessere Performance
+   * @param startDate - Start-Datum (wird ignoriert, nutzt aktuellen Monat)
+   * @param endDate - End-Datum (wird ignoriert, nutzt aktuellen Monat)
+   * @param accountId - Optionale Account-ID für Filterung
+   * @returns Observable mit Dashboard-Statistiken
    */
   getStatistics(
     startDate?: string,
@@ -342,7 +418,10 @@ export class DashboardApiService {
   }
 
   /**
-   * Get monthly comparison data (mock)
+   * Holt monatliche Vergleichsdaten (Mock-Daten)
+   *
+   * @param accountId - Optionale Account-ID für Filterung
+   * @returns Observable mit Chart-Daten für monatlichen Vergleich
    */
   getMonthlyComparison(accountId?: string): Observable<ChartData> {
     // Wenn kein Account ausgewählt ist, gebe leere Daten zurück
@@ -370,8 +449,11 @@ export class DashboardApiService {
   }
 
   /**
-   * Get budget progress overview (deprecated - use getAllDashboardData instead)
-   * @deprecated Use getAllDashboardData for better performance
+   * Holt Budget-Fortschritt-Übersicht
+   *
+   * @deprecated Nutze getAllDashboardData für bessere Performance
+   * @param accountId - Optionale Account-ID für Filterung
+   * @returns Observable mit Budget-Fortschritt für aktuellen Monat
    */
   getBudgetProgress(accountId?: string): Observable<
     Array<{
@@ -386,8 +468,12 @@ export class DashboardApiService {
   }
 
   /**
-   * Get recent transactions for dashboard (deprecated - use getAllDashboardData instead)
-   * @deprecated Use getAllDashboardData for better performance
+   * Holt letzte Transaktionen für Dashboard
+   *
+   * @deprecated Nutze getAllDashboardData für bessere Performance
+   * @param limit - Maximale Anzahl der Transaktionen (Standard: 10)
+   * @param accountId - Optionale Account-ID für Filterung
+   * @returns Observable mit letzten Transaktionen
    */
   getRecentTransactions(
     limit: number = 10,

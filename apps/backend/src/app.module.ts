@@ -9,6 +9,30 @@ import { AccountsModule } from './accounts/accounts.module';
 import { AuthModule } from './auth/auth.module';
 import * as Joi from 'joi';
 
+/**
+ * Haupt-Modul der NestJS-Anwendung
+ *
+ * Konfiguriert alle Feature-Module und globale Services:
+ * - ConfigModule: Umgebungsvariablen mit Validation
+ * - PrismaModule: Datenbank-Zugriff
+ * - AuthModule: Authentifizierung und Authorization
+ * - HealthModule: Health-Check Endpoints
+ * - BudgetsModule: Budget-Verwaltung
+ * - CategoriesModule: Kategorie-Verwaltung
+ * - TransactionsModule: Transaktions-Verwaltung
+ * - AccountsModule: Konto-Verwaltung
+ *
+ * Environment Variables (mit Joi-Validation):
+ * - PORT_API: Server Port (default: 3001)
+ * - DATABASE_URL: PostgreSQL Connection String (required)
+ * - CORS_ORIGIN: Erlaubte CORS Origins (optional)
+ *
+ * @example
+ * ```typescript
+ * // In main.ts
+ * const app = await NestFactory.create(AppModule);
+ * ```
+ */
 @Module({
   imports: [
     ConfigModule.forRoot({

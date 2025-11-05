@@ -1,4 +1,11 @@
-import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  inject,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -25,36 +32,81 @@ import { BaseComponent } from '../shared/components/base.component';
 import { BudgetsApiService } from './budgets-api.service';
 
 // Budget interfaces
+/**
+ * Budget mit Statistiken-Schnittstelle
+ */
 export interface BudgetWithStats {
+  /** Budget-ID */
   id: string;
+  /** Kategorie-ID */
   categoryId: string;
+  /** Kategoriename */
   categoryName: string;
+  /** Kategorie-Icon */
   categoryIcon: string;
+  /** Kategorie-Farbe */
   categoryColor: string;
+  /** Zielbetrag */
   targetAmount: number;
+  /** Aktueller ausgegebener Betrag */
   currentAmount: number;
+  /** Verbleibender Betrag */
   remainingAmount: number;
+  /** Prozentsatz der Verwendung */
   percentageUsed: number;
+  /** Anzahl der Transaktionen */
   transactionCount: number;
+  /** Datum der letzten Transaktion */
   lastTransactionDate?: Date;
+  /** Monat */
   month: number;
+  /** Jahr */
   year: number;
+  /** Erstellungsdatum */
   createdAt: Date;
+  /** Aktualisierungsdatum */
   updatedAt: Date;
+  /** Gibt an, ob Budget aktiv ist */
   isActive: boolean;
 }
 
+/**
+ * Monatliche Budget-Zusammenfassung
+ */
+/**
+ * Monatliche Budget-Zusammenfassung
+ */
 export interface MonthlyBudgetSummary {
+  /** Monat */
   month: number;
+  /** Jahr */
   year: number;
+  /** Gesamtes Zielbudget */
   totalTarget: number;
+  /** Gesamte Ausgaben */
   totalSpent: number;
+  /** Gesamt verbleibend */
   totalRemaining: number;
+  /** Anzahl der Budgets */
   budgetCount: number;
+  /** Anzahl überschrittener Budgets */
   overBudgetCount: number;
+  /** Anzahl erreichter Budgets */
   achievedCount: number;
 }
 
+/**
+ * Budgets-Verwaltungs-Komponente
+ *
+ * Verwaltet die Anzeige, Erstellung und Bearbeitung von Budgets.
+ * Zeigt monatliche Zusammenfassungen, Fortschrittsbalken und ermöglicht
+ * Filterung nach Monat/Jahr mit Kontoauswahl-Integration.
+ *
+ * @example
+ * ```html
+ * <app-budgets></app-budgets>
+ * ```
+ */
 @Component({
   selector: 'app-budgets',
   standalone: true,
@@ -78,34 +130,50 @@ export interface MonthlyBudgetSummary {
   ],
   templateUrl: './budgets.component.html',
   styleUrl: './budgets.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy {
+  /** Eindeutiger Komponenten-Schlüssel für BaseComponent */
   protected componentKey = 'budgets';
+
+  /** Dialog-Service für Budget-Formulare */
   private dialog = inject(MatDialog);
+  /** Service zur Konto-Auswahl */
   private accountSelection = inject(AccountSelectionService);
+  /** ChangeDetectorRef für manuelle Change Detection */
   private cdr = inject(ChangeDetectorRef);
 
   // Data properties
+  /** Budgets mit Statistiken */
   budgets: BudgetWithStats[] = [];
+  /** Monatliche Zusammenfassungsstatistiken */
   monthlyStats: MonthlyBudgetSummary | null = null;
+  /** Verfügbare Kategorien für Budget-Erstellung */
   private availableCategories: Category[] = [];
+  /** Subscription für Konto-Änderungen */
   private accountSubscription?: Subscription;
 
-  // Helper for template
+  /** Math-Objekt für Template-Zugriff */
   Math = Math;
 
   // UI states
+  /** Gibt an, ob keine Budgets vorhanden sind */
   isEmpty = false;
+  /** Gibt an, ob der initiale Ladevorgang abgeschlossen ist */
   private initialLoadCompleted = false;
 
   // Date selection
-  selectedMonth = new Date().getMonth(); // 0-11
+  /** Ausgewählter Monat (0-11) */
+  selectedMonth = new Date().getMonth();
+  /** Ausgewähltes Jahr */
   selectedYear = new Date().getFullYear();
+  /** FormControl für Monatsauswahl */
   monthControl = new FormControl(this.selectedMonth);
+  /** FormControl für Jahresauswahl */
   yearControl = new FormControl(this.selectedYear);
 
   // Available options
+  /** Verfügbare Monate für Dropdown */
   availableMonths = [
     { value: 0, label: 'Januar' },
     { value: 1, label: 'Februar' },
@@ -121,9 +189,11 @@ export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy
     { value: 11, label: 'Dezember' },
   ];
 
+  /** Verfügbare Jahre für Dropdown */
   availableYears: number[] = [];
 
   // Table columns
+  /** Angezeigte Tabellenspalten */
   displayedColumns: string[] = [
     'category',
     'target',
@@ -133,10 +203,19 @@ export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy
     'actions',
   ];
 
+  /** API-Service für Budgets */
   private budgetsApi = inject(BudgetsApiService);
+  /** API-Service für Kategorien */
   private categoriesApi = inject(CategoriesApiService);
+  /** API-Service für Transaktionen */
   private transactionsApi = inject(TransactionsApiService);
 
+  /**
+   * Initialisiert Komponente und lädt Budgets
+   *
+   * Setzt Loading-State, initialisiert Jahre und FormControl-Subscriptions,
+   * und lädt Budgets nach Konto-Service-Initialisierung.
+   */
   ngOnInit() {
     // BaseComponent initialisieren
     this.initializeLoadingState();
@@ -156,14 +235,26 @@ export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy
     this.initializeAndLoadData();
   }
 
+  /**
+   * Initialisiert AccountSelectionService und lädt anschließend Budgets
+   *
+   * @private
+   */
   private async initializeAndLoadData() {
     // Warte auf die Initialisierung des AccountSelectionService
     await this.accountSelection.initialize();
-    
+
     // Dann Initial load
     this.loadBudgetsForPeriod();
   }
 
+  /**
+   * Initialisiert verfügbare Jahre für Dropdown
+   *
+   * Erstellt Array mit Jahren von 2020 bis nächstes Jahr.
+   *
+   * @private
+   */
   private initializeYears() {
     const currentYear = new Date().getFullYear();
     this.availableYears = [];
@@ -174,6 +265,13 @@ export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy
     }
   }
 
+  /**
+   * Richtet FormControl-Subscriptions für Monat/Jahr-Auswahl ein
+   *
+   * Lädt Budgets neu bei Änderung von Monat oder Jahr.
+   *
+   * @private
+   */
   private setupFormSubscriptions() {
     this.monthControl.valueChanges.subscribe((month) => {
       if (month !== null) {
@@ -190,11 +288,17 @@ export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy
     });
   }
 
-
-
+  /**
+   * Lädt Budgets für ausgewählten Zeitraum
+   *
+   * Ruft Budgets mit Statistiken vom API-Service ab und lädt
+   * verfügbare Kategorien. Prüft ob Konto ausgewählt ist.
+   *
+   * @private
+   */
   private loadBudgetsForPeriod() {
     console.log('🔄 Loading budgets for period:', this.selectedYear, this.selectedMonth);
-    
+
     // Verwende die ausgewählte Account-ID
     const selectedAccountId = this.accountSelection.getSelectedAccountId();
 
@@ -212,16 +316,18 @@ export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy
 
     // Verwende die neue optimierte API mit bereits berechneten Statistiken
     const budgetMonth = this.selectedMonth + 1; // Frontend: 0-11, Backend: 1-12
-    
+
     // Lade nur Kategorien für Dialog-Zwecke, Budgets kommen bereits mit allen Statistiken
     Promise.all([
-      this.budgetsApi.getBudgetsWithStats(this.selectedYear, budgetMonth, selectedAccountId).toPromise(),
+      this.budgetsApi
+        .getBudgetsWithStats(this.selectedYear, budgetMonth, selectedAccountId)
+        .toPromise(),
       this.categoriesApi.getAll(selectedAccountId).toPromise(), // Nur für Dialog-Zwecke
     ])
       .then(([budgetsWithStats, categories]) => {
         // Store categories for reuse in dialogs
         this.availableCategories = categories ?? [];
-        
+
         console.log('📊 Budgets with stats loaded:', budgetsWithStats?.length);
         console.log('📊 Sample budget data:', budgetsWithStats?.[0]);
 
@@ -237,7 +343,9 @@ export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy
           remainingAmount: budget.remainingAmount,
           percentageUsed: budget.percentageUsed,
           transactionCount: budget.transactionCount,
-          lastTransactionDate: budget.lastTransactionDate ? new Date(budget.lastTransactionDate) : undefined,
+          lastTransactionDate: budget.lastTransactionDate
+            ? new Date(budget.lastTransactionDate)
+            : undefined,
           month: budget.month - 1, // Backend: 1-12, Frontend: 0-11
           year: budget.year,
           createdAt: budget.createdAt ? new Date(budget.createdAt) : new Date(),
@@ -259,6 +367,14 @@ export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy
       });
   }
 
+  /**
+   * Berechnet monatliche Zusammenfassungsstatistiken
+   *
+   * Aggregiert alle Budgets und berechnet Gesamt-Ziel, -Ausgaben,
+   * -Verbleibend und Anzahl überschrittener/erreichter Budgets.
+   *
+   * @private
+   */
   private calculateMonthlyStats() {
     if (this.budgets.length === 0) {
       this.monthlyStats = null;
@@ -316,15 +432,34 @@ export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy
     };
   }
 
+  /**
+   * Prüft Empty-State
+   *
+   * Setzt isEmpty-Flag basierend auf vorhandenen Budgets.
+   *
+   * @private
+   */
   private checkEmptyState() {
     this.isEmpty = this.budgets.length === 0;
   }
 
   // UI Helper Methods
+  /**
+   * Formatiert Betrag als Währung
+   *
+   * @param amount - Zu formatierender Betrag
+   * @returns Formatierter Währungsstring
+   */
   formatCurrency(amount: number): string {
     return this.formatUtils.formatCurrency(amount);
   }
 
+  /**
+   * Formatiert Datum in deutschem Format
+   *
+   * @param date - Zu formatierendes Datum
+   * @returns Formatierter Datum-String oder 'Keine Aktivität'
+   */
   formatDate(date: Date | undefined): string {
     if (!date) return 'Keine Aktivität';
     return new Intl.DateTimeFormat('de-DE', {
@@ -334,6 +469,12 @@ export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy
     }).format(date);
   }
 
+  /**
+   * Gibt Farbe für Fortschrittsbalken zurück
+   *
+   * @param percentage - Prozentsatz der Budget-Nutzung
+   * @returns Material Design Color ('primary', 'accent', 'warn')
+   */
   getProgressBarColor(percentage: number): string {
     if (percentage <= 50) return 'primary'; // Blue
     if (percentage <= 80) return 'accent'; // Orange
@@ -341,6 +482,12 @@ export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy
     return 'warn'; // Red for over budget
   }
 
+  /**
+   * Gibt Budget-Status zurück
+   *
+   * @param budget - Budget zur Statusermittlung
+   * @returns Status ('success', 'warning', 'danger', 'info')
+   */
   getBudgetStatus(budget: BudgetWithStats): 'success' | 'warning' | 'danger' | 'info' {
     if (!budget.isActive) return 'info';
     if (budget.percentageUsed > 100) return 'danger';
@@ -351,6 +498,12 @@ export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy
     return 'info'; // Nicht verwendet
   }
 
+  /**
+   * Gibt Budget-Statustext zurück
+   *
+   * @param budget - Budget zur Textermittlung
+   * @returns Deutscher Statustext
+   */
   getBudgetStatusText(budget: BudgetWithStats): string {
     if (!budget.isActive) return 'Inaktiv';
     if (budget.percentageUsed === 0) return 'Nicht verwendet';
@@ -361,11 +514,22 @@ export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy
     return 'Auf Kurs';
   }
 
+  /**
+   * Gibt Namen des ausgewählten Monats zurück
+   *
+   * @returns Deutscher Monatsname
+   */
   getSelectedMonthName(): string {
     return this.availableMonths.find((m) => m.value === this.selectedMonth)?.label || '';
   }
 
   // Budget Actions
+  /**
+   * Öffnet Dialog zum Erstellen eines neuen Budgets
+   *
+   * Prüft ob Konto ausgewählt und Kategorien verfügbar sind.
+   * Öffnet BudgetFormComponent im Dialog-Modus.
+   */
   async createBudget(): Promise<void> {
     // Überprüfen ob ein Konto ausgewählt ist
     const selectedAccountId = this.accountSelection.getSelectedAccountId();
@@ -415,6 +579,13 @@ export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy
     });
   }
 
+  /**
+   * Öffnet Dialog zum Bearbeiten eines Budgets
+   *
+   * Lädt Kategorien und zeigt BudgetFormComponent im Edit-Modus.
+   *
+   * @param budget - Zu bearbeitendes Budget
+   */
   async editBudget(budget: BudgetWithStats): Promise<void> {
     const categories = await this.loadCategoriesForDialog();
     const existingBudgets = this.budgets
@@ -459,6 +630,14 @@ export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy
     });
   }
 
+  /**
+   * Löscht Budget nach Bestätigung
+   *
+   * Zeigt Bestätigungs-Dialog und löscht Budget über API.
+   * Lädt Budgets neu nach erfolgreicher Löschung.
+   *
+   * @param budget - Zu löschendes Budget
+   */
   deleteBudget(budget: BudgetWithStats): void {
     const confirmed = confirm(
       `Möchten Sie das Budget für "${budget.categoryName}" wirklich löschen?`,
@@ -477,11 +656,25 @@ export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy
     }
   }
 
+  /**
+   * Lädt Budgets erneut
+   *
+   * Wird vom Error-Template aufgerufen bei Fehler-Zustand.
+   */
   retry(): void {
     this.loadBudgetsForPeriod();
   }
 
   // Helper methods for dialog integration
+  /**
+   * Lädt Kategorien für Dialog
+   *
+   * Verwendet bereits geladene Kategorien oder lädt sie neu.
+   * Filtert nur Ausgabe-Kategorien für Budget-Erstellung.
+   *
+   * @private
+   * @returns Promise mit Array von Kategorien
+   */
   private async loadCategoriesForDialog(): Promise<Category[]> {
     try {
       // Versuche zuerst, bereits geladene Kategorien zu verwenden (aus loadBudgetsForPeriod)
@@ -526,6 +719,15 @@ export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy
     }
   }
 
+  /**
+   * Erstellt Budget aus Dialog-Daten
+   *
+   * Validiert Eingaben, prüft auf Einnahme-Kategorien und erstellt
+   * Budget über API-Service. Lädt Budgets neu nach erfolgreicher Erstellung.
+   *
+   * @private
+   * @param budgetData - Budget-Daten aus Dialog
+   */
   private async createBudgetFromDialog(budgetData: Partial<BudgetWithStats>): Promise<void> {
     const categoryId = budgetData.categoryId || '';
     const targetAmount = budgetData.targetAmount || 0;
@@ -585,6 +787,19 @@ export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy
     });
   }
 
+  /**
+   * Aktualisiert ein bestehendes Budget über den Dialog.
+   *
+   * Diese private Methode wird von editBudget() aufgerufen, nachdem der Benutzer
+   * Änderungen im Dialog bestätigt hat. Sie extrahiert den Zielbetrag aus den
+   * Dialog-Daten und sendet ein Update an die API. Nach erfolgreicher Aktualisierung
+   * wird die Budget-Liste neu geladen.
+   *
+   * @private
+   * @param {string} budgetId - Die eindeutige ID des zu aktualisierenden Budgets
+   * @param {Partial<BudgetWithStats>} budgetData - Die aktualisierten Budget-Daten aus dem Dialog
+   * @returns {void}
+   */
   private updateBudgetFromDialog(budgetId: string, budgetData: Partial<BudgetWithStats>): void {
     const targetAmount = budgetData.targetAmount || 0;
 
@@ -605,31 +820,68 @@ export class BudgetsComponent extends BaseComponent implements OnInit, OnDestroy
   }
 
   // Account Selection Helper Methods
+  /**
+   * Prüft, ob derzeit ein Konto ausgewählt ist.
+   *
+   * @returns {boolean} True, wenn ein Konto ausgewählt ist, sonst false
+   */
   hasAccountSelection(): boolean {
     return !!this.accountSelection.getSelectedAccountId();
   }
 
+  /**
+   * Gibt den Namen des aktuell ausgewählten Kontos zurück.
+   *
+   * @returns {string} Der Name des ausgewählten Kontos oder ein leerer String
+   */
   getSelectedAccountName(): string {
     const account = this.accountSelection.getSelectedAccount();
     return account?.name || '';
   }
 
+  /**
+   * Entfernt den aktuellen Kontofilter.
+   *
+   * Setzt die Kontoauswahl zurück und lädt alle Budgets ohne Kontofilter.
+   *
+   * @returns {void}
+   */
   clearAccountFilter(): void {
-    this.accountSelection.clearSelection().catch(err => {
+    this.accountSelection.clearSelection().catch((err) => {
       console.error('Error clearing account filter:', err);
     });
   }
 
-  // TrackBy functions for performance optimization - using inherited methods
+  /**
+   * TrackBy-Funktionen für Performance-Optimierung.
+   *
+   * Diese Funktionen werden von Angular's *ngFor verwendet, um DOM-Updates zu minimieren.
+   * Sie nutzen die geerbten Methoden aus TrackByUtilsService.
+   */
   trackByBudget = this.trackByUtils.trackById.bind(this.trackByUtils);
   trackByCategory = this.trackByUtils.trackByCategoryId.bind(this.trackByUtils);
 
-  // Die folgenden Helper wurden durch echte Kategorien ersetzt und sind nicht mehr nötig.
-
+  /**
+   * Generiert eine eindeutige ID für neue Budgets (Legacy).
+   *
+   * Diese Methode wird nicht mehr verwendet, da IDs jetzt von der Datenbank generiert werden.
+   * Bleibt aus Kompatibilitätsgründen erhalten.
+   *
+   * @protected
+   * @returns {string} Eine eindeutige ID im Format 'budget_timestamp_random'
+   */
   protected generateId(): string {
     return 'budget_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   }
 
+  /**
+   * Angular Lifecycle Hook - wird beim Zerstören der Komponente aufgerufen.
+   *
+   * Führt Aufräumarbeiten durch, um Memory Leaks und doppelte API-Aufrufe zu verhindern.
+   * Beendet insbesondere das Konto-Auswahl-Subscription.
+   *
+   * @returns {void}
+   */
   ngOnDestroy() {
     // Cleanup subscriptions to prevent memory leaks and duplicate API calls during navigation
     if (this.accountSubscription) {

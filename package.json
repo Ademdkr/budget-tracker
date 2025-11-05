@@ -24,6 +24,11 @@
     "db:down": "docker compose down",
     "db:studio": "pnpm --filter @budget-tracker/backend exec prisma studio",
     "gen:prisma": "pnpm --filter @budget-tracker/backend exec prisma generate",
+    "docs:backend": "compodoc -p apps/backend/tsconfig.json -d docs/backend --theme readthedocs --disablePrivate --disableProtected",
+    "docs:backend:serve": "compodoc -p apps/backend/tsconfig.json -d docs/backend -s --port 8081 --theme readthedocs --disablePrivate --disableProtected",
+    "docs:frontend": "compodoc -p apps/frontend/tsconfig.json -d docs/frontend --theme readthedocs --disablePrivate --disableProtected",
+    "docs:frontend:serve": "compodoc -p apps/frontend/tsconfig.json -d docs/frontend -s --port 8082 --theme readthedocs --disablePrivate --disableProtected",
+    "docs:all": "pnpm docs:backend && pnpm docs:frontend",
     "postinstall": "node -e \"if(process.env.SKIP_POSTINSTALL!=='true'){require('child_process').execSync('pnpm --filter @budget-tracker/backend exec prisma generate',{stdio:'inherit'})} else {console.log('Skipping postinstall (SKIP_POSTINSTALL=true)')}\""
   },
   "lint-staged": {
@@ -44,6 +49,7 @@
     "@angular-eslint/template-parser": "^20.4.0",
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
+    "@compodoc/compodoc": "^1.1.32",
     "@types/jest": "^29.5.14",
     "@types/joi": "^17.2.3",
     "@types/node": "^20.19.22",

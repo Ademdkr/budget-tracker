@@ -2,31 +2,99 @@ import { Injectable, inject, Injector } from '@angular/core';
 import { BehaviorSubject, firstValueFrom } from 'rxjs';
 import { AuthService } from '../../auth/auth.service';
 
+/**
+ * Interface für ein ausgewähltes Konto.
+ *
+ * Repräsentiert die minimalen Informationen, die benötigt werden,
+ * um ein ausgewähltes Konto in der Anwendung zu verwalten.
+ */
 export interface SelectedAccount {
+  /** Eindeutige Konto-ID */
   id: string;
+
+  /** Name des Kontos */
   name: string;
+
+  /** Typ des Kontos (z.B. 'checking', 'savings') */
   type: string;
+
+  /** Aktueller Kontostand in EUR */
   balance: number;
+
+  /** Optionales Icon für die Anzeige */
   icon?: string;
+
+  /** Optionale Farbe für die Anzeige */
   color?: string;
 }
 
+/**
+ * Service zur Verwaltung der globalen Kontoauswahl.
+ *
+ * Dieser Service verwaltet die Auswahl eines aktiven Kontos für die gesamte Anwendung.
+ * Die Auswahl wird in der Datenbank persistiert und automatisch geladen, wenn sich
+ * ein Benutzer anmeldet. Der Service verhindert zirkuläre Abhängigkeiten durch
+ * Lazy Loading des AccountsApiService.
+ *
+ * Features:
+ * - Persistierung der Kontoauswahl in der Datenbank
+ * - Automatisches Laden beim Login
+ * - Löschen der Auswahl beim Logout/User-Wechsel
+ * - Observable für reaktive Updates
+ * - Verhindert Race Conditions durch Synchronisation
+ * - Migration von altem localStorage-Ansatz
+ *
+ * @example
+ * // Konto auswählen
+ * await this.accountSelection.selectAccount({
+ *   id: 'account-1',
+ *   name: 'Girokonto',
+ *   type: 'checking',
+ *   balance: 1500.00
+ * });
+ *
+ * // Aktuelles Konto beobachten
+ * this.accountSelection.selectedAccount$.subscribe(account => {
+ *   console.log('Ausgewähltes Konto:', account?.name);
+ * });
+ */
 @Injectable({
   providedIn: 'root',
 })
 export class AccountSelectionService {
+  /** AuthService für Benutzer-Informationen */
   private authService = inject(AuthService);
+
+  /** Injector für Lazy Loading des AccountsApiService */
   private injector = inject(Injector);
 
+  /** BehaviorSubject für das aktuell ausgewählte Konto */
   private selectedAccountSubject = new BehaviorSubject<SelectedAccount | null>(null);
+
+  /** Observable für das aktuell ausgewählte Konto */
   public selectedAccount$ = this.selectedAccountSubject.asObservable();
 
+  /** ID des aktuellen Benutzers */
   private currentUserId: string | null = null;
-  private isInitialized = false; // Flag um mehrfache Initialisierung zu verhindern
-  private initializationPromise: Promise<void> | null = null; // Promise um parallele Aufrufe zu synchronisieren
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private accountsApi: any; // Lazy inject to avoid circular dependency
 
+  /** Flag um mehrfache Initialisierung zu verhindern */
+  private isInitialized = false;
+
+  /** Promise um parallele Aufrufe zu synchronisieren */
+  private initializationPromise: Promise<void> | null = null;
+
+  /** Lazy injected AccountsApiService (verhindert zirkuläre Abhängigkeit) */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private accountsApi: any;
+
+  /**
+   * Konstruktor initialisiert den Service und beobachtet Benutzer-Änderungen.
+   *
+   * Führt automatisch Migration von alten localStorage-Einträgen durch und
+   * lädt das aktive Konto aus der Datenbank, wenn ein Benutzer bereits
+   * eingeloggt ist. Beobachtet User-Wechsel und lädt entsprechend neue
+   * Kontoauswahl oder löscht sie beim Logout.
+   */
   constructor() {
     // Entferne alte globale selectedAccount (Migration)
     const oldAccount = localStorage.getItem('selectedAccount');
@@ -80,7 +148,13 @@ export class AccountSelectionService {
   }
 
   /**
-   * Lazy inject AccountsApiService to avoid circular dependency
+   * Lädt den AccountsApiService per Lazy Loading.
+   *
+   * Diese Methode verhindert zirkuläre Abhängigkeiten, indem der
+   * AccountsApiService erst bei Bedarf geladen wird.
+   *
+   * @private
+   * @returns {Promise} Promise, das den AccountsApiService zurückgibt
    */
   private async getAccountsApi() {
     if (!this.accountsApi) {
@@ -91,7 +165,14 @@ export class AccountSelectionService {
   }
 
   /**
-   * Load active account from database
+   * Lädt das aktive Konto aus der Datenbank.
+   *
+   * Diese Methode verhindert parallele Aufrufe durch ein Promise-basiertes
+   * Locking-Mechanismus. Wenn bereits ein Ladevorgang läuft, wartet die
+   * Methode auf dessen Abschluss.
+   *
+   * @private
+   * @returns {Promise<void>} Promise, das nach dem Laden aufgelöst wird
    */
   private async loadActiveAccountFromDatabase() {
     // Verhindere mehrfache parallele Aufrufe
@@ -110,6 +191,15 @@ export class AccountSelectionService {
     }
   }
 
+  /**
+   * Interne Methode zum Laden des aktiven Kontos aus der Datenbank.
+   *
+   * Ruft die API auf, validiert die Antwort und aktualisiert das
+   * selectedAccountSubject. Setzt den isInitialized-Flag nach Abschluss.
+   *
+   * @private
+   * @returns {Promise<void>} Promise, das nach dem Laden aufgelöst wird
+   */
   private async _loadActiveAccountFromDatabase() {
     try {
       const api = await this.getAccountsApi();
@@ -148,7 +238,23 @@ export class AccountSelectionService {
   }
 
   /**
-   * Set the currently selected account and persist to database
+   * Setzt das aktuell ausgewählte Konto und persistiert es in der Datenbank.
+   *
+   * Wenn ein Konto übergeben wird, wird es in der Datenbank als aktiv markiert
+   * (alle anderen Konten werden automatisch deaktiviert). Wenn null übergeben
+   * wird, wird nur die lokale Auswahl gelöscht.
+   *
+   * @param {SelectedAccount | null} account - Das zu selektierende Konto oder null
+   * @returns {Promise<void>} Promise, das nach dem Setzen aufgelöst wird
+   * @throws {Error} Wenn das Setzen in der Datenbank fehlschlägt
+   *
+   * @example
+   * await this.accountSelection.selectAccount({
+   *   id: 'account-1',
+   *   name: 'Hauptkonto',
+   *   type: 'checking',
+   *   balance: 2500.00
+   * });
    */
   async selectAccount(account: SelectedAccount | null): Promise<void> {
     if (!account) {
@@ -172,14 +278,32 @@ export class AccountSelectionService {
   }
 
   /**
-   * Get the currently selected account
+   * Gibt das aktuell ausgewählte Konto zurück.
+   *
+   * @returns {SelectedAccount | null} Das aktuell ausgewählte Konto oder null
+   *
+   * @example
+   * const account = this.accountSelection.getSelectedAccount();
+   * if (account) {
+   *   console.log('Aktives Konto:', account.name);
+   * }
    */
   getSelectedAccount(): SelectedAccount | null {
     return this.selectedAccountSubject.value;
   }
 
   /**
-   * Clear the selected account and set isActive=false in database
+   * Löscht die Kontoauswahl und setzt isActive=false in der Datenbank.
+   *
+   * Löscht zuerst die lokale Auswahl und deaktiviert dann das Konto in
+   * der Datenbank. Fehler bei der Datenbank-Deaktivierung werden geloggt,
+   * werfen aber keinen Fehler, da die lokale Auswahl bereits gelöscht wurde.
+   *
+   * @returns {Promise<void>} Promise, das nach dem Löschen aufgelöst wird
+   *
+   * @example
+   * await this.accountSelection.clearSelection();
+   * console.log('Kontoauswahl gelöscht');
    */
   async clearSelection(): Promise<void> {
     const currentAccount = this.selectedAccountSubject.value;
@@ -201,9 +325,18 @@ export class AccountSelectionService {
   }
 
   /**
-   * Initialize service - load active account from database
-   * Note: This is now automatically called in constructor when user is logged in.
-   * This method is kept for backward compatibility and manual refresh.
+   * Initialisiert den Service - lädt das aktive Konto aus der Datenbank.
+   *
+   * Diese Methode wird automatisch im Konstruktor aufgerufen, wenn ein
+   * Benutzer eingeloggt ist. Sie kann auch manuell aufgerufen werden,
+   * um einen Refresh zu erzwingen. Überprüft, ob bereits initialisiert,
+   * um unnötige API-Aufrufe zu vermeiden.
+   *
+   * @returns {Promise<void>} Promise, das nach der Initialisierung aufgelöst wird
+   *
+   * @example
+   * // Manueller Refresh der Kontoauswahl
+   * await this.accountSelection.initialize();
    */
   async initialize(): Promise<void> {
     const currentUser = this.authService.getCurrentUser();
@@ -224,7 +357,16 @@ export class AccountSelectionService {
   }
 
   /**
-   * Force refresh - reload active account from database even if already initialized
+   * Erzwingt einen Refresh - lädt das aktive Konto aus der Datenbank neu.
+   *
+   * Im Gegensatz zu initialize() lädt diese Methode die Daten immer neu,
+   * auch wenn der Service bereits initialisiert wurde.
+   *
+   * @returns {Promise<void>} Promise, das nach dem Refresh aufgelöst wird
+   *
+   * @example
+   * // Nach Konto-Update in einer anderen Komponente
+   * await this.accountSelection.forceRefresh();
    */
   async forceRefresh(): Promise<void> {
     console.log('🔃 Force refresh requested - reloading active account from database');
@@ -233,14 +375,29 @@ export class AccountSelectionService {
   }
 
   /**
-   * Check if an account is currently selected
+   * Prüft, ob derzeit ein Konto ausgewählt ist.
+   *
+   * @returns {boolean} True, wenn ein Konto ausgewählt ist, sonst false
+   *
+   * @example
+   * if (this.accountSelection.hasSelection()) {
+   *   console.log('Ein Konto ist ausgewählt');
+   * }
    */
   hasSelection(): boolean {
     return this.selectedAccountSubject.value !== null;
   }
 
   /**
-   * Get the selected account ID
+   * Gibt die ID des ausgewählten Kontos zurück.
+   *
+   * @returns {string | null} Die Konto-ID oder null, wenn kein Konto ausgewählt ist
+   *
+   * @example
+   * const accountId = this.accountSelection.getSelectedAccountId();
+   * if (accountId) {
+   *   this.loadTransactionsForAccount(accountId);
+   * }
    */
   getSelectedAccountId(): string | null {
     const account = this.selectedAccountSubject.value;

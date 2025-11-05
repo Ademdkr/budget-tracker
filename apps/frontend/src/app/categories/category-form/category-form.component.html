@@ -8,14 +8,15 @@
 
   <mat-dialog-content class="form-content">
     <form [formGroup]="categoryForm" class="category-form">
-      
       <!-- Category Preview -->
       <div class="form-section">
         <h3 class="section-title">Vorschau</h3>
         <div class="category-preview">
           <div class="preview-card" [ngStyle]="getPreviewStyle()">
             <span class="preview-emoji">{{ categoryForm.get('emoji')?.value }}</span>
-            <span class="preview-name">{{ categoryForm.get('name')?.value || 'Kategoriename' }}</span>
+            <span class="preview-name">{{
+              categoryForm.get('name')?.value || 'Kategoriename'
+            }}</span>
           </div>
         </div>
       </div>
@@ -23,17 +24,29 @@
       <!-- Basic Information -->
       <div class="form-section">
         <h3 class="section-title">Grundinformationen</h3>
-        
+
         <div class="form-row">
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Kategoriename</mat-label>
-            <input matInput 
-                   formControlName="name"
-                   placeholder="z.B. Lebensmittel, Gehalt, Transport"
-                   maxlength="30"
-                   [class.error]="hasError('name', 'required') || hasError('name', 'minlength') || hasError('name', 'uniqueName')">
+            <input
+              matInput
+              formControlName="name"
+              placeholder="z.B. Lebensmittel, Gehalt, Transport"
+              maxlength="30"
+              [class.error]="
+                hasError('name', 'required') ||
+                hasError('name', 'minlength') ||
+                hasError('name', 'uniqueName')
+              "
+            />
             <mat-hint align="end">{{ categoryForm.get('name')?.value?.length || 0 }}/30</mat-hint>
-            <mat-error *ngIf="hasError('name', 'required') || hasError('name', 'minlength') || hasError('name', 'uniqueName')">
+            <mat-error
+              *ngIf="
+                hasError('name', 'required') ||
+                hasError('name', 'minlength') ||
+                hasError('name', 'uniqueName')
+              "
+            >
               {{ getErrorMessage('name') }}
             </mat-error>
           </mat-form-field>
@@ -42,12 +55,16 @@
         <div class="form-row">
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Beschreibung (optional)</mat-label>
-            <textarea matInput 
-                     formControlName="description"
-                     rows="2"
-                     placeholder="Kurze Beschreibung der Kategorie..."
-                     maxlength="100"></textarea>
-            <mat-hint align="end">{{ categoryForm.get('description')?.value?.length || 0 }}/100</mat-hint>
+            <textarea
+              matInput
+              formControlName="description"
+              rows="2"
+              placeholder="Kurze Beschreibung der Kategorie..."
+              maxlength="100"
+            ></textarea>
+            <mat-hint align="end"
+              >{{ categoryForm.get('description')?.value?.length || 0 }}/100</mat-hint
+            >
           </mat-form-field>
         </div>
       </div>
@@ -77,21 +94,20 @@
       <div class="form-section">
         <h3 class="section-title">Emoji wählen</h3>
         <div class="emoji-grid">
-          <button *ngFor="let emoji of commonEmojis" 
-                  type="button"
-                  mat-button
-                  class="emoji-button"
-                  [class.selected]="categoryForm.get('emoji')?.value === emoji"
-                  (click)="onEmojiSelect(emoji)">
+          <button
+            *ngFor="let emoji of commonEmojis"
+            type="button"
+            mat-button
+            class="emoji-button"
+            [class.selected]="categoryForm.get('emoji')?.value === emoji"
+            (click)="onEmojiSelect(emoji)"
+          >
             {{ emoji }}
           </button>
         </div>
         <mat-form-field appearance="outline" class="custom-emoji-field">
           <mat-label>Oder eigenes Emoji eingeben</mat-label>
-          <input matInput 
-                 formControlName="emoji"
-                 placeholder="🎯"
-                 maxlength="4">
+          <input matInput formControlName="emoji" placeholder="🎯" maxlength="4" />
         </mat-form-field>
       </div>
 
@@ -99,44 +115,52 @@
       <div class="form-section">
         <h3 class="section-title">Farbe wählen</h3>
         <div class="color-grid">
-          <button *ngFor="let color of predefinedColors" 
-                  type="button"
-                  mat-button
-                  class="color-button"
-                  [class.selected]="categoryForm.get('color')?.value === color"
-                  [style.background-color]="color"
-                  (click)="onColorSelect(color)">
-            <mat-icon *ngIf="categoryForm.get('color')?.value === color" class="selected-icon">check</mat-icon>
+          <button
+            *ngFor="let color of predefinedColors"
+            type="button"
+            mat-button
+            class="color-button"
+            [class.selected]="categoryForm.get('color')?.value === color"
+            [style.background-color]="color"
+            (click)="onColorSelect(color)"
+          >
+            <mat-icon *ngIf="categoryForm.get('color')?.value === color" class="selected-icon"
+              >check</mat-icon
+            >
           </button>
         </div>
         <mat-form-field appearance="outline" class="custom-color-field">
           <mat-label>Oder eigene Farbe (Hex)</mat-label>
-          <input matInput 
-                 formControlName="color"
-                 placeholder="#4caf50"
-                 pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$">
-          <div matSuffix class="color-preview" [style.background-color]="categoryForm.get('color')?.value"></div>
+          <input
+            matInput
+            formControlName="color"
+            placeholder="#4caf50"
+            pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+          />
+          <div
+            matSuffix
+            class="color-preview"
+            [style.background-color]="categoryForm.get('color')?.value"
+          ></div>
         </mat-form-field>
       </div>
-
     </form>
   </mat-dialog-content>
 
   <!-- Form Actions -->
   <mat-dialog-actions class="form-actions">
-    <button mat-button 
-            type="button" 
-            (click)="onCancel()"
-            [disabled]="isSubmitting">
+    <button mat-button type="button" (click)="onCancel()" [disabled]="isSubmitting">
       Abbrechen
     </button>
-    
-    <button mat-raised-button 
-            color="primary"
-            type="submit"
-            (click)="onSubmit()"
-            [disabled]="categoryForm.invalid || isSubmitting"
-            [class.loading]="isSubmitting">
+
+    <button
+      mat-raised-button
+      color="primary"
+      type="submit"
+      (click)="onSubmit()"
+      [disabled]="categoryForm.invalid || isSubmitting"
+      [class.loading]="isSubmitting"
+    >
       <mat-icon *ngIf="isSubmitting" class="spinning">hourglass_empty</mat-icon>
       <mat-icon *ngIf="!isSubmitting && mode === 'create'">add</mat-icon>
       <mat-icon *ngIf="!isSubmitting && mode === 'edit'">save</mat-icon>

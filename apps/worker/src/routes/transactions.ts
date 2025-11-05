@@ -3,7 +3,45 @@ import type { NeonQueryFunction } from '@neondatabase/serverless';
 import { getUserIdFromHeaders, serializeTransaction } from '../utils/helpers';
 
 /**
- * Register transaction routes
+ * Registriert Transaktions-Verwaltungs-Routen
+ *
+ * Endpoints:
+ * - GET /api/transactions: Alle Transaktionen abrufen (optional gefiltert nach Account)
+ * - POST /api/transactions/import: CSV-Import von Transaktionen
+ * - GET /api/transactions/:id: Einzelne Transaktion abrufen
+ * - POST /api/transactions: Neue Transaktion erstellen
+ * - PATCH /api/transactions/:id: Transaktion aktualisieren
+ * - DELETE /api/transactions/:id: Transaktion löschen
+ *
+ * Features:
+ * - Account-basierte Filterung
+ * - CSV-Bulk-Import mit verschiedenen Formaten
+ * - Automatische Kategorisierung (Uncategorized)
+ * - Datum- und Betrags-Parsing
+ * - Import-Fehlerbehandlung mit Details
+ * - Transaktionstyp-Erkennung (INCOME/EXPENSE)
+ * - Vollständige Relation-Serialisierung
+ *
+ * CSV-Import Features:
+ * - Flexible Datumsformate (DD.MM.YYYY, MM/DD/YYYY, YYYY-MM-DD)
+ * - Flexible Betragsformate (DE: 1.000,50 / EN: 1,000.50 / Simple)
+ * - Skip-First-Row Option
+ * - Automatische Unbekannt-Kategorien
+ * - Error-Tracking pro Zeile
+ * - Success/Error-Statistiken
+ *
+ * Query Parameters (GET):
+ * - accountId: Filtert Transaktionen nach Account
+ *
+ * @param app - Hono App-Instanz
+ * @param sql - Neon SQL Query-Funktion
+ *
+ * @example
+ * ```typescript
+ * const app = new Hono();
+ * const sql = neon(DATABASE_URL);
+ * registerTransactionRoutes(app, sql);
+ * ```
  */
 export function registerTransactionRoutes(app: Hono<any>, sql: NeonQueryFunction<false, false>) {
   /**
@@ -269,12 +307,7 @@ export function registerTransactionRoutes(app: Hono<any>, sql: NeonQueryFunction
         }),
       );
 
-      console.log(
-        '✅ Import completed - Successful:',
-        result.successful,
-        'Errors:',
-        result.errors,
-      );
+      console.log('✅ Import completed - Successful:', result.successful, 'Errors:', result.errors);
       return c.json({
         ...result,
         createdTransactions: serializedTransactions,
