@@ -14,13 +14,36 @@ import { Transaction, TransactionsApiService } from '../transactions-api.service
 import { Category } from '../../categories/categories-api.service';
 import { AccountSelectionService } from '../../shared/services/account-selection.service';
 
+/**
+ * Formulardaten-Schnittstelle für Transaktions-Dialog
+ */
 export interface TransactionFormData {
+  /** Zu bearbeitende Transaktion (nur im Edit-Modus) */
   transaction?: Transaction;
+  /** Verfügbare Kategorien für Dropdown */
   categories: Category[];
-  // accounts: Account[];
+  /** Formularmodus */
   mode: 'create' | 'edit';
 }
 
+/**
+ * Transaktions-Formular-Komponente
+ *
+ * Dialog-Komponente zum Erstellen und Bearbeiten von Transaktionen.
+ * Bietet Felder für Datum, Betrag, Kategorie und Notiz mit automatischer
+ * Kategorie-Filterung nach Transaktionstyp.
+ *
+ * @example
+ * ```typescript
+ * const dialogRef = this.dialog.open(TransactionFormComponent, {
+ *   width: '600px',
+ *   data: {
+ *     mode: 'create',
+ *     categories: this.categories
+ *   }
+ * });
+ * ```
+ */
 @Component({
   selector: 'app-transaction-form',
   standalone: true,
@@ -41,23 +64,37 @@ export interface TransactionFormData {
   styleUrl: './transaction-form.component.scss',
 })
 export class TransactionFormComponent implements OnInit {
+  /** FormBuilder zur Formular-Erstellung */
   private fb = inject(FormBuilder);
+  /** Dialog-Referenz zum Schließen */
   private dialogRef = inject(MatDialogRef<TransactionFormComponent>);
+  /** API-Service für Transaktionen */
   private transactionsApi = inject(TransactionsApiService);
+  /** Service zur Konto-Auswahl */
   private accountSelectionService = inject(AccountSelectionService);
+  /** Injizierte Formulardaten */
   public data = inject(MAT_DIALOG_DATA) as TransactionFormData;
 
+  /** Reaktives Formular für Transaktion */
   transactionForm!: FormGroup;
+  /** Verfügbare Kategorien */
   categories: Category[] = [];
-  // accounts: Account[] = [];
+  /** Formularmodus (erstellen oder bearbeiten) */
   mode: 'create' | 'edit' = 'create';
+  /** Gibt an, ob Formular gerade übermittelt wird */
   isSubmitting = false;
 
-  // Filtered categories based on transaction type
+  /** Gefilterte Kategorien basierend auf Transaktionstyp */
   filteredCategories: Category[] = [];
 
   constructor() {}
 
+  /**
+   * Initialisiert Formular mit injizierten Daten
+   *
+   * Erstellt ReactiveForm mit Validatoren, füllt Felder im Edit-Modus
+   * und richtet Formular-Subscriptions ein.
+   */
   ngOnInit() {
     const data = this.data;
     this.categories = data.categories;
@@ -82,29 +119,64 @@ export class TransactionFormComponent implements OnInit {
     this.filterCategories();
   }
 
+  /**
+   * Richtet Formular-Subscriptions ein
+   *
+   * Lädt initial gefilterte Kategorien.
+   *
+   * @private
+   */
   private setupFormSubscriptions() {
     // Kategorien initial laden
     this.filterCategories();
   }
 
+  /**
+   * Filtert Kategorien (aktuell keine Filterung)
+   *
+   * Zeigt alle Kategorien an, da Schema kein type-Feld hat.
+   *
+   * @private
+   */
   private filterCategories() {
     // Zeige alle Kategorien, da das Schema kein type-Feld hat
     this.filteredCategories = [...this.categories];
   }
 
+  /**
+   * Gibt Dialog-Titel basierend auf Modus zurück
+   *
+   * @returns 'Neue Transaktion' oder 'Transaktion bearbeiten'
+   */
   getDialogTitle(): string {
     return this.mode === 'create' ? 'Neue Transaktion' : 'Transaktion bearbeiten';
   }
 
+  /**
+   * Gibt Submit-Button-Text basierend auf Modus zurück
+   *
+   * @returns 'Hinzufügen' oder 'Speichern'
+   */
   getSubmitButtonText(): string {
     return this.mode === 'create' ? 'Hinzufügen' : 'Speichern';
   }
 
+  /**
+   * Gibt Emoji für ausgewählte Kategorie zurück
+   *
+   * @param categoryId - Kategorie-ID
+   * @returns Emoji oder Icon der Kategorie, oder leerer String
+   */
   getCategoryEmoji(categoryId: string): string {
     const category = this.categories.find((c) => c.id === categoryId);
     return category?.emoji || category?.icon || '';
   }
 
+  /**
+   * Gibt Transaktionstyp der ausgewählten Kategorie zurück
+   *
+   * @returns 'INCOME', 'EXPENSE' oder null wenn keine Kategorie ausgewählt
+   */
   getSelectedCategoryType(): 'INCOME' | 'EXPENSE' | null {
     const selectedCategoryId = this.transactionForm.get('category')?.value;
     if (!selectedCategoryId) return null;
@@ -113,6 +185,12 @@ export class TransactionFormComponent implements OnInit {
     return category?.transactionType || null;
   }
 
+  /**
+   * Übermittelt Formular und erstellt/aktualisiert Transaktion
+   *
+   * Validiert Formular, leitet Transaktionstyp von Kategorie ab,
+   * erstellt oder aktualisiert Transaktion über API und schließt Dialog.
+   */
   onSubmit() {
     if (this.transactionForm.valid && !this.isSubmitting) {
       this.isSubmitting = true;
@@ -211,16 +289,34 @@ export class TransactionFormComponent implements OnInit {
     }
   }
 
+  /**
+   * Bricht Formular ab und schließt Dialog ohne Änderungen
+   */
   onCancel() {
     this.dialogRef.close();
   }
 
   // Validation helper methods
+  /**
+   * Prüft ob Feld spezifischen Validierungsfehler hat
+   *
+   * @param fieldName - Name des Formular-Felds
+   * @param errorType - Typ des Validierungsfehlers (z.B. 'required', 'min')
+   * @returns true wenn Feld den Fehler hat und touched/dirty ist
+   */
   hasError(fieldName: string, errorType: string): boolean {
     const field = this.transactionForm.get(fieldName);
     return !!(field?.hasError(errorType) && (field?.dirty || field?.touched));
   }
 
+  /**
+   * Gibt benutzerfreundliche Fehlermeldung für Feld zurück
+   *
+   * Übersetzt Angular-Validierungsfehler in deutsche Fehlermeldungen.
+   *
+   * @param fieldName - Name des Formular-Felds
+   * @returns Deutsche Fehlermeldung oder leerer String
+   */
   getErrorMessage(fieldName: string): string {
     const field = this.transactionForm.get(fieldName);
 

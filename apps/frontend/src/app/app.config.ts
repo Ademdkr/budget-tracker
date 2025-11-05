@@ -17,6 +17,29 @@ import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 // Deutsche Locale registrieren
 registerLocaleData(localeDe);
 
+/**
+ * Haupt-Konfiguration der Angular-Anwendung
+ *
+ * Provider:
+ * - Zone Change Detection mit Event Coalescing für Performance
+ * - Router mit definierten Routes
+ * - HttpClient mit Fetch API und Auth/Loading Interceptors
+ * - Animations für Material Design
+ * - Chart.js mit Standard-Registrierungen
+ * - Deutsche Locale (de-DE) für Formatierungen
+ * - Material Date Locale für Datumspicker
+ *
+ * Interceptors:
+ * - authInterceptor: Fügt JWT-Token zu Requests hinzu
+ * - LoadingInterceptor: Zeigt globalen Loading-State
+ *
+ * @example
+ * ```typescript
+ * // In main.ts
+ * bootstrapApplication(AppComponent, appConfig)
+ *   .catch(err => console.error(err));
+ * ```
+ */
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
