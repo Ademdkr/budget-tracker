@@ -19,6 +19,28 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 
+/**
+ * Register Component - Benutzer-Registrierungsseite
+ *
+ * Features:
+ * - Reaktives Registrierungs-Formular mit Email/Passwort
+ * - Custom Validator für Passwort-Stärke (Groß-/Kleinbuchstaben, Zahlen, Sonderzeichen)
+ * - Custom Validator für Passwort-Übereinstimmung
+ * - Passwort-Sichtbarkeit toggle
+ * - Detaillierte Formular-Validierung mit Fehleranzeige
+ * - Automatischer Login nach erfolgreicher Registrierung
+ * - Navigation zu Login-Seite
+ *
+ * @example
+ * ```typescript
+ * // In app.routes.ts
+ * {
+ *   path: 'register',
+ *   component: RegisterComponent,
+ *   canActivate: [guestGuard]
+ * }
+ * ```
+ */
 @Component({
   selector: 'app-register',
   standalone: true,
@@ -40,10 +62,15 @@ export class RegisterComponent {
   private router = inject(Router);
   private authService = inject(AuthService);
 
+  /** Reaktives Formular für Registrierung */
   registerForm: FormGroup;
+  /** Loading-Status während Registrierung */
   isLoading = false;
+  /** Fehlermeldung bei Registrierungs-Fehler */
   errorMessage = '';
+  /** Passwort-Sichtbarkeit toggle */
   hidePassword = true;
+  /** Passwort-Bestätigung Sichtbarkeit toggle */
   hideConfirmPassword = true;
 
   constructor() {
@@ -60,7 +87,18 @@ export class RegisterComponent {
     );
   }
 
-  // Custom validator for password strength
+  /**
+   * Custom Validator für Passwort-Stärke
+   *
+   * Prüft auf:
+   * - Mindestens eine Zahl
+   * - Mindestens ein Kleinbuchstabe
+   * - Mindestens ein Großbuchstabe
+   * - Mindestens ein Sonderzeichen
+   *
+   * @param control - FormControl mit Passwort
+   * @returns ValidationErrors oder null wenn valide
+   */
   passwordStrengthValidator(control: AbstractControl): ValidationErrors | null {
     const password = control.value;
     if (!password) return null;
@@ -85,7 +123,14 @@ export class RegisterComponent {
     return null;
   }
 
-  // Custom validator for password match
+  /**
+   * Custom Validator für Passwort-Übereinstimmung
+   *
+   * Prüft ob password und confirmPassword identisch sind.
+   *
+   * @param control - FormGroup mit password und confirmPassword
+   * @returns ValidationErrors oder null wenn identisch
+   */
   passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
     const password = control.get('password');
     const confirmPassword = control.get('confirmPassword');
@@ -95,6 +140,15 @@ export class RegisterComponent {
     return password.value === confirmPassword.value ? null : { passwordMismatch: true };
   }
 
+  /**
+   * Behandelt Formular-Absenden
+   *
+   * Validiert Formular und führt Registrierung durch AuthService aus.
+   * Bei Erfolg: Automatischer Login und Navigation zu Dashboard
+   * Bei Fehler: Anzeige Fehlermeldung
+   *
+   * @todo Ersetze simulateRegister durch echten API-Call
+   */
   onSubmit() {
     if (this.registerForm.valid) {
       this.isLoading = true;
@@ -120,10 +174,18 @@ export class RegisterComponent {
     }
   }
 
+  /**
+   * Navigiert zur Login-Seite
+   */
   navigateToLogin() {
     this.router.navigate(['/login']);
   }
 
+  /**
+   * Markiert alle Formular-Controls als touched
+   *
+   * @private
+   */
   private markFormGroupTouched() {
     Object.keys(this.registerForm.controls).forEach((key) => {
       const control = this.registerForm.get(key);
@@ -131,6 +193,12 @@ export class RegisterComponent {
     });
   }
 
+  /**
+   * Generiert benutzerfreundliche Fehlermeldungen
+   *
+   * @param field - Feldname (email, password, confirmPassword)
+   * @returns Fehlermeldung oder leerer String
+   */
   getErrorMessage(field: string): string {
     const control = this.registerForm.get(field);
 
@@ -162,6 +230,11 @@ export class RegisterComponent {
     return '';
   }
 
+  /**
+   * Generiert detaillierten Text für fehlende Passwort-Anforderungen
+   *
+   * @returns String mit fehlenden Anforderungen oder leerer String
+   */
   getPasswordStrengthText(): string {
     const control = this.registerForm.get('password');
     if (!control?.hasError('passwordStrength')) return '';

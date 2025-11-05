@@ -15,6 +15,27 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
 
+/**
+ * Login Component - Benutzer-Anmeldeseite
+ *
+ * Features:
+ * - Reaktives Login-Formular mit Email/Passwort
+ * - Lädt verfügbare Demo-Benutzer für einfaches Testing
+ * - Schnellauswahl von Demo-Benutzern
+ * - Formular-Validierung mit Fehleranzeige
+ * - Loading-Spinner während Authentifizierung
+ * - Navigation zu Register-Seite
+ *
+ * @example
+ * ```typescript
+ * // In app.routes.ts
+ * {
+ *   path: 'login',
+ *   component: LoginComponent,
+ *   canActivate: [guestGuard]
+ * }
+ * ```
+ */
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -39,11 +60,17 @@ export class LoginComponent implements OnInit {
   private authService = inject(AuthService);
   private userService = inject(UserService);
 
+  /** Reaktives Formular für Login */
   loginForm: FormGroup;
+  /** Loading-Status während Authentifizierung */
   isLoading = false;
+  /** Fehlermeldung bei Login-Fehler */
   errorMessage = '';
+  /** Passwort-Sichtbarkeit toggle */
   hidePassword = true;
+  /** Liste verfügbarer Demo-Benutzer */
   availableUsers: UserInfo[] = [];
+  /** Loading-Status beim Laden der Benutzer */
   isLoadingUsers = false;
 
   constructor() {
@@ -53,10 +80,18 @@ export class LoginComponent implements OnInit {
     });
   }
 
+  /**
+   * Angular Lifecycle Hook - Initialisierung
+   */
   ngOnInit() {
     this.loadAvailableUsers();
   }
 
+  /**
+   * Lädt verfügbare Demo-Benutzer vom Backend
+   *
+   * Zeigt Liste von Test-Accounts für schnelle Anmeldung.
+   */
   loadAvailableUsers() {
     this.isLoadingUsers = true;
     this.userService.getUsers().subscribe({
@@ -71,6 +106,11 @@ export class LoginComponent implements OnInit {
     });
   }
 
+  /**
+   * Füllt Login-Formular mit ausgewähltem Demo-Benutzer
+   *
+   * @param user - Ausgewählter Demo-User
+   */
   selectUser(user: UserInfo) {
     this.loginForm.patchValue({
       email: user.email,
@@ -78,6 +118,13 @@ export class LoginComponent implements OnInit {
     });
   }
 
+  /**
+   * Behandelt Formular-Absenden
+   *
+   * Validiert Formular und führt Login durch AuthService aus.
+   * Bei Erfolg: Navigation zu Dashboard
+   * Bei Fehler: Anzeige Fehlermeldung
+   */
   onSubmit() {
     if (this.loginForm.valid) {
       this.isLoading = true;
@@ -101,10 +148,18 @@ export class LoginComponent implements OnInit {
     }
   }
 
+  /**
+   * Navigiert zur Registrierungs-Seite
+   */
   navigateToRegister() {
     this.router.navigate(['/register']);
   }
 
+  /**
+   * Markiert alle Formular-Controls als touched
+   *
+   * @private
+   */
   private markFormGroupTouched() {
     Object.keys(this.loginForm.controls).forEach((key) => {
       const control = this.loginForm.get(key);
@@ -112,6 +167,12 @@ export class LoginComponent implements OnInit {
     });
   }
 
+  /**
+   * Generiert benutzerfreundliche Fehlermeldungen
+   *
+   * @param field - Feldname (email oder password)
+   * @returns Fehlermeldung oder leerer String
+   */
   getErrorMessage(field: string): string {
     const control = this.loginForm.get(field);
     if (control?.hasError('required')) {
