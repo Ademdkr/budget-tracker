@@ -90,7 +90,7 @@ export default {
 
     // Root Health-Check
     app.get('/', (c) => c.text('Budget Tracker API - Running!'));
-    
+
     // API Health-Check mit Details
     app.get('/api/health', (c) =>
       c.json({
