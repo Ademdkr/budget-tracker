@@ -5,9 +5,28 @@ import { catchError, switchMap, throwError } from 'rxjs';
 import { AuthApiService } from '../../auth/auth-api.service';
 
 /**
- * HTTP Interceptor for JWT token authentication
- * Adds Authorization header with token to all requests
- * Handles 401 errors with automatic token refresh
+ * HTTP Interceptor für JWT-Token Authentifizierung
+ *
+ * Funktionen:
+ * - Fügt Authorization-Header mit JWT-Token zu allen Requests hinzu
+ * - Fügt X-User-Id Header für User-spezifische Requests hinzu
+ * - Überspringt Auth-Header für Login/Register/Refresh Endpoints
+ * - Behandelt 401 Errors mit automatischem Token-Refresh
+ * - Leitet zu Login bei fehlgeschlagenem Refresh
+ *
+ * @param req - HTTP Request
+ * @param next - Next Handler in Interceptor-Chain
+ * @returns Observable mit HTTP Response
+ *
+ * @example
+ * ```typescript
+ * // In app.config.ts
+ * export const appConfig: ApplicationConfig = {
+ *   providers: [
+ *     provideHttpClient(withInterceptors([authInterceptor]))
+ *   ]
+ * };
+ * ```
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthApiService);
