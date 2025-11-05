@@ -12,16 +12,43 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { AccountsApiService, AccountCategory } from '../accounts-api.service';
 import { CategoriesApiService, Category } from '../../categories/categories-api.service';
 
+/**
+ * Dialog-Daten für Kategorie-Zuordnung
+ */
 export interface CategoryAssignmentDialogData {
+  /** Account-Informationen */
   account: {
+    /** Konto-ID */
     id: string;
+    /** Konto-Name */
     name: string;
+    /** Kontotyp */
     type: string;
+    /** Icon (optional) */
     icon?: string;
+    /** Farbe (optional) */
     color?: string;
   };
 }
 
+/**
+ * Category Assignment Component - Dialog für Kategorie-Zuordnung zu Konten
+ *
+ * Features:
+ * - Zeigt zugewiesene Kategorien für ein Konto
+ * - Zeigt verfügbare Kategorien zum Zuweisen
+ * - Kategorien hinzufügen/entfernen
+ * - Loading und Error States
+ *
+ * @example
+ * ```typescript
+ * this.dialog.open(CategoryAssignmentComponent, {
+ *   data: {
+ *     account: { id: '123', name: 'Girokonto', type: 'checking' }
+ *   }
+ * });
+ * ```
+ */
 @Component({
   selector: 'app-category-assignment',
   standalone: true,
@@ -45,19 +72,28 @@ export class CategoryAssignmentComponent implements OnInit {
   public dialogRef = inject(MatDialogRef<CategoryAssignmentComponent>);
   public data = inject<CategoryAssignmentDialogData>(MAT_DIALOG_DATA);
 
-  // State
+  /** Loading-Status beim Datenladen */
   isLoading = true;
+  /** Fehler-Status */
   hasError = false;
 
-  // Data
+  /** Zugewiesene Kategorien */
   assignedCategories: AccountCategory[] = [];
+  /** Alle verfügbaren Kategorien */
   allCategories: Category[] = [];
+  /** Noch nicht zugewiesene Kategorien */
   availableCategories: Category[] = [];
 
+  /**
+   * Angular Lifecycle Hook - Initialisierung
+   */
   ngOnInit() {
     this.loadData();
   }
 
+  /**
+   * Lädt zugewiesene und verfügbare Kategorien
+   */
   async loadData() {
     this.isLoading = true;
     this.hasError = false;
@@ -86,6 +122,11 @@ export class CategoryAssignmentComponent implements OnInit {
     }
   }
 
+  /**
+   * Weist Kategorie dem Konto zu
+   *
+   * @param categoryId - ID der zuzuweisenden Kategorie
+   */
   async assignCategory(categoryId: string) {
     try {
       await this.accountsApi.assignCategory(this.data.account.id, categoryId).toPromise();
@@ -100,6 +141,11 @@ export class CategoryAssignmentComponent implements OnInit {
     }
   }
 
+  /**
+   * Entfernt Kategorie-Zuordnung vom Konto
+   *
+   * @param categoryId - ID der zu entfernenden Kategorie
+   */
   async removeCategory(categoryId: string) {
     try {
       await this.accountsApi.removeCategory(this.data.account.id, categoryId).toPromise();

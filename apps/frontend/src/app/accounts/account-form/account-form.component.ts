@@ -12,31 +12,86 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { AccountsApiService, CreateAccountDto } from '../accounts-api.service';
 
+/**
+ * Repräsentiert ein Konto
+ */
 export interface Account {
+  /** Eindeutige Konto-ID */
   id: string;
+  /** Name des Kontos */
   name: string;
+  /** Kontotyp */
   type: AccountType;
+  /** Aktueller Saldo */
   balance: number;
+  /** Notiz (optional) */
   note?: string;
+  /** Ob Konto aktiv ist */
   isActive: boolean;
+  /** Erstellungsdatum */
   createdAt: Date;
+  /** Letzte Änderung */
   updatedAt: Date;
 }
 
+/**
+ * Enum für Kontotypen
+ */
+/**
+ * Enum für Kontotypen
+ */
 export enum AccountType {
+  /** Girokonto */
   CHECKING = 'CHECKING',
+  /** Sparkonto */
   SAVINGS = 'SAVINGS',
+  /** Kreditkarte */
   CREDIT_CARD = 'CREDIT_CARD',
+  /** Anlagekonto */
   INVESTMENT = 'INVESTMENT',
+  /** Bargeld */
   CASH = 'CASH',
+  /** Sonstiges */
   OTHER = 'OTHER',
 }
 
+/**
+ * Dialog-Daten für Account-Form
+ */
+/**
+ * Dialog-Daten für Account-Form
+ */
 export interface AccountDialogData {
+  /** Account-Objekt bei Bearbeitung (optional) */
   account?: Account;
+  /** true = Bearbeiten, false = Neu erstellen */
   isEdit: boolean;
 }
 
+/**
+ * Account Form Component - Dialog für Konto-Erstellung/-Bearbeitung
+ *
+ * Features:
+ * - Reaktives Formular für Konto-Details
+ * - Unterstützt Erstellen und Bearbeiten von Konten
+ * - Auswahl verschiedener Kontotypen mit Icons
+ * - Initialer Saldo (nur bei Erstellung)
+ * - isActive Toggle für aktives Konto
+ * - Formular-Validierung
+ *
+ * @example
+ * ```typescript
+ * // Neues Konto erstellen
+ * this.dialog.open(AccountFormComponent, {
+ *   data: { isEdit: false }
+ * });
+ *
+ * // Konto bearbeiten
+ * this.dialog.open(AccountFormComponent, {
+ *   data: { account: existingAccount, isEdit: true }
+ * });
+ * ```
+ */
 @Component({
   selector: 'app-account-form',
   standalone: true,
@@ -57,9 +112,12 @@ export interface AccountDialogData {
   styleUrls: ['./account-form.component.scss'],
 })
 export class AccountFormComponent implements OnInit {
+  /** Reaktives Formular für Konto-Daten */
   accountForm: FormGroup;
+  /** Sende-Status während API-Call */
   isSubmitting = false;
 
+  /** Verfügbare Kontotypen mit Icons und Farben */
   accountTypes = [
     {
       value: AccountType.CHECKING,
@@ -108,6 +166,9 @@ export class AccountFormComponent implements OnInit {
     this.accountForm = this.createForm();
   }
 
+  /**
+   * Angular Lifecycle Hook - Initialisierung
+   */
   ngOnInit(): void {
     console.log('🚀 AccountFormComponent ngOnInit');
     console.log('📋 Dialog data:', this.data);
@@ -121,6 +182,12 @@ export class AccountFormComponent implements OnInit {
     }
   }
 
+  /**
+   * Erstellt das reaktive Formular mit Validierung
+   *
+   * @private
+   * @returns Initialisiertes FormGroup
+   */
   private createForm(): FormGroup {
     const form = this.fb.group({
       name: ['Test Konto', [Validators.required, Validators.minLength(2)]],
@@ -135,6 +202,12 @@ export class AccountFormComponent implements OnInit {
     return form;
   }
 
+  /**
+   * Füllt Formular mit bestehenden Account-Daten
+   *
+   * @private
+   * @param account - Account zum Bearbeiten
+   */
   private populateForm(account: Account): void {
     this.accountForm.patchValue({
       name: account.name,
@@ -150,6 +223,12 @@ export class AccountFormComponent implements OnInit {
     }
   }
 
+  /**
+   * Behandelt Formular-Absenden
+   *
+   * Erstellt neues Konto oder aktualisiert bestehendes.
+   * Schließt Dialog bei Erfolg.
+   */
   onSubmit(): void {
     console.log('🔄 onSubmit called');
     console.log('📋 Form valid:', this.accountForm.valid);
@@ -217,6 +296,11 @@ export class AccountFormComponent implements OnInit {
     }
   }
 
+  /**
+   * Bricht Formular-Bearbeitung ab
+   *
+   * Fragt bei ungespeicherten Änderungen nach Bestätigung.
+   */
   onCancel(): void {
     if (this.accountForm.dirty) {
       // In a real app, you might want to show a confirmation dialog
@@ -231,6 +315,9 @@ export class AccountFormComponent implements OnInit {
     this.dialogRef.close();
   }
 
+  /**
+   * Setzt Formular auf Ursprungswerte zurück
+   */
   onReset(): void {
     if (this.data.isEdit && this.data.account) {
       this.populateForm(this.data.account);
@@ -246,6 +333,11 @@ export class AccountFormComponent implements OnInit {
     this.accountForm.markAsUntouched();
   }
 
+  /**
+   * Markiert alle Formular-Controls als touched
+   *
+   * @private
+   */
   private markFormGroupTouched(): void {
     console.log('👆 Marking form fields as touched');
     Object.keys(this.accountForm.controls).forEach((key) => {
@@ -260,7 +352,12 @@ export class AccountFormComponent implements OnInit {
     });
   }
 
-  // Helper method to get account type info
+  /**
+   * Hilfsmethode für Account-Typ Informationen
+   *
+   * @param type - AccountType
+   * @returns Typ-Informationen (Label, Icon, Farbe)
+   */
   getAccountTypeInfo(type: AccountType) {
     return this.accountTypes.find((t) => t.value === type);
   }
