@@ -21,16 +21,19 @@ async function bootstrap() {
     }),
   );
 
-  const port = Number(process.env.PORT_API) || 3001;
-  await app.listen(port, '0.0.0.0');
-  console.log(`Backend listening on http://localhost:${port}`);
-
+  // Swagger Setup
   const config = new DocumentBuilder()
     .setTitle('Budget Tracker API')
     .setDescription('Budget-Tracker API-Dokumentation')
     .setVersion('1.0.0')
+    .addBearerAuth()
     .build();
   const doc = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, doc);
+
+  const port = Number(process.env.PORT_API) || 3001;
+  await app.listen(port, '0.0.0.0');
+  console.log(`Backend listening on http://localhost:${port}`);
+  console.log(`Swagger docs available at http://localhost:${port}/api/docs`);
 }
 bootstrap();

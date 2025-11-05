@@ -9,10 +9,26 @@ import {
   Query,
   Headers,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+  ApiBearerAuth,
+  ApiHeader,
+} from '@nestjs/swagger';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
+@ApiTags('Categories')
+@ApiBearerAuth()
+@ApiHeader({
+  name: 'x-user-id',
+  description: 'Benutzer-ID',
+  required: true,
+})
 @Controller('categories')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
@@ -26,6 +42,15 @@ export class CategoriesController {
   }
 
   @Post()
+  @ApiOperation({
+    summary: 'Neue Kategorie erstellen',
+    description: 'Erstellt eine neue Kategorie für ein bestimmtes Konto',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Kategorie erfolgreich erstellt',
+  })
+  @ApiResponse({ status: 400, description: 'Ungültige Eingabedaten' })
   create(
     @Body() createCategoryDto: CreateCategoryDto,
     @Headers() headers: any,
@@ -35,6 +60,21 @@ export class CategoriesController {
   }
 
   @Get()
+  @ApiOperation({
+    summary: 'Kategorien abrufen',
+    description:
+      'Gibt alle Kategorien zurück oder filtert nach Konto-ID (optional)',
+  })
+  @ApiQuery({
+    name: 'accountId',
+    required: false,
+    description: 'Filter nach Konto-ID',
+    example: '1',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Liste der Kategorien',
+  })
   async findAll(
     @Query('accountId') accountId?: string,
     @Headers() headers?: any,
@@ -64,12 +104,29 @@ export class CategoriesController {
   }
 
   @Get(':id')
+  @ApiOperation({
+    summary: 'Einzelne Kategorie abrufen',
+    description: 'Gibt Details einer bestimmten Kategorie zurück',
+  })
+  @ApiParam({ name: 'id', description: 'Kategorie-ID', example: '1' })
+  @ApiResponse({ status: 200, description: 'Kategorie gefunden' })
+  @ApiResponse({ status: 404, description: 'Kategorie nicht gefunden' })
   findOne(@Param('id') id: string, @Headers() headers: any) {
     const userId = this.getUserIdFromHeaders(headers);
     return this.categoriesService.findOne(id, userId);
   }
 
   @Patch(':id')
+  @ApiOperation({
+    summary: 'Kategorie aktualisieren',
+    description: 'Aktualisiert eine bestehende Kategorie',
+  })
+  @ApiParam({ name: 'id', description: 'Kategorie-ID', example: '1' })
+  @ApiResponse({
+    status: 200,
+    description: 'Kategorie erfolgreich aktualisiert',
+  })
+  @ApiResponse({ status: 404, description: 'Kategorie nicht gefunden' })
   update(
     @Param('id') id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
@@ -80,6 +137,16 @@ export class CategoriesController {
   }
 
   @Delete(':id')
+  @ApiOperation({
+    summary: 'Kategorie löschen',
+    description: 'Löscht eine bestehende Kategorie',
+  })
+  @ApiParam({ name: 'id', description: 'Kategorie-ID', example: '1' })
+  @ApiResponse({
+    status: 200,
+    description: 'Kategorie erfolgreich gelöscht',
+  })
+  @ApiResponse({ status: 404, description: 'Kategorie nicht gefunden' })
   remove(@Param('id') id: string, @Headers() headers: any) {
     const userId = this.getUserIdFromHeaders(headers);
     return this.categoriesService.remove(id, userId);
@@ -87,6 +154,20 @@ export class CategoriesController {
 
   // Account-Category Relationship Endpoints
   @Post(':id/accounts/:accountId')
+  @ApiOperation({
+    summary: 'Kategorie einem Konto zuweisen',
+    description: 'Verknüpft eine Kategorie mit einem bestimmten Konto',
+  })
+  @ApiParam({ name: 'id', description: 'Kategorie-ID', example: '1' })
+  @ApiParam({ name: 'accountId', description: 'Konto-ID', example: '2' })
+  @ApiResponse({
+    status: 200,
+    description: 'Kategorie erfolgreich zugewiesen',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Kategorie oder Konto nicht gefunden',
+  })
   assignToAccount(
     @Param('id') categoryId: string,
     @Param('accountId') accountId: string,
@@ -101,6 +182,20 @@ export class CategoriesController {
   }
 
   @Delete(':id/accounts/:accountId')
+  @ApiOperation({
+    summary: 'Kategorie von Konto entfernen',
+    description: 'Entfernt die Verknüpfung einer Kategorie mit einem Konto',
+  })
+  @ApiParam({ name: 'id', description: 'Kategorie-ID', example: '1' })
+  @ApiParam({ name: 'accountId', description: 'Konto-ID', example: '2' })
+  @ApiResponse({
+    status: 200,
+    description: 'Verknüpfung erfolgreich entfernt',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Kategorie oder Konto nicht gefunden',
+  })
   removeFromAccount(
     @Param('id') categoryId: string,
     @Param('accountId') accountId: string,
@@ -115,6 +210,17 @@ export class CategoriesController {
   }
 
   @Get(':id/accounts')
+  @ApiOperation({
+    summary: 'Konto-Zuweisungen abrufen',
+    description:
+      'Gibt alle Konten zurück, denen diese Kategorie zugewiesen ist',
+  })
+  @ApiParam({ name: 'id', description: 'Kategorie-ID', example: '1' })
+  @ApiResponse({
+    status: 200,
+    description: 'Liste der zugewiesenen Konten',
+  })
+  @ApiResponse({ status: 404, description: 'Kategorie nicht gefunden' })
   getAccountAssignments(
     @Param('id') categoryId: string,
     @Headers() headers: any,
@@ -125,6 +231,21 @@ export class CategoriesController {
 
   // Auto-assign categories to account based on existing transactions
   @Post('auto-assign/:accountId')
+  @ApiOperation({
+    summary: 'Kategorien automatisch zuweisen',
+    description:
+      'Weist Kategorien automatisch einem Konto zu, basierend auf vorhandenen Transaktionen',
+  })
+  @ApiParam({
+    name: 'accountId',
+    description: 'Konto-ID',
+    example: '1',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Kategorien erfolgreich automatisch zugewiesen',
+  })
+  @ApiResponse({ status: 404, description: 'Konto nicht gefunden' })
   autoAssignCategoriesBasedOnTransactions(
     @Param('accountId') accountId: string,
     @Headers() headers: any,
