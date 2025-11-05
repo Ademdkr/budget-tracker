@@ -116,3 +116,7 @@ pids/
 # Temporary folders
 tmp/
 temp/
+
+# Documentation
+docs/
+.compodoc/

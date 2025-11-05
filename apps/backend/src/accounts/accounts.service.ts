@@ -3,11 +3,26 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 
+/**
+ * Service für die Verwaltung von Finanzkonten
+ *
+ * Verwaltet alle CRUD-Operationen für Konten und berechnet Kontostände
+ * basierend auf Transaktionen. Unterstützt die Aktivierung/Deaktivierung
+ * von Konten und automatisches Balance-Management.
+ */
 @Injectable()
 export class AccountsService {
   constructor(private prisma: PrismaService) {}
 
-  // Helper method um BigInt zu String zu konvertieren
+  /**
+   * Serialisiert ein Account-Objekt für die API-Response
+   *
+   * Konvertiert BigInt-IDs zu Strings und fügt Frontend-kompatible Felder hinzu.
+   *
+   * @param account - Das zu serialisierende Account-Objekt
+   * @returns Serialisiertes Account-Objekt
+   * @private
+   */
   private serializeAccount(account: any) {
     return {
       id: account.id.toString(),
@@ -24,6 +39,16 @@ export class AccountsService {
     };
   }
 
+  /**
+   * Erstellt ein neues Konto
+   *
+   * Wenn das neue Konto als aktiv markiert ist, werden automatisch alle anderen
+   * aktiven Konten des Benutzers deaktiviert (nur ein aktives Konto pro Benutzer).
+   *
+   * @param createAccountDto - Die Daten des zu erstellenden Kontos
+   * @param userId - Die ID des Benutzers
+   * @returns Das erstellte Konto
+   */
   async create(createAccountDto: CreateAccountDto, userId: string) {
     const shouldBeActive = createAccountDto.isActive ?? true;
 
@@ -52,6 +77,12 @@ export class AccountsService {
     return this.serializeAccount(result);
   }
 
+  /**
+   * Ruft alle Konten eines Benutzers ab
+   *
+   * @param userId - Die ID des Benutzers
+   * @returns Array aller Konten des Benutzers, sortiert nach Erstellungsdatum
+   */
   async findAll(userId: string) {
     console.log('🔍 findAll called with userId:', userId);
 
@@ -69,6 +100,16 @@ export class AccountsService {
     return accounts.map((account) => this.serializeAccount(account));
   }
 
+  /**
+   * Ruft ein einzelnes Konto mit Details ab
+   *
+   * Inkludiert die letzten 10 Transaktionen und die Gesamtanzahl aller Transaktionen.
+   *
+   * @param id - Die ID des Kontos
+   * @param userId - Die ID des Benutzers (für Berechtigungsprüfung)
+   * @returns Das Konto mit Transaktionen
+   * @throws {NotFoundException} Wenn Konto nicht gefunden oder keine Berechtigung
+   */
   async findOne(id: string, userId: string) {
     const account = await this.prisma.account.findFirst({
       where: {
@@ -107,6 +148,18 @@ export class AccountsService {
     };
   }
 
+  /**
+   * Aktualisiert ein Konto
+   *
+   * Wenn das Konto auf aktiv gesetzt wird, werden automatisch alle anderen
+   * aktiven Konten des Benutzers deaktiviert.
+   *
+   * @param id - Die ID des zu aktualisierenden Kontos
+   * @param updateAccountDto - Die zu aktualisierenden Daten
+   * @param userId - Die ID des Benutzers (für Berechtigungsprüfung)
+   * @returns Das aktualisierte Konto
+   * @throws {NotFoundException} Wenn Konto nicht gefunden oder keine Berechtigung
+   */
   async update(id: string, updateAccountDto: UpdateAccountDto, userId: string) {
     const account = await this.prisma.account.findFirst({
       where: {
@@ -147,6 +200,17 @@ export class AccountsService {
     return this.serializeAccount(result);
   }
 
+  /**
+   * Löscht oder deaktiviert ein Konto
+   *
+   * Wenn das Konto Transaktionen enthält, wird es nur deaktiviert statt gelöscht,
+   * um Datenintegrität zu gewährleisten.
+   *
+   * @param id - Die ID des zu löschenden Kontos
+   * @param userId - Die ID des Benutzers (für Berechtigungsprüfung)
+   * @returns Das gelöschte oder deaktivierte Konto
+   * @throws {NotFoundException} Wenn Konto nicht gefunden oder keine Berechtigung
+   */
   async remove(id: string, userId: string) {
     console.log(
       '🔍 AccountsService.remove called with ID:',
@@ -195,6 +259,12 @@ export class AccountsService {
     return this.serializeAccount(result);
   }
 
+  /**
+   * Ruft Konten-Statistiken ab
+   *
+   * @param userId - Die ID des Benutzers
+   * @returns Statistiken über Konten (Gesamtbalance, aktive/totale Anzahl)
+   */
   async getStatistics(userId: string) {
     const accounts = await this.prisma.account.findMany({
       where: {
@@ -219,6 +289,16 @@ export class AccountsService {
     };
   }
 
+  /**
+   * Berechnet Kontostände neu (Legacy-Methode)
+   *
+   * Mit dem neuen Schema ist diese Methode nicht mehr relevant,
+   * da es kein separates balance-Feld mehr gibt.
+   *
+   * @param userId - Die ID des Benutzers
+   * @returns Array aller Konten
+   * @deprecated Verwende stattdessen getAccountsWithCalculatedBalances
+   */
   async recalculateAccountBalances(userId: string) {
     // Das neue Schema hat kein balance Feld mehr, nur initialBalance
     // Diese Methode ist mit dem neuen Schema nicht mehr relevant
@@ -228,6 +308,31 @@ export class AccountsService {
     return accounts.map((account) => this.serializeAccount(account));
   }
 
+  /**
+   * Ruft alle Konten mit berechneten Salden ab
+   *
+   * Berechnet den tatsächlichen Kontostand basierend auf initialBalance und allen Transaktionen.
+   * Unterscheidet zwischen Einnahmen (INCOME) und Ausgaben (EXPENSE) für detaillierte Statistiken.
+   *
+   * @param userId - Die ID des Benutzers
+   * @returns Array aller Konten mit berechneten Salden, Einnahmen/Ausgaben und letzter Transaktion
+   *
+   * @example
+   * ```typescript
+   * const accounts = await getAccountsWithCalculatedBalances('1');
+   * // [
+   * //   {
+   * //     id: '1',
+   * //     name: 'Girokonto',
+   * //     calculatedBalance: 1500.00,
+   * //     totalIncome: 2000.00,
+   * //     totalExpenses: 500.00,
+   * //     lastTransactionDate: '2025-11-05',
+   * //     transactionCount: 25
+   * //   }
+   * // ]
+   * ```
+   */
   async getAccountsWithCalculatedBalances(userId: string) {
     console.log(
       '🔍 getAccountsWithCalculatedBalances called with userId:',
