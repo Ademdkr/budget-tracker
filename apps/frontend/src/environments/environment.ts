@@ -8,5 +8,5 @@ export const environment = {
   /** Flag für Produktionsumgebung */
   production: true,
   /** Base-URL für API-Calls (Cloudflare Worker) */
-  apiBaseUrl: 'https://budget-tracker-worker.adem-dokur.workers.dev/api',
+  apiBaseUrl: 'https://api.budget-tracker.ademdokur.dev/api',
 };
