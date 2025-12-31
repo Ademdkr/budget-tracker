@@ -76,6 +76,7 @@ export default {
       '/*',
       cors({
         origin: [
+          'https://budget-tracker.ademdokur.dev', // Custom Domain Production
           'https://budget-tracker-frontend.pages.dev', // Production
           'https://7c847dee.budget-tracker-frontend.pages.dev', // Preview
           'http://localhost:4201', // Local Development

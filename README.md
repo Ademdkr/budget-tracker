@@ -2,7 +2,7 @@
 
 Eine moderne Full-Stack-Webanwendung zur Verwaltung persönlicher Finanzen, Budgets und Transaktionen.
 
-[![Demo](https://img.shields.io/badge/Demo-Live-brightgreen)](https://budget-tracker-frontend.pages.dev)
+[![Demo](https://img.shields.io/badge/Demo-Live-brightgreen)](https://budget-tracker.ademdokur.dev)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)
 ![NestJS](https://img.shields.io/badge/NestJS-10-red)
 ![Angular](https://img.shields.io/badge/Angular-18-red)
@@ -12,7 +12,7 @@ Eine moderne Full-Stack-Webanwendung zur Verwaltung persönlicher Finanzen, Budg
 
 ## 🌐 Live Demo
 
-**[https://budget-tracker-frontend.pages.dev](https://budget-tracker-frontend.pages.dev)**
+**[https://budget-tracker.ademdokur.dev](https://budget-tracker.ademdokur.dev)**
 
 ## 📋 Inhaltsverzeichnis
 

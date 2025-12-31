@@ -8,28 +8,18 @@
   ],
   "scripts": {
     "prepare": "node -e \"if(process.env.HUSKY===undefined||process.env.HUSKY!=='0'){require('child_process').exec('husky',()=>{})}\"",
+    "postinstall": "node -e \"if(process.env.SKIP_POSTINSTALL!=='true'){require('child_process').execSync('pnpm --filter @budget-tracker/backend exec prisma generate',{stdio:'inherit'})} else {console.log('Skipping postinstall (SKIP_POSTINSTALL=true)')}\"",
     "setup": "node ./tools/setup.mjs",
     "dev": "concurrently -n FE,BE -c blue,magenta \"pnpm --filter @budget-tracker/frontend dev\" \"pnpm --filter @budget-tracker/backend start:dev\"",
-    "dev:web": "pnpm --filter @budget-tracker/frontend dev",
-    "dev:api": "pnpm --filter @budget-tracker/backend start:dev",
     "build": "pnpm -r run build",
-    "build:web": "pnpm --filter @budget-tracker/frontend build",
-    "build:api": "pnpm --filter @budget-tracker/backend build",
     "lint": "pnpm -r run lint",
-    "test": "pnpm -r run test",
-    "start": "pnpm --filter @budget-tracker/backend start",
     "format": "prettier --write \"**/*.{ts,js,tsx,jsx,json,md,scss,css,html}\"",
+    "test": "pnpm -r run test",
     "db:up": "docker compose up -d",
-    "db:logs": "docker compose logs -f db",
     "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f db",
     "db:studio": "pnpm --filter @budget-tracker/backend exec prisma studio",
-    "gen:prisma": "pnpm --filter @budget-tracker/backend exec prisma generate",
-    "docs:backend": "compodoc -p apps/backend/tsconfig.json -d docs/backend --theme readthedocs --disablePrivate --disableProtected",
-    "docs:backend:serve": "compodoc -p apps/backend/tsconfig.json -d docs/backend -s --port 8081 --theme readthedocs --disablePrivate --disableProtected",
-    "docs:frontend": "compodoc -p apps/frontend/tsconfig.json -d docs/frontend --theme readthedocs --disablePrivate --disableProtected",
-    "docs:frontend:serve": "compodoc -p apps/frontend/tsconfig.json -d docs/frontend -s --port 8082 --theme readthedocs --disablePrivate --disableProtected",
-    "docs:all": "pnpm docs:backend && pnpm docs:frontend",
-    "postinstall": "node -e \"if(process.env.SKIP_POSTINSTALL!=='true'){require('child_process').execSync('pnpm --filter @budget-tracker/backend exec prisma generate',{stdio:'inherit'})} else {console.log('Skipping postinstall (SKIP_POSTINSTALL=true)')}\""
+    "docs:all": "pnpm docs:backend && pnpm docs:frontend"
   },
   "lint-staged": {
     "apps/**/{src,prisma}/**/*.{ts,tsx,js,jsx}": [
