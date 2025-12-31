@@ -1,0 +1,26 @@
+<footer class="footer" role="contentinfo">
+  <div class="footer-content">
+    <span class="copyright"
+      >© {{ currentYear }}
+      <a href="https://ademdokur.dev" class="copyright-link">ademdokur.dev</a>
+    </span>
+
+    <nav class="footer-links" aria-label="Social Media Links">
+      <a
+        [href]="githubUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="footer-link"
+        aria-label="GitHub Profil besuchen"
+      >
+        <mat-icon aria-hidden="true">code</mat-icon>
+        <span>GitHub</span>
+      </a>
+
+      <a [href]="'mailto:' + email" class="footer-link" aria-label="E-Mail senden">
+        <mat-icon aria-hidden="true">email</mat-icon>
+        <span>Mail</span>
+      </a>
+    </nav>
+  </div>
+</footer>

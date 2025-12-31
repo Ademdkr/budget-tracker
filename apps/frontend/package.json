@@ -3,16 +3,11 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "ng": "ng",
     "dev": "ng serve --host 0.0.0.0 --port 4201 --proxy-config proxy.conf.json",
-    "dev:worker": "ng serve --host 0.0.0.0 --port 4201 --configuration worker",
-    "start": "ng serve --host 0.0.0.0 --port 4201 --proxy-config proxy.conf.json",
-    "start:worker": "ng serve --host 0.0.0.0 --port 4201 --configuration worker",
     "build": "ng build",
-    "build:prod": "ng build --configuration production",
-    "test": "ng test --watch=false --browsers=ChromeHeadless",
+    "preview": "npx http-server ./dist/apps/frontend -p 4201",
     "lint": "eslint \"src/**/*.{ts,html}\" --ext .ts,.html --ignore-path ../../.eslintignore",
-    "preview": "npx http-server ./dist/apps/frontend -p 4201"
+    "test": "ng test --watch=false --browsers=ChromeHeadless"
   },
   "dependencies": {
     "@angular/animations": "^18.2.0",

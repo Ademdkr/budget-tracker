@@ -14,6 +14,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
+import { Footer } from '../../footer/footer';
 
 /**
  * Login Component - Benutzer-Anmeldeseite
@@ -50,6 +51,7 @@ import { MatDividerModule } from '@angular/material/divider';
     MatIconModule,
     MatSelectModule,
     MatDividerModule,
+    Footer,
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',

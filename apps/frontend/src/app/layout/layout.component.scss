@@ -16,6 +16,13 @@
 .sidenav-container {
   flex: 1;
   background-color: #fafafa;
+  display: flex;
+  flex-direction: column;
+}
+
+mat-sidenav-content {
+  display: flex;
+  flex-direction: column;
 }
 
 .sidenav {
@@ -23,6 +30,9 @@
   border-right: 1px solid #e0e0e0;
   background-color: white;
   box-shadow: 3px 0 6px rgba(0, 0, 0, 0.08);
+  overflow-x: hidden;
+  // height: fit-content;
+  max-height: 100%;
 
   .sidenav-header {
     background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
@@ -187,7 +197,13 @@
   padding: 24px;
   overflow-y: auto;
   background-color: #fafafa;
-  min-height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.content-wrapper {
+  flex: 0 1 auto;
 }
 
 // Responsive Design
@@ -241,6 +257,10 @@
   .content-area {
     padding: 16px;
   }
+
+  .content-wrapper {
+    flex: 1;
+  }
 }
 
 @media (max-width: 480px) {
@@ -272,6 +292,10 @@
   .content-area {
     padding: 12px;
   }
+
+  .content-wrapper {
+    flex: 1;
+  }
 }
 
 // Custom Material Design Overrides
@@ -288,6 +312,11 @@
 // Sidenav overlay styling
 .mat-drawer-backdrop {
   background-color: rgba(0, 0, 0, 0.6);
+}
+
+// Fix horizontal scrollbar in sidenav
+::ng-deep .mat-drawer-inner-container {
+  overflow-x: hidden !important;
 }
 
 // Active route styling enhancement
