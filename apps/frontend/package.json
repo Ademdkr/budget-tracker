@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "ng serve --host 0.0.0.0 --port 4201 --proxy-config proxy.conf.json",
     "build": "ng build",
+    "build:prod": "ng build --configuration=production",
     "preview": "npx http-server ./dist/apps/frontend -p 4201",
     "lint": "eslint \"src/**/*.{ts,html}\" --ext .ts,.html --ignore-path ../../.eslintignore",
     "test": "ng test --watch=false --browsers=ChromeHeadless"
